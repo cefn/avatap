@@ -7,73 +7,107 @@ class MockEngine(Engine):
 		super().__init__(*args, **kwargs)
 		self.render_calls = list()
 		
-	def render(self, *args, **kwargs):
+	def renderText(self, *args, **kwargs):
 		self.render_calls.append((args, kwargs))
-
-class PageTest(unittest.TestCase):
+		
+# create passage ids
+passageIdStrings = [
+	"landingPassage",
+	"endingPassage",
+]
+boxIdStrings = [
+	"northBox",
+	"eastBox",
+	"southBox",
+	"westBox"
+]
+# populate into an item
+uidDict = dict()
+for idString in passageIdStrings + boxIdStrings:
+	uidDict[idString]=Uid(idString)
+uids = Item(uidDict)
+del uidDict
 	
-	def __init__(self, *args, **kwargs):
+class PageTest(Container, unittest.TestCase):
+	required = [n for n in Container.required if n!="uid"] # remove need for uid
+	
+	def __init__(self, *args, **kwargs): # note multiple inheritance
 		super().__init__(*args, **kwargs)
 		self.num_boxes = 4
+	
+	def registerEngine(self, engine):
+		return self._register(Engine, engine)
+	
+	def lookupEngine(self, engineUid):
+		return self._lookup(Engine, engineUid)
 		
 	def setUp(self):
-
-		# configure 'story' 
-		self.storyUid = Uid("teststory")
-		story = Story(
-			uid=self.storyUid
-		)
-
-		# configure boxes
-		self.boxes = [Box(story=story, uid=str(boxPos), label="The box called " + str(boxPos)) for boxPos in range(self.num_boxes)]
+		# create uids to wire up/trigger story+passages
+		self.landingUid = 	Uid("landing")
+		self.endingUid = 	Uid("ending")
 		
-		# configure engines
-		self.engines = [MockEngine(box=box) for box in self.boxes]
-		for engine in self.engines:
-			engine.registerStory(story)
+		# create ids for boxes
+		self.northBoxUid = 	Uid("north")
+		self.eastBoxUid = 	Uid("east")
+		self.southBoxUid = 	Uid("south")
+		self.westBoxUid = 	Uid("west")
+		
+		# record all boxUids in a list for later exhaustive testing
+		self.boxUids = [
+			self.northBoxUid, 
+			self.eastBoxUid, 
+			self.southBoxUid, 
+			self.westBoxUid
+		]
 
-		# create passage uids to wire up passages
-		self.landingUid = Uid("landing")
-		self.endingUid = Uid("ending")
-
-		# create a beginning passage which points to the end passage
-		PagePassage(story=story,
-			uid=self.landingUid,
-			rightBoxUid=self.engines[0].box.uid,
-			rightText="Welcome to Milecastles.",
-			nextPassageUid=self.endingUid
-		)
-
-		# create an ending passage for the story
-		PagePassage(story=story,
-			uid=self.endingUid,
-			rightBoxUid=self.engines[1].box.uid,
-			rightText="You have finished your adventure",
-			nextPassageUid=self.landingUid
+		# create 'story' 
+		self.story = Story(
+			uid="teststory",
+			startPassageUid=self.landingUid
 		)
 		
+		with self.story:
+
+			# configure boxes, starting at 1
+			
+			for boxUid in self.boxUids:
+				Box(uid=boxUid, label="The box called " + boxUid.idString) 
+			
+			# create a beginning passage which points to the end passage
+			PagePassage(
+				uid=self.landingUid,
+				rightBoxUid=self.northBoxUid,
+				rightBoxText="Welcome to Milecastles.",
+				nextPassageUid=self.endingUid
+			)
+
+			# create an ending passage for the story
+			PagePassage(
+				uid=self.endingUid,
+				rightBoxUid=self.southBoxUid,
+				rightBoxText="You have finished your adventure",
+				nextPassageUid=self.landingUid
+			)
+		
+		# configure engine for each box in the story
+		for boxIdString,box in self.story._get_table(Box).items():
+			engine = MockEngine(uid=boxIdString, box=box)
+			engine.registerStory(self.story)
+			self.registerEngine(engine)
 
 	def tearDown(self):
-		del self.boxes, self.engines, self.storyUid, self.landingUid, self.endingUid
+		del self.story, self.registry, self.landingUid, self.endingUid
 			
 	def test_show_text(self):
 		# create an imaginary card
-		card = Card(
-			uid="abcdefgh",
-			storyUid =self.storyUid,
-			passageUid = self.landingUid,
-			sack = dict(
-				money=10,
-				health=10
-			)
-		)
+		card = self.story.createBlankCard("abcdefgh")
 				
 		# present the card to the relevant engine
-		engine = self.engines[0]
+		engine = self.lookupEngine(self.northBoxUid)
 		
 		#import pdb; pdb.set_trace()
 
-		engine.handle_card(card)
+		engine.handleCard(card)
 
 		# check results
 		assert len(engine.render_calls) == 1
