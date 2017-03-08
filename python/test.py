@@ -10,100 +10,85 @@ class MockEngine(Engine):
 	def renderText(self, *args, **kwargs):
 		self.render_calls.append((args, kwargs))
 		
-# create passage ids
-passageIdStrings = [
+# create uids to wire up/trigger story+passages
+storyUid = Uid("teststory")
+passageUids = [Uid(name) for name in [
 	"landingPassage",
 	"endingPassage",
-]
-boxIdStrings = [
+]]
+boxUids = [Uid(name) for name in [
 	"northBox",
 	"eastBox",
 	"southBox",
 	"westBox"
-]
-# populate into an item
+]]
+
+# populate into an item using a dict
 uidDict = dict()
-for idString in passageIdStrings + boxIdStrings:
-	uidDict[idString]=Uid(idString)
+for uid in (passageUids + boxUids):
+	uidDict[uid.idString]=uid
+#import pdb; pdb.set_trace()
 uids = Item(uidDict)
 del uidDict
-	
-class PageTest(Container, unittest.TestCase):
-	required = [n for n in Container.required if n!="uid"] # remove need for uid
-	
-	def __init__(self, *args, **kwargs): # note multiple inheritance
-		super().__init__(*args, **kwargs)
-		self.num_boxes = 4
-	
+
+class EngineContainer(AnonymousContainer):
 	def registerEngine(self, engine):
 		return self._register(Engine, engine)
 	
 	def lookupEngine(self, engineUid):
-		return self._lookup(Engine, engineUid)
+		return self._lookup(Engine, engineUid)	
+	
+class PageTest(unittest.TestCase):
+	
+	def __init__(self, *a, **k): # note multiple inheritance
+		super().__init__(*a, **k)
+		self.num_boxes = 4
 		
 	def setUp(self):
-		# create uids to wire up/trigger story+passages
-		self.landingUid = 	Uid("landing")
-		self.endingUid = 	Uid("ending")
-		
-		# create ids for boxes
-		self.northBoxUid = 	Uid("north")
-		self.eastBoxUid = 	Uid("east")
-		self.southBoxUid = 	Uid("south")
-		self.westBoxUid = 	Uid("west")
-		
-		# record all boxUids in a list for later exhaustive testing
-		self.boxUids = [
-			self.northBoxUid, 
-			self.eastBoxUid, 
-			self.southBoxUid, 
-			self.westBoxUid
-		]
 
 		# create 'story' 
 		self.story = Story(
-			uid="teststory",
-			startPassageUid=self.landingUid
+			uid=storyUid,
+			startPassageUid=uids.landingPassage
 		)
 		
 		with self.story:
 
-			# configure boxes, starting at 1
-			
-			for boxUid in self.boxUids:
+			# configure boxes			
+			for boxUid in boxUids:
 				Box(uid=boxUid, label="The box called " + boxUid.idString) 
 			
 			# create a beginning passage which points to the end passage
 			PagePassage(
-				uid=self.landingUid,
-				rightBoxUid=self.northBoxUid,
+				uid=uids.landingPassage,
+				rightBoxUid=uids.northBox,
 				rightBoxText="Welcome to Milecastles.",
-				nextPassageUid=self.endingUid
+				nextPassageUid=uids.endingPassage
 			)
 
 			# create an ending passage for the story
 			PagePassage(
-				uid=self.endingUid,
-				rightBoxUid=self.southBoxUid,
+				uid=uids.endingPassage,
+				rightBoxUid=uids.southBox,
 				rightBoxText="You have finished your adventure",
-				nextPassageUid=self.landingUid
-			)
+				nextPassageUid=uids.landingPassage			)
 		
 		# configure engine for each box in the story
+		self.engines = EngineContainer()
 		for boxIdString,box in self.story._get_table(Box).items():
 			engine = MockEngine(uid=boxIdString, box=box)
 			engine.registerStory(self.story)
-			self.registerEngine(engine)
+			self.engines.registerEngine(engine)
 
 	def tearDown(self):
-		del self.story, self.registry, self.landingUid, self.endingUid
+		del self.engines, self.story
 			
 	def test_show_text(self):
 		# create an imaginary card
 		card = self.story.createBlankCard("abcdefgh")
 				
 		# present the card to the relevant engine
-		engine = self.lookupEngine(self.northBoxUid)
+		engine = self.engines.lookupEngine(uids.northBox)
 		
 		#import pdb; pdb.set_trace()
 
@@ -114,7 +99,7 @@ class PageTest(Container, unittest.TestCase):
 		a, k = engine.render_calls[0]
 		print(a)
 		
-		assert card.passageUid == self.endingUid
+		assert card.passageUid == uids.endingPassage
 		return True
 
 '''
@@ -123,6 +108,15 @@ class TullieStoryTest(unittest.TestCase):
 		super().__init__(*args, **kwargs)
 		from stories import tullie
 		self.story = tullie.story	
+'''
+
+'''
+loader = unittest.defaultTestLoader
+
+def suite():
+    suite = unittest.TestSuite()
+    suite.addTest(PageTest())
+    return suite
 '''
 
 if __name__ == "__main__":
