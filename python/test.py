@@ -24,12 +24,8 @@ boxUids = [Uid(name) for name in [
 ]]
 
 # populate into an item using a dict
-uidDict = dict()
-for uid in (passageUids + boxUids):
-	uidDict[uid.idString]=uid
 #import pdb; pdb.set_trace()
-uids = Item(uidDict)
-del uidDict
+uids = UidRegistry(*boxUids+passageUids)
 
 class EngineContainer(AnonymousContainer):
 	def registerEngine(self, engine):
