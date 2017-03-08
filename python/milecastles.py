@@ -43,9 +43,12 @@ class Item(object):
 	
 	# populate attributes from positional dicts and keyword args
 	def __init__(self, *args, **kwargs): 
-		for data in args[1:]: # exclude self
-			for key in data:
+		# assume positional arguments are dicts
+		for data in args: # exclude self
+			assert type(data)==dict, "non-dict passed to Item#__init__()"
+			for key in data: 
 				setattr(self, key, data[key])
+		# assume keyword arguments specify attributes
 		for key in kwargs:
 			suffix = "uid"
 			# check that uids are typed as Uid
@@ -113,6 +116,9 @@ class Container(UidItem):
 					if uid.idString in table:
 						return table[uid.idString]
 			raise AssertionError("'" + uid.idString + "' not in " + cls.__name__ + " lookup table")
+			
+class AnonymousContainer(Container):
+	required = [n for n in Container.required if n!="uid"]
 	
 class Story(Container):
 	required = Container.required + ["startPassageUid"]
