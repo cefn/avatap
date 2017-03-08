@@ -1,0 +1,3 @@
+[submodule "submodules/cockle"]
+	path = submodules/cockle
+	url = https://github.com/ShrimpingIt/cockle.git
