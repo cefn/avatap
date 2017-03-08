@@ -1,8 +1,8 @@
 from milecastles import *
 from engines import Engine
 
-class ConsoleSiteEmulator(Container):
-	required = [n for n in Container.required if n!="uid"] + ["story"]
+class ConsoleSiteEmulator(AnonymousContainer):
+	required = AnonymousContainer.required + ["story"]
 
 	def __init__(self, *a, **k):
 		super().__init__(*a, **k)
