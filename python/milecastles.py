@@ -1,4 +1,4 @@
-from util import ticks_ms
+from agnostic import ticks_ms
 from boilerplate import Resolver
 
 story = None
@@ -58,6 +58,11 @@ class Item(object):
                 assert uidType == Uid or uidType == type(None), "Attribute '{0}' with name ending '1' is actually of type {2}".format(key, suffix, str(uidType))
             setattr(self, key, kwargs[key])
 
+        # populate with defaults
+        for key in type(self).defaults:
+            if not hasattr(self, key):
+                setattr(self, key, type(self).defaults[key])
+
         # raise error if any 'required' attributes are missing   
         missing = list()
         for name in type(self).required:
@@ -66,22 +71,21 @@ class Item(object):
         if len(missing) > 0:
             raise AssertionError(type(self).__name__ + " missing required attributes " + str(missing) )
         
-        for key in type(self).defaults:
-            if not hasattr(self, key):
-                setattr(self, key, type(self).defaults[key])
-
 # Class which simplifies handling a list of idStrings or Uids and exposing them as attributes on an object, named by idString
 class UidRegistry(Item):
-        def __init__(self,  *a):
-            uidDict = dict()
-            for uid in a:
-                if type(uid)==str:
-                    uid = Uid(uid)
-                if type(uid)!=Uid:
-                    import pdb; pdb.set_trace()
-                assert type(uid)==Uid
-                uidDict[uid.idString]=uid
-            super().__init__(**uidDict)
+    def __init__(self,  *a):
+        uidDict = dict()
+        for uid in a:
+            if type(uid)==str:
+                uid = Uid(uid)
+            if type(uid)!=Uid:
+                import pdb; pdb.set_trace()
+            assert type(uid)==Uid
+            uidDict[uid.idString]=uid
+        super().__init__(**uidDict)
+    
+    def getUids(self):
+        return [val for val in self.__dict__.values() if type(val) == Uid]
 
 '''
     A common superclass for items with ids. Accepts a string id argument
@@ -152,7 +156,7 @@ class Story(Container):
     def validate(self):
         assert type(self.startSack) == dict, "'sack' must be of type dict"
         # delegate validation to nodes
-        for nodeUid, node in self._getTable(Node).items():
+        for nodeUid, node in self._get_table(Node).items():
             node.validate(self)
     
     def registerNode(self, node):
@@ -201,7 +205,7 @@ class Node(UidItem):
     def handleTap(self, engine, card):
         raise AssertionError("Not yet implemented")
         
-class BoolMethodFork(ThroughNode):
+class BoolMethodFork(Node):
     required = Node.required + ["trueNodeUid", "falseNodeUid"]
     
     def activate(self, engine):
@@ -213,54 +217,57 @@ class BoolMethodFork(ThroughNode):
     def evaluate(self, engine):
         raise AssertionError("Not yet implemented")
 
-class BoolExpressionFork(ThroughNode):
-    required = BooleanMethodRouter.required + ["expression"]
+class BoolExpressionFork(BoolMethodFork):
+    required = BoolMethodFork.required + ["expression"]
 
     def evaluate(self, engine):
         return engine.evaluateExpression(self.expression)
 
-class TemplatedNode(Node):
-    required = Node.required + ["template"]
+class PageNode(Node):
+    required = Node.required + ["page"]
 
-    def getTemplateString():
-        return self.template
+    def getTemplateString(self, engine):
+        return self.page
     
-    def getTemplateResolver():
-        return TemplateResolver(**self.__dict__)
+    def getTemplateResolver(self, engine):
+        return Resolver(**self.__dict__)
                 
     def displayTemplate(self, engine):
-        engine.render(self.getTemplateString(), self.getTemplateResolver())
+        engine.renderTemplate(self.getTemplateString(engine), self.getTemplateResolver(engine))
 
-class VisitBoxPassage(TemplatedNode):
-    required = TemplatedNode.required + ["visitBoxUid", "visitBoxText"]
-    defaults = dict(TemplatedNode.defaults,
-        template="{% if box.uid == node.visitBoxUid %}{{node.visitBoxText}}{% else %}{{node.otherBoxText}}{% endif %}"
-        otherBoxText="Please go to {node.visitBoxLabel} to continue your adventure"
+class VisitPage(PageNode):
+    required = PageNode.required + ["visitBoxUid", "visitBoxText"]
+    defaults = dict(PageNode.defaults,
+        page="{% if box.uid == node.visitBoxUid %}{{node.visitBoxText}}{% else %}{{node.otherBoxText}}{% endif %}",
+        otherBoxText="Please go to {{node.visitBoxLabel}} to continue your adventure"
     )
 
     def validate(self, story):
         self.visitBoxLabel = story.lookupBox(self.visitBoxUid).label
         
-class LinearPassage(VisitBoxPassage):
-    required = VisitBoxPassage.required + ["nextNodeUid"]
+class LinearPage(VisitPage):
+    required = VisitPage.required + ["nextNodeUid"]
+    
+    def validate(self, story):
+        nextNode = story.lookupNode(self.nextNodeUid)
+        self.instruction = "\n...tap to continue"
+        if isinstance(nextNode, VisitPage): 
+            self.nextBoxLabel = story.lookupBox(nextNode.visitBoxUid).label
+            if nextNode.visitBoxUid != self.visitBoxUid:
+                self.instruction = "\n find {{node.nextBoxLabel}} and tap in there to continue"
 
     def getTemplateString(self, engine):
-        nextNode = engine.story.lookupNode(self.getNextNodeUid())
-        if isinstance(nextNode, VisitBoxPassage):
-            self.nextBoxLabel = engine.story.lookupBox(nextNode.visitBoxUid).label
-            if nextNode.visitBoxUid != self.visitBoxUid:
-                return super().getTemplateString(engine) + "\n find {{node.nextBoxLabel}} and tap in to continue"
-        return super().getTemplateString(engine) = "\n...tap to continue"
+        return super().getTemplateString(engine) + self.instruction
                         
     def gotoNextNode(self, engine):
         engine.setNodeUid(self.nextNodeUid)
                     
     def handleTap(self, engine):
-        self.gotoNextNode(engine)
         self.displayTemplate(engine)
+        self.gotoNextNode(engine)
         
-class ConfirmationPassage(LinearPassage):
-    defaults = dict(StraightPassage.defaults, 
+class ConfirmationPage(LinearPage):
+    defaults = dict(LinearPage.defaults, 
         timeout=4000
     )
     
@@ -272,10 +279,10 @@ class ConfirmationPassage(LinearPassage):
         engine.renderText(self.getRenderedText(engine))
         self.last_tap_ms = now      
 
-class SackChangePassage(LinearPassage):
-    defaults = dict(LinearPassage.defaults,
-        changeCondition = None
-        add = None
+class SackChangePage(LinearPage):
+    defaults = dict(LinearPage.defaults,
+        changeCondition = None,
+        add = None,
         remove = None
     )
     
@@ -283,7 +290,7 @@ class SackChangePassage(LinearPassage):
         super().validate(story)
         assert self.add == None or type(self.add) == dict
         assert self.remove == None or type(self.remove) == dict
-        assert hasattr(self, "add") or hasattr(self, "remove"), "SackChangePassage should have one of either 'add' or 'remove'"
+        assert hasattr(self, "add") or hasattr(self, "remove"), "SackChangePage should have one of either 'add' or 'remove'"
     
     def handleTap(self, engine):
         if self.changeCondition == None or engine.evaluateExpression(self.changeCondition):
@@ -296,7 +303,7 @@ class SackChangePassage(LinearPassage):
                     else:
                         sack[key] = val
             # handle removal (list of entries or a number)
-            if(hasattr(self, "remove)):
+            if(hasattr(self, "remove")):
                 for key,val in self.remove:
                     if key in sack:                        
                         if type(val) == list:
@@ -310,17 +317,17 @@ class SackChangePassage(LinearPassage):
 '''
 # superceded by 'script' attribute which is evaluated in the context of a tap (e.g. "sack.money = sack.money + 5")
 # See also https://twine2.neocities.org/1.html for Twine reference features around variables and execution
-class ExecutePassage(StraightPassage):
+class ExecutePage(LinearPage):
     pass
 '''
 
 '''
-class WaitPassage(StraightPassage):
+class WaitPage(LinearPage):
     pass
 '''    
     
-class ChoicePassageFork(VisitBoxPassage):
-    required = VisitBoxPassage.required + ["choices"]
+class ChoicePageFork(VisitPage):
+    required = VisitPage.required + ["choices"]
     
     def validate(self, story):
         print( "Validating Node:" + self.uid.idString)
@@ -330,20 +337,20 @@ class ChoicePassageFork(VisitBoxPassage):
         choiceNodeUids = choices.keys()
         assert all([isinstance(key, Uid) for key in choiceNodeUids]), "'choices' property uid keys are not all of type 'Uid'"
         choiceNodes = [story.lookupNode(nodeUid) for nodeUid in choiceNodeUids]
-        assert all([isinstance(node, VisitBoxNode) for node in choiceNodes]), "ChoiceFork choices must point to subclasses of VisitBoxNode"
+        assert all([isinstance(node, VisitPage) for node in choiceNodes]), "ChoiceFork choices must point to subclasses of VisitBoxNode"
         choiceBoxUids = [node.visitBoxUid for node in choiceNodes]
         assert len(choiceBoxUids) == len(set(choiceBoxUids)), "Some VisitBoxNodes referenced by 'choices' share the same box" + str(choiceBoxUids)
-        choiceBoxes = [engine.story.lookupBox(boxUid) for boxUid in choiceBoxUids]
+        choiceBoxes = [story.lookupBox(boxUid) for boxUid in choiceBoxUids]
         # record nodes and boxes
         self.choiceNodes = choiceNodes
         self.choiceBoxes = choiceBoxes
 
     def getTemplateString(self, engine):
         try:
-            # find the matching choice, if it exists
+            # find the matching choice, if it exists, and respond
             choiceBoxUids = [box.uid for box in self.choiceBoxes]
             chosenPos = choiceBoxUids.index(engine.box.uid)
-            chosenNode = chosenNodes[choiceIndex]
+            chosenNode = self.choiceNodes[chosenPos]
             engine.setNodeUid(chosenNode.uid)
             return "You chose: " + self.choices[chosenNode.uid] + "\n... now tap to continue"
         except ValueError:
@@ -353,18 +360,18 @@ class ChoicePassageFork(VisitBoxPassage):
             for choiceNode,choicePos in enumerate(self.choiceNodes):
                 choiceString += "\n" + self.choices[choiceNode.uid] + " : " + self.choiceBoxes[choicePos].label
             if engine.box.uid == self.visitBoxUid:
-                # it's the visit box, render the page
+                # it's the visit box, render the page as normal
                 return super().getTemplateString(engine) + choiceString
             else:
-                # it's not the visit box
+                # it's not the visit box, bypass rendering the page
                 return "This box is not among your choices. To continue the game..." + choiceString
 
 '''
-def constructLinearSequence(inboundUid, outboundUid, templates):
-    templates = list(templates)
-    templates.reverse()
+def constructLinearSequence(inboundUid, outboundUid, pages):
+    pages = list(pages)
+    pages.reverse()
     toUid = outboundUid
-    for template,pos in enumerate(templates):
+    for page,pos in enumerate(pages):
 '''        
         
 # Condition render
