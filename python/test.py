@@ -2,6 +2,8 @@ import unittest
 from milecastles import *
 from engines import Engine
 
+from stories import exampleShort
+
 class MockEngine(Engine):
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
@@ -9,23 +11,6 @@ class MockEngine(Engine):
 		
 	def renderText(self, *args, **kwargs):
 		self.render_calls.append((args, kwargs))
-		
-# create uids to wire up/trigger story+passages
-storyUid = Uid("teststory")
-passageUids = [Uid(name) for name in [
-	"landingPassage",
-	"endingPassage",
-]]
-boxUids = [Uid(name) for name in [
-	"northBox",
-	"eastBox",
-	"southBox",
-	"westBox"
-]]
-
-# populate into an item using a dict
-#import pdb; pdb.set_trace()
-uids = UidRegistry(*boxUids+passageUids)
 
 class EngineContainer(AnonymousContainer):
 	def registerEngine(self, engine):
@@ -43,32 +28,7 @@ class PageTest(unittest.TestCase):
 	def setUp(self):
 
 		# create 'story' 
-		self.story = Story(
-			uid=storyUid,
-			startPassageUid=uids.landingPassage
-		)
-		
-		with self.story:
-
-			# configure boxes			
-			for boxUid in boxUids:
-				Box(uid=boxUid, label="The box called " + boxUid.idString) 
-			
-			# create a beginning passage which points to the end passage
-			PagePassage(
-				uid=uids.landingPassage,
-				rightBoxUid=uids.northBox,
-				rightBoxText="Welcome to Milecastles.",
-				nextPassageUid=uids.endingPassage
-			)
-
-			# create an ending passage for the story
-			PagePassage(
-				uid=uids.endingPassage,
-				rightBoxUid=uids.southBox,
-				rightBoxText="You have finished your adventure",
-				nextPassageUid=uids.landingPassage			)
-		
+		self.story = exampleShort.story
 		# configure engine for each box in the story
 		self.engines = EngineContainer()
 		for boxIdString,box in self.story._get_table(Box).items():
@@ -84,7 +44,7 @@ class PageTest(unittest.TestCase):
 		card = self.story.createBlankCard("abcdefgh")
 				
 		# present the card to the relevant engine
-		engine = self.engines.lookupEngine(uids.northBox)
+		engine = self.engines.lookupEngine(exampleShort.boxUids.north)
 		
 		#import pdb; pdb.set_trace()
 
@@ -95,7 +55,7 @@ class PageTest(unittest.TestCase):
 		a, k = engine.render_calls[0]
 		print(a)
 		
-		assert card.passageUid == uids.endingPassage
+		assert card.nodeUid == exampleShort.nodeUids.ending
 		return True
 
 '''
