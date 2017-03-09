@@ -1,8 +1,20 @@
 # os module is loaded on demand
 #import os
 
-from . import compiled
+# based on utemplate from @pfalcon on github
 
+from agnostic import io
+
+class Resolver:
+
+    def __init__(self, **k):
+        self.templateDict = k
+
+    def openTemplate(self, name):
+        assert name in self.templateDict, "Attempted to load template string named " + name + ". No such template"
+        templateString = self.templateDict[name]
+        assert type(templateString) == str, "Attempted to load template string from " + name + " entry not of type 'str'"
+        return io.StringIO(templateString)
 
 class Compiler:
 
@@ -12,10 +24,10 @@ class Compiler:
     EXPR = "{"
     EXPR_END = "}}"
 
-    def __init__(self, file_in, file_out, indent=0, seq=0, loader=None):
+    def __init__(self, resolver, file_in, file_out, indent=0, seq=0):
+        self.resolver = resolver
         self.file_in = file_in
         self.file_out = file_out
-        self.loader = loader
         self.seq = seq
         self._indent = indent
         self.stack = []
@@ -58,11 +70,12 @@ class Compiler:
                 self.args = ""
         elif tokens[0] == "include":
             tokens = tokens[1].split(None, 1)
-            with open(self.loader.file_path(tokens[0][1:-1])) as inc:
-                self.seq += 1
-                c = Compiler(inc, self.file_out, len(self.stack) + self._indent, self.seq)
-                inc_id = self.seq
-                self.seq = c.compile()
+            assert tokens[0][0] == tokens[0][-1] and tokens[0][0] in "\"'", "Template names for 'include' should be in quotes"
+            templateName = tokens[0][1:-1]
+            self.seq += 1
+            c = Compiler(self.resolver, self.resolver.openTemplate(templateName), self.file_out, len(self.stack) + self._indent, self.seq)
+            inc_id = self.seq
+            self.seq = c.compile()
             self.indent()
             args = ""
             if len(tokens) > 1:
@@ -128,53 +141,3 @@ class Compiler:
             self.parse_line(l)
         self.close_literal()
         return self.seq
-
-
-class Loader(compiled.Loader):
-
-    def __init__(self, pkg, dir):
-        super().__init__(pkg, dir)
-        self.dir = dir
-        if pkg == "__main__":
-            # if pkg isn't really a package, don't bother to use it
-            # it means we're running from "filesystem directory", not
-            # from a package.
-            pkg = None
-
-        self.pkg_path = ""
-        if pkg:
-            p = __import__(pkg)
-            if isinstance(p.__path__, str):
-                # uPy
-                self.pkg_path = p.__path__
-            else:
-                # CPy
-                self.pkg_path = p.__path__[0]
-            self.pkg_path += "/"
-
-    def file_path(self, template):
-        return self.pkg_path + self.dir + "/" + template
-
-    def compiled_path(self, template):
-        return self.dir + "/compiled/" + template.replace(".", "_") + ".py"
-
-    def load(self, name):
-        try:
-            return super().load(name)
-        except (OSError, ImportError):
-            pass
-
-        compiled_path = self.pkg_path + self.compiled_path(name)
-
-        import uos
-        try:
-            uos.mkdir(self.pkg_path + self.dir + "/compiled/")
-        except OSError:
-            pass
-        f_in = open(self.file_path(name))
-        f_out = open(compiled_path, "w")
-        c = Compiler(f_in, f_out, loader=self)
-        c.compile()
-        f_in.close()
-        f_out.close()
-        return super().load(name)
