@@ -1,4 +1,5 @@
 from util import ticks_ms
+from boilerplate import Resolver
 
 story = None
 
@@ -86,7 +87,7 @@ class UidRegistry(Item):
     A common superclass for items with ids. Accepts a string id argument
     and silently replaces it with a typed Uid object which is required 
     by other Uid oriented references, this supports implicit validation 
-    of data structures (e.g. encouraging you to refer to myPassage.uid in 
+    of data structures (e.g. encouraging you to refer to myNode.uid in 
     preference to the possibly "theuid")
 ''' 
 class UidItem(Item):
@@ -134,24 +135,31 @@ class AnonymousContainer(Container):
     required = [n for n in Container.required if n!="uid"]
     
 class Story(Container):
-    required = Container.required + ["startPassageUid"]
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-                    
+    required = Container.required + ["startNodeUid", "startSack"]
+    defaults = dict(Container.defaults, 
+        startSack = dict()
+    )
+                        
     def __enter__(self):
         global story
         story = self
         
     def __exit__(self, type, value, traceback):
+        self.validate()
         global story
         story = None
+        
+    def validate(self):
+        assert type(self.startSack) == dict, "'sack' must be of type dict"
+        # delegate validation to nodes
+        for nodeUid, node in self._getTable(Node).items():
+            node.validate(self)
     
-    def registerPassage(self, passage):
-        return self._register(Passage, passage)
+    def registerNode(self, node):
+        return self._register(Node, node)
     
-    def lookupPassage(self, passageUid):
-        return self._lookup(Passage, passageUid)
+    def lookupNode(self, nodeUid):
+        return self._lookup(Node, nodeUid)
 
     def registerBox(self, box):
         return self._register(Box, box)
@@ -163,14 +171,12 @@ class Story(Container):
         return Card(
             uid=cardUid,
             storyUid = self.uid,
-            passageUid = self.startPassageUid,
-            sack = dict(
-                money=100
-            )
+            nodeUid = self.startNodeUid,
+            sack = dict(self.startSack)
         )
 
 class Card(UidItem):
-    required = UidItem.required + ["storyUid", "passageUid", "sack"]
+    required = UidItem.required + ["storyUid", "nodeUid", "sack"]
 
 class Box(UidItem):
     required = UidItem.required + ["label"]
@@ -178,135 +184,189 @@ class Box(UidItem):
         super().__init__(*args, **kwargs)
         getStoryContext().registerBox(self) 
                         
-class Passage(UidItem):
+class Node(UidItem):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        global story
-        story.registerPassage(self)
+        getStoryContext().registerNode(self)
+
+    def validate(self, story):
+        pass
 
     def activate(self,  engine):
-        raise AssertionError("Not yet implemented")
-        
-    def getRenderedDict(self, engine):
-        d = dict()
-        
-        # populate using all primitive attributes of Passage
-        for key,value in self.__dict__.items():
-            valType = type(value)
-            if valType==str or valType==int or valType==float or valType==bool:
-                d[key]=str(value)
-        
-        # populate using all attributes of sack
-        for key,value in engine.card.sack.items():
-            assert key not in d, "Error processing sack value. RenderedDict already contains '" + key + "'"
-            d[key]=value
-        
-        return d
-        
-    def getRenderedText(self, engine):
-        d = self.getRenderedDict(engine)
-        nextT = self.getRenderedTemplate(engine)
-        prevT = None
-        try:
-            while nextT != prevT: # repeats until formatted text is the same as unformatted
-                prevT = nextT
-                nextT = prevT.format(**d)
-            return nextT
-        except KeyError as k:
-            import pdb; pdb.set_trace()
-            raise k
-        
-    def getRenderedTemplate(self):
-        raise AssertionError("Not yet implemented")
+        pass
+
+    def deactivate(self, engine):
+        pass    
         
     def handleTap(self, engine, card):
         raise AssertionError("Not yet implemented")
-
-class BoxPassage(Passage):
-    required = Passage.required + ["rightBoxUid", "rightBoxText"]
-    defaults = dict(Passage.defaults, 
-        wrongBoxText="Please go to {rightBoxLabel} to continue your adventure"
-    )
-    
-    def getRenderedDict(self, engine):
-        d = super().getRenderedDict(engine)
-        d.update(
-            rightBoxLabel = engine.story.lookupBox(self.rightBoxUid).label
-        )
-        return d
-
-    def getRenderedTemplate(self, engine):
-        box = engine.box
-        if box.uid == self.rightBoxUid:
-            return "{rightBoxText}"
-        else:
-            return "{wrongBoxText}"
-
-class PagePassage(BoxPassage):
-    required = BoxPassage.required + ["nextPassageUid"]
-    
-    def getNextPassage(self, engine):
-        return engine.story.lookupPassage(self.nextPassageUid)
-    
-    def getNextBox(self, engine):
-        nextPassage = self.getNextPassage(engine)
-        return engine.story.lookupBox(nextPassage.rightBoxUid)      
         
-    def getRenderedDict(self, engine):
-        d = super().getRenderedDict(engine)
-        d.update(
-            nextBoxLabel=self.getNextBox(engine).label
-        )
-        return d
-            
-    def getRenderedTemplate(self, engine):
-        template = super().getRenderedTemplate(engine)
-        nextPassage = self.getNextPassage(engine)
-        if self.rightBoxUid == nextPassage.rightBoxUid:
-            return template + "\n...tap to continue"
+class BoolMethodFork(ThroughNode):
+    required = Node.required + ["trueNodeUid", "falseNodeUid"]
+    
+    def activate(self, engine):
+        if self.evaluate(engine):
+            engine.setNodeUid(self.trueNodeUid)
         else:
-            return template + "\n...now go to {nextBoxLabel}"
+            engine.setNodeUid(self.falseNodeUid)
+    
+    def evaluate(self, engine):
+        raise AssertionError("Not yet implemented")
 
-    def progress_player(self, engine):
-        engine.card.passageUid = self.nextPassageUid
+class BoolExpressionFork(ThroughNode):
+    required = BooleanMethodRouter.required + ["expression"]
+
+    def evaluate(self, engine):
+        return engine.evaluateExpression(self.expression)
+
+class TemplatedNode(Node):
+    required = Node.required + ["template"]
+
+    def getTemplateString():
+        return self.template
+    
+    def getTemplateResolver():
+        return TemplateResolver(**self.__dict__)
+                
+    def displayTemplate(self, engine):
+        engine.render(self.getTemplateString(), self.getTemplateResolver())
+
+class VisitBoxPassage(TemplatedNode):
+    required = TemplatedNode.required + ["visitBoxUid", "visitBoxText"]
+    defaults = dict(TemplatedNode.defaults,
+        template="{% if box.uid == node.visitBoxUid %}{{node.visitBoxText}}{% else %}{{node.otherBoxText}}{% endif %}"
+        otherBoxText="Please go to {node.visitBoxLabel} to continue your adventure"
+    )
+
+    def validate(self, story):
+        self.visitBoxLabel = story.lookupBox(self.visitBoxUid).label
+        
+class LinearPassage(VisitBoxPassage):
+    required = VisitBoxPassage.required + ["nextNodeUid"]
+
+    def getTemplateString(self, engine):
+        nextNode = engine.story.lookupNode(self.getNextNodeUid())
+        if isinstance(nextNode, VisitBoxPassage):
+            self.nextBoxLabel = engine.story.lookupBox(nextNode.visitBoxUid).label
+            if nextNode.visitBoxUid != self.visitBoxUid:
+                return super().getTemplateString(engine) + "\n find {{node.nextBoxLabel}} and tap in to continue"
+        return super().getTemplateString(engine) = "\n...tap to continue"
+                        
+    def gotoNextNode(self, engine):
+        engine.setNodeUid(self.nextNodeUid)
                     
     def handleTap(self, engine):
-        self.progress_player(engine)
-        engine.renderText(self.getRenderedText(engine))
+        self.gotoNextNode(engine)
+        self.displayTemplate(engine)
         
-class ConfirmationPassage(PagePassage):
-    defaults = dict(PagePassage.defaults, 
-        tapTime=4000
+class ConfirmationPassage(LinearPassage):
+    defaults = dict(StraightPassage.defaults, 
+        timeout=4000
     )
     
     def handleTap(self, engine):
         now = ticks_ms()
         # progress only if tap follows quickly
-        if now - self.last_tap_ms < self.tapTime:
-            self.progress_player(engine.card)
+        if now - self.last_tap_ms < self.timeout:
+            self.progressPlayer(engine.card)
         engine.renderText(self.getRenderedText(engine))
         self.last_tap_ms = now      
 
+class SackChangePassage(LinearPassage):
+    defaults = dict(LinearPassage.defaults,
+        changeCondition = None
+        add = None
+        remove = None
+    )
+    
+    def validate(self, story):
+        super().validate(story)
+        assert self.add == None or type(self.add) == dict
+        assert self.remove == None or type(self.remove) == dict
+        assert hasattr(self, "add") or hasattr(self, "remove"), "SackChangePassage should have one of either 'add' or 'remove'"
+    
+    def handleTap(self, engine):
+        if self.changeCondition == None or engine.evaluateExpression(self.changeCondition):
+            sack = engine.card.sack
+            # handle addition (list of entries or a number)
+            if(hasattr(self, "add")):
+                for key,val in self.add.items():
+                    if key in sack:
+                        sack[key] = sack[key] + val
+                    else:
+                        sack[key] = val
+            # handle removal (list of entries or a number)
+            if(hasattr(self, "remove)):
+                for key,val in self.remove:
+                    if key in sack:                        
+                        if type(val) == list:
+                            for entry in val:
+                                sack[key].remove(entry)
+                        else:
+                            sack[key] = sack[key] - entry
+        # now run the main routine
+        super().handleTap(engine)
+        
 '''
 # superceded by 'script' attribute which is evaluated in the context of a tap (e.g. "sack.money = sack.money + 5")
 # See also https://twine2.neocities.org/1.html for Twine reference features around variables and execution
-class ExecutePassage(PagePassage):
+class ExecutePassage(StraightPassage):
     pass
 '''
 
 '''
-class WaitPassage(PagePassage):
+class WaitPassage(StraightPassage):
     pass
-'''
-
-class ChoicePassage(PagePassage):
-    pass
+'''    
     
-class ConditionalPassage(Passage):
-        def checkCondition(self,  engine):
-            raise AssertionError("Not yet implemented")
+class ChoicePassageFork(VisitBoxPassage):
+    required = VisitBoxPassage.required + ["choices"]
+    
+    def validate(self, story):
+        print( "Validating Node:" + self.uid.idString)
+        choices = self.choices
+        assert type(choices) == dict, "'choices' is not a dict mapping box uids to string templates as expected"
+        assert all([isinstance(val, str) for val in choices]), "'choices' property template values are not all of type 'str'"
+        choiceNodeUids = choices.keys()
+        assert all([isinstance(key, Uid) for key in choiceNodeUids]), "'choices' property uid keys are not all of type 'Uid'"
+        choiceNodes = [story.lookupNode(nodeUid) for nodeUid in choiceNodeUids]
+        assert all([isinstance(node, VisitBoxNode) for node in choiceNodes]), "ChoiceFork choices must point to subclasses of VisitBoxNode"
+        choiceBoxUids = [node.visitBoxUid for node in choiceNodes]
+        assert len(choiceBoxUids) == len(set(choiceBoxUids)), "Some VisitBoxNodes referenced by 'choices' share the same box" + str(choiceBoxUids)
+        choiceBoxes = [engine.story.lookupBox(boxUid) for boxUid in choiceBoxUids]
+        # record nodes and boxes
+        self.choiceNodes = choiceNodes
+        self.choiceBoxes = choiceBoxes
 
+    def getTemplateString(self, engine):
+        try:
+            # find the matching choice, if it exists
+            choiceBoxUids = [box.uid for box in self.choiceBoxes]
+            chosenPos = choiceBoxUids.index(engine.box.uid)
+            chosenNode = chosenNodes[choiceIndex]
+            engine.setNodeUid(chosenNode.uid)
+            return "You chose: " + self.choices[chosenNode.uid] + "\n... now tap to continue"
+        except ValueError:
+            # box not in list of choices
+            # render the choice string
+            choiceString = ""
+            for choiceNode,choicePos in enumerate(self.choiceNodes):
+                choiceString += "\n" + self.choices[choiceNode.uid] + " : " + self.choiceBoxes[choicePos].label
+            if engine.box.uid == self.visitBoxUid:
+                # it's the visit box, render the page
+                return super().getTemplateString(engine) + choiceString
+            else:
+                # it's not the visit box
+                return "This box is not among your choices. To continue the game..." + choiceString
 
+'''
+def constructLinearSequence(inboundUid, outboundUid, templates):
+    templates = list(templates)
+    templates.reverse()
+    toUid = outboundUid
+    for template,pos in enumerate(templates):
+'''        
+        
 # Condition render
 # and text rendering from sack
 # Condition routing
