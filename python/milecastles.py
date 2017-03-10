@@ -202,7 +202,7 @@ class Node(UidItem):
     def deactivate(self, engine):
         pass    
         
-    def handleTap(self, engine, card):
+    def handleTap(self, engine):
         raise AssertionError("Not yet implemented")
         
 class BoolMethodFork(Node):
@@ -238,7 +238,7 @@ class PageNode(Node):
 class VisitPage(PageNode):
     required = PageNode.required + ["visitBoxUid", "visitBoxText"]
     defaults = dict(PageNode.defaults,
-        page="{% if box.uid == node.visitBoxUid %}{{node.visitBoxText}}{% else %}{{node.otherBoxText}}{% endif %}",
+        page="""{% if box.uid == node.visitBoxUid %}{%include 'visitBoxText' %}{% else %}{% include 'otherBoxText' %}{% endif %}""",
         otherBoxText="Please go to {{node.visitBoxLabel}} to continue your adventure"
     )
 
@@ -247,24 +247,14 @@ class VisitPage(PageNode):
         
 class LinearPage(VisitPage):
     required = VisitPage.required + ["nextNodeUid"]
-    
-    def validate(self, story):
-        nextNode = story.lookupNode(self.nextNodeUid)
-        self.instruction = "\n...tap to continue"
-        if isinstance(nextNode, VisitPage): 
-            self.nextBoxLabel = story.lookupBox(nextNode.visitBoxUid).label
-            if nextNode.visitBoxUid != self.visitBoxUid:
-                self.instruction = "\n find {{node.nextBoxLabel}} and tap in there to continue"
-
-    def getTemplateString(self, engine):
-        return super().getTemplateString(engine) + self.instruction
-                        
+                            
     def gotoNextNode(self, engine):
         engine.setNodeUid(self.nextNodeUid)
                     
     def handleTap(self, engine):
         self.displayTemplate(engine)
-        self.gotoNextNode(engine)
+        if engine.box.uid == self.visitBoxUid:
+            self.gotoNextNode(engine)
         
 class ConfirmationPage(LinearPage):
     defaults = dict(LinearPage.defaults, 
@@ -281,7 +271,7 @@ class ConfirmationPage(LinearPage):
 
 class SackChangePage(LinearPage):
     defaults = dict(LinearPage.defaults,
-        changeCondition = None,
+        condition = None,
         add = None,
         remove = None
     )
@@ -293,7 +283,8 @@ class SackChangePage(LinearPage):
         assert hasattr(self, "add") or hasattr(self, "remove"), "SackChangePage should have one of either 'add' or 'remove'"
     
     def handleTap(self, engine):
-        if self.changeCondition == None or engine.evaluateExpression(self.changeCondition):
+        if self.condition == None or engine.evaluateExpression(self.condition):
+            # trigger the change
             sack = engine.card.sack
             # handle addition (list of entries or a number)
             if(hasattr(self, "add")):
@@ -311,7 +302,7 @@ class SackChangePage(LinearPage):
                                 sack[key].remove(entry)
                         else:
                             sack[key] = sack[key] - entry
-        # now run the main routine
+        # always run the main routine
         super().handleTap(engine)
         
 '''
@@ -332,7 +323,7 @@ class ChoicePageFork(VisitPage):
     def validate(self, story):
         print( "Validating Node:" + self.uid.idString)
         choices = self.choices
-        assert type(choices) == dict, "'choices' is not a dict mapping box uids to string templates as expected"
+        assert type(choices) == dict, "'choices' is not a dict mapping node uids to string templates as expected"
         assert all([isinstance(val, str) for val in choices]), "'choices' property template values are not all of type 'str'"
         choiceNodeUids = choices.keys()
         assert all([isinstance(key, Uid) for key in choiceNodeUids]), "'choices' property uid keys are not all of type 'Uid'"
