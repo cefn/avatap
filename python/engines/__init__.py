@@ -1,5 +1,5 @@
 from agnostic import io
-from milecastles import Container, Story
+from milecastles import AnonymousContainer, Story
 from boilerplate import Compiler
 
 class Debug():
@@ -21,8 +21,8 @@ class Debug():
     def fatal(msg):
         print("FATAL:" + msg)
 
-class Engine(Container):
-    required = [n for n in Container.required if n!="uid"] + ["box"] # remove "uid"
+class Engine(AnonymousContainer):
+    required = AnonymousContainer.required + ["box"] # remove "uid"
     
     def __init__(self, *a, **k):
         super().__init__(*a, **k)
