@@ -15,25 +15,6 @@ def getStoryContext():
     assert story != None, "Code needs to execute in a `with story:` block"
     return story
 
-class Uid:
-    def __init__(self, idString):
-        self.idString = idString
-
-    """Override the default Equals behavior"""
-    def __eq__(self, other):
-        if isinstance(other, self.__class__):
-            return self.idString == other.idString
-        return False
-
-    def __neq__(self, other):
-        return not self.__eq__(other)
-        
-    def __hash__(self):
-        return hash(type(self).__name__) ^ hash(self.idString)
-
-# valid types which can be passed as the 'uid' value when creating an item
-uidInitTypes = [type(None), Uid, str]
-
 '''
 Base class which treats all named arguments as attributes and 
 all positional arguments as dicts containing named attributes
@@ -46,16 +27,11 @@ class Item(object):
     def __init__(self, *args, **kwargs): 
         # assume positional arguments are dicts
         for data in args: # exclude self
-            assert type(data)==dict, "non-dict passed to Item#__init__()"
+            assert type(data)==dict, "Item#__init__() can only handle 'dict' arguments"
             for key in data: 
                 setattr(self, key, data[key])
         # assume keyword arguments specify attributes
         for key in kwargs:
-            suffix = "uid"
-            # check that uids are typed as Uid
-            if key.lower().endswith(suffix):
-                uidType = type(kwargs[key])
-                assert uidType == Uid or uidType == type(None), "Attribute '{0}' with name ending '1' is actually of type {2}".format(key, suffix, str(uidType))
             setattr(self, key, kwargs[key])
 
         # populate with defaults
@@ -71,22 +47,6 @@ class Item(object):
         if len(missing) > 0:
             raise AssertionError(type(self).__name__ + " missing required attributes " + str(missing) )
         
-# Class which simplifies handling a list of idStrings or Uids and exposing them as attributes on an object, named by idString
-class UidRegistry(Item):
-    def __init__(self,  *a):
-        uidDict = dict()
-        for uid in a:
-            if type(uid)==str:
-                uid = Uid(uid)
-            if type(uid)!=Uid:
-                import pdb; pdb.set_trace()
-            assert type(uid)==Uid
-            uidDict[uid.idString]=uid
-        super().__init__(**uidDict)
-    
-    def getUids(self):
-        return [val for val in self.__dict__.values() if type(val) == Uid]
-
 '''
     A common superclass for items with ids. Accepts a string id argument
     and silently replaces it with a typed Uid object which is required 
@@ -96,15 +56,6 @@ class UidRegistry(Item):
 ''' 
 class UidItem(Item):
     required = Item.required + ["uid"]
-    def __init__(self, *a, **k):
-        # intercept string uids, turn into Uid objects
-        if "uid" in k:
-            uid = k["uid"]
-            uidType = type(uid)
-            assert uidType in uidInitTypes, "'uid' is of '{}'. Uids must be one of ()".format(str(uidType),str(uidInitTypes))
-            if type(uid) == str: # cast strings to Uid
-                k["uid"]=Uid(uid)
-        super().__init__(*a,**k)
                 
 class Container(UidItem):
     
@@ -118,22 +69,19 @@ class Container(UidItem):
     '''register any subclass of item to be looked up later by its id'''
     def _register(self, cls, item):
         table = self._get_table(cls)
-        if not(item.uid.idString in table):
-            table[item.uid.idString]=item
+        if not(item.uid in table):
+            table[item.uid]=item
         else:
-            raise AssertionError("Lookup table for " + cls.__name__ + " already contains item with uid" + item.uid.idString)
+            raise AssertionError("Lookup table for " + cls.__name__ + " already contains item with uid" + item.uid)
 
     ''''''
     def _lookup(self, cls, uid):
-        if not(type(uid) == Uid):       
-            raise AssertionError("Attempted lookup with type" + type(uid) + "; should be Uid")  
-        else:
-            if hasattr(self, "registry"):
-                if cls.__name__ in self.registry:
-                    table = self.registry[cls.__name__]
-                    if uid.idString in table:
-                        return table[uid.idString]
-            raise AssertionError("'" + uid.idString + "' not in " + cls.__name__ + " lookup table")
+        if hasattr(self, "registry"):
+            if cls.__name__ in self.registry:
+                table = self.registry[cls.__name__]
+                if uid in table:
+                    return table[uid]
+        raise AssertionError("'" + uid + "' not in " + cls.__name__ + " lookup table")
             
 class AnonymousContainer(Container):
     required = [n for n in Container.required if n!="uid"]
@@ -155,6 +103,9 @@ class Story(Container):
         
     def validate(self):
         assert type(self.startSack) == dict, "'sack' must be of type dict"
+        # construct an easy dot lookup mechanism from within templates
+        self.nodes = Item(**self._get_table(Node))
+        self.boxes = Item(**self._get_table(Box))
         # delegate validation to nodes
         for nodeUid, node in self._get_table(Node).items():
             node.validate(self)
@@ -194,6 +145,38 @@ class Node(UidItem):
         getStoryContext().registerNode(self)
 
     def validate(self, story):
+        # lookup box/node uids, generate new attributes pointing to boxes and nodes
+        print("Validating " + type(self).__name__ + " with uid " + self.uid)
+        uidSuffix = "Uid"
+        for cls in [Node, Box]:
+            clsSuffix = (cls.__name__ + uidSuffix)
+            for key in kwargs:
+                if key.endswith(clsSuffix):
+                    uidPrefix = key[:-len(uidSuffix)] 
+                    item = story._lookup(cls, getattr(self, key))
+                    setattr(self, itemKey, item)
+                    
+        # allow plugins to validate themselves
+        self.plugins = []
+        for key,val in self.__dict__.items():
+            if isinstance(val, NodePlugin):
+                plugins.append(val)
+
+    def activate(self,  engine):
+        for plugin in self.plugins:
+            plugin.activate(engine)
+
+    def deactivate(self, engine):
+        for plugin in self.plugins:
+            plugin.deactivate(engine)
+        
+    def handleTap(self, engine):
+        for plugin in self.plugins:
+            plugin.handleTap(engine)
+
+class NodePlugin(Item):
+
+    def validate(self, story):
         pass
 
     def activate(self,  engine):
@@ -203,27 +186,76 @@ class Node(UidItem):
         pass    
         
     def handleTap(self, engine):
-        raise AssertionError("Not yet implemented")
-        
-class BoolMethodFork(Node):
-    required = Node.required + ["trueNodeUid", "falseNodeUid"]
+        pass
+
+# See also https://twine2.neocities.org/1.html for Twine reference features around variables and execution
+class SackChange(NodePlugin):
+    defaults = dict(NodePlugin.defaults,
+        trigger = None,
+        stayPositive = True,
+    )
     
+    def validate(self, story):
+        assert hasattr(self, "assign") or hasattr(self, "plus") or hasattr(self, "minus"), "SackChangePage should have one of either 'assign', 'plus' or 'minus'"
+        assert not(hasattr("assign") or type(self.assign) == dict,  "SackChange assign should be of type dict"
+        assert not(hasattr("plus")   or type(self.plus) == dict,    "SackChange plus should be of type dict"
+        assert not(hasattr("minus")  or type(self.minus) == dict,   "SackChange minus should be of type dict"
+                           
     def activate(self, engine):
+        self.reset()
+        if self.trigger == None or engine.evaluateExpression(self.trigger):
+            self.triggered = True
+            sack = engine.card.sack
+            
+            if self.stayPositive:
+                # check if minus transactions might incorrectly send a value negative
+                if(hasattr(self, "minus")):
+                    for key,val in self.minus:
+                        if key not in sack or sack[key] <= val:
+                            self.completed = False
+                            return                        
+            # can trigger change(s)
+            
+            # handle setting (any python value)
+            if(hasattr(self, "assign")):
+                for key,val in self.assign:
+                    sack[key]=val
+            # handle addition (to a number)
+            if(hasattr(self, "plus")):
+                for key,val in self.plus.items():
+                    if key in sack:
+                        sack[key] = sack[key] + val
+                    else:
+                        sack[key] = val
+            # handle removal (from a number)
+            if(hasattr(self, "minus")):
+                for key,val in self.minus:
+                    if key in sack:
+                        sack[key] = sack[key] - entry
+                    else:
+                        sack[key] = - val
+            self.completed = True
+
+    def deactivate(self, engine):
+        self.reset() # for paranoia, to ensure nothing reads old state by mistake
+
+    def reset():
+        del self.triggered, self.completed
+
+class ConditionFork(Node):
+    required = Node.required + ["condition", "trueNodeUid", "falseNodeUid"]
+
+    def activate(self, engine):
+        super().activate(engine)
         if self.evaluate(engine):
             engine.setNodeUid(self.trueNodeUid)
         else:
             engine.setNodeUid(self.falseNodeUid)
-    
-    def evaluate(self, engine):
-        raise AssertionError("Not yet implemented")
-
-class BoolExpressionFork(BoolMethodFork):
-    required = BoolMethodFork.required + ["expression"]
 
     def evaluate(self, engine):
-        return engine.evaluateExpression(self.expression)
+        return engine.evaluateExpression(self.condition)
 
-class PageNode(Node):
+class Page(Node):
     required = Node.required + ["page"]
 
     def getTemplateString(self, engine):
@@ -235,15 +267,12 @@ class PageNode(Node):
     def displayTemplate(self, engine):
         engine.renderTemplate(self.getTemplateString(engine), self.getTemplateResolver(engine))
 
-class VisitPage(PageNode):
-    required = PageNode.required + ["visitBoxUid", "visitBoxText"]
-    defaults = dict(PageNode.defaults,
-        page="""{% if box.uid == node.visitBoxUid %}{%include 'visitBoxText' %}{% else %}{% include 'otherBoxText' %}{% endif %}""",
+class VisitPage(Page):
+    required = Page.required + ["visitBoxUid", "visitBoxText"]
+    defaults = dict(Page.defaults,
+        page="""{% if box == node.visitBox %}{%include 'visitBoxText' %}{% else %}{% include 'otherBoxText' %}{% endif %}""",
         otherBoxText="Please go to {{node.visitBoxLabel}} to continue your adventure"
     )
-
-    def validate(self, story):
-        self.visitBoxLabel = story.lookupBox(self.visitBoxUid).label
         
 class LinearPage(VisitPage):
     required = VisitPage.required + ["nextNodeUid"]
@@ -252,10 +281,12 @@ class LinearPage(VisitPage):
         engine.setNodeUid(self.nextNodeUid)
                     
     def handleTap(self, engine):
+        super.handleTap(engine)
         self.displayTemplate(engine)
         if engine.box.uid == self.visitBoxUid:
             self.gotoNextNode(engine)
         
+"""
 class ConfirmationPage(LinearPage):
     defaults = dict(LinearPage.defaults, 
         timeout=4000
@@ -267,72 +298,45 @@ class ConfirmationPage(LinearPage):
         if now - self.last_tap_ms < self.timeout:
             self.progressPlayer(engine.card)
         engine.renderText(self.getRenderedText(engine))
-        self.last_tap_ms = now      
+        self.last_tap_ms = now          
 
-class SackChangePage(LinearPage):
-    defaults = dict(LinearPage.defaults,
-        condition = None,
-        add = None,
-        remove = None
-    )
-    
-    def validate(self, story):
-        super().validate(story)
-        assert self.add == None or type(self.add) == dict
-        assert self.remove == None or type(self.remove) == dict
-        assert hasattr(self, "add") or hasattr(self, "remove"), "SackChangePage should have one of either 'add' or 'remove'"
-    
-    def handleTap(self, engine):
-        if self.condition == None or engine.evaluateExpression(self.condition):
-            # trigger the change
-            sack = engine.card.sack
-            # handle addition (list of entries or a number)
-            if(hasattr(self, "add")):
-                for key,val in self.add.items():
-                    if key in sack:
-                        sack[key] = sack[key] + val
-                    else:
-                        sack[key] = val
-            # handle removal (list of entries or a number)
-            if(hasattr(self, "remove")):
-                for key,val in self.remove:
-                    if key in sack:                        
-                        if type(val) == list:
-                            for entry in val:
-                                sack[key].remove(entry)
-                        else:
-                            sack[key] = sack[key] - entry
-        # always run the main routine
-        super().handleTap(engine)
-        
-'''
-# superceded by 'script' attribute which is evaluated in the context of a tap (e.g. "sack.money = sack.money + 5")
-# See also https://twine2.neocities.org/1.html for Twine reference features around variables and execution
-class ExecutePage(LinearPage):
-    pass
-'''
-
-'''
 class WaitPage(LinearPage):
     pass
-'''    
+"""    
     
-class ChoicePageFork(VisitPage):
+class ChoicePage(VisitPage):
     required = VisitPage.required + ["choices"]
     
     def validate(self, story):
-        print( "Validating Node:" + self.uid.idString)
+        super().validate(story)
+        
+        nodeTable = story._get_table(Node)
+        boxTable = story._get_table(Box)
+        
         choices = self.choices
-        assert type(choices) == dict, "'choices' is not a dict mapping node uids to string templates as expected"
-        assert all([isinstance(val, str) for val in choices]), "'choices' property template values are not all of type 'str'"
-        choiceNodeUids = choices.keys()
-        assert all([isinstance(key, Uid) for key in choiceNodeUids]), "'choices' property uid keys are not all of type 'Uid'"
-        choiceNodes = [story.lookupNode(nodeUid) for nodeUid in choiceNodeUids]
-        assert all([isinstance(node, VisitPage) for node in choiceNodes]), "ChoiceFork choices must point to subclasses of VisitBoxNode"
+
+        assert type(choices) == dict, "'choices' must be a dict mapping node uids to string templates. Cannot accept " + str(choices)
+        choiceTemplates = choices.values()
+        choiceNodeUids = choices.keys()        
+        
+        badTemplates = [val for val in choiceTemplates if not(isinstance(val, str))]
+        assert len(badTemplates)==0, "ChoicePage: choice templates must be string values. Cannot accept " + str(badTemplates)
+        
+        badNodeUids = [val for val in choiceNodeUids if not(val in nodeTable)]
+        assert len(badNodeUids)==0, "ChoicePage: choice node uid values must be found in story table. Cannot accept " + str(badNodeUids)
+
+        choiceNodes = [story.lookupNode(nodeUid) for nodeUid in choiceNodeUids]        
+        badNodes = [val for val in choiceNodes if not(isinstance(val, VisitPage))]
+        assert len(badNodes) == 0, "ChoiceFork choices must point to subclasses of VisitPage. Cannot accept " + str(badNodes)
+        
         choiceBoxUids = [node.visitBoxUid for node in choiceNodes]
-        assert len(choiceBoxUids) == len(set(choiceBoxUids)), "Some VisitBoxNodes referenced by 'choices' share the same box" + str(choiceBoxUids)
+        badBoxUids = [val for val in choiceBoxUids if not(val in boxTable)]
+        assert len(badBoxUids)==0, "ChoicePage: box uid values must be found in story table. Cannot accept " + str(badBoxUids)
+        assert len(choiceBoxUids) == len(set(choiceBoxUids)), "Some VisitBoxNodes referenced by 'choices' share the same box. Cannot accept " + str(choiceBoxUids)
+
         choiceBoxes = [story.lookupBox(boxUid) for boxUid in choiceBoxUids]
-        # record nodes and boxes
+        
+        # save nodes and boxes
         self.choiceNodes = choiceNodes
         self.choiceBoxes = choiceBoxes
 
