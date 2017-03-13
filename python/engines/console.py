@@ -11,15 +11,15 @@ class ConsoleSiteEmulator(AnonymousContainer):
         #import pdb; pdb.set_trace()
         boxTable = self.story._get_table(Box)
         self.engines = dict()        
-        for boxIdString,box in boxTable.items():
+        for boxUid,box in boxTable.items():
             engine = ConsoleEngine(box=box)
             engine.registerStory(self.story)
-            self.engines[boxIdString] = engine
+            self.engines[boxUid] = engine
             
         # for each card, register it with the emulator
         cardIds = ["a","b","c","d"]
         for cardId in cardIds:
-            card = story.createBlankCard(cardId)
+            card = self.story.createBlankCard(cardId)
             self.registerCard(card)
             
         self.currentCard = None
@@ -42,22 +42,24 @@ class ConsoleSiteEmulator(AnonymousContainer):
 
             else:
                 # handle commands identifying a box in the story
-                boxes = list(self.story._get_table(Box).values())
-                boxCommands = [str(pos + 1) for pos in range(len(boxes))]
-                try:
-                    boxPos = boxCommands.index(command)
+                boxUids = list(self.story._get_table(Box).keys())
+                matchingBoxUids = [boxUid for boxUid in boxUids if command in boxUid]
+                numMatching = len(matchingBoxUids)
+                if numMatching == 0:
+                    print("No box uids match '" + command + "'")
+                elif numMatching >= 2:
+                    print("Too many box uids match '" + command + "' : " + str(matchingBoxUids) )
+                elif numMatching == 1: # a single box got matched
+                    boxUid = matchingBoxUids[0]
                     if self.currentCard != None:
-                        print("Tapping box '" + command + "' with card '" + self.currentCard.uid.idString + "'")
-                        engine = self.engines[boxes[boxPos].uid.idString]
-                        engine.handleCard(self.currentCard)
+                        print("Tapping box '" + command + "' with card '" + self.currentCard.uid + "'")
+                        self.engines[boxUid].handleCard(self.currentCard)
                     else:
                         print("Cannot tap box. No card selected. Choose one of " + str(list(cardTable.keys())))            
-                except ValueError:
-                    print("Command not a card id or a box position. Can't understand command")
     
 class ConsoleEngine(Engine):
     
-    def renderText(self, text):
+    def displayText(self, text):
         print(text)
         
 if __name__ == "__main__":
