@@ -298,24 +298,22 @@ class Page(Node):
     )
                     
     def render(self, engine):
-        super().render(engine)
         return self.template
 
 class GoalPage(Page):
     required = Page.required + ["goalBoxUid"]
     defaults = dict(Page.defaults,
-        missPage="Please go to {{node.goalBox.label}} to continue your adventure"
+        missTemplate="Please go to {{node.goalBox.label}} to continue your adventure"
     )
     
     def getGoalBoxUid(self, story):
         return self.goalBoxUid
 
     def render(self, engine):
-        result = super().render(engine)
         if engine.box == self.goalBox:
-            return result   # render as usual
+            return self.template # render as usual
         else:
-            return self.missPage            # render a miss
+            return self.missTemplate            # render a miss
         
 class ThroughPage(GoalPage):
     required = GoalPage.required + ["nextNodeUid"]
@@ -350,8 +348,7 @@ class NodeFork(Page):
         template = " {% include 'page' %}\n{% include 'choiceList' %}",
         page = "Choose from the following:",
         choiceList = " {% for choiceUid in node.choiceNodeUids %}{% if not(node.isHidden(engine, choiceUid)) %}{% include 'choiceItem' choiceUid %}\n{% endif %}{% endfor %}",
-        choiceItem = " {% args choiceUid %}{{ node.choices[choiceUid] }} : {{story.lookupNode(choiceUid).getGoalBox(story).label}}",
-        missPage = "This box is not among your choices. Choose from the following\n{% include 'choiceView' %}"
+        choiceItem = " {% args choiceUid %}{{ engine.fillNodeTemplate(node, node.choices[choiceUid]) }} : {{story.lookupNode(choiceUid).getGoalBox(story).label}}",
     )
     
     def validate(self, story):

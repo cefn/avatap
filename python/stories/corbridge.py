@@ -6,9 +6,9 @@ storyName = __name__.split(".")[-1]
 # create story
 story = Story(
     uid=storyName,
-    # added for debugging
-    startNodeUid = "stoneFork",
-    #startNodeUid = "landing",
+    # choose an alternative startNodeUid and startSack for debugging
+    #startNodeUid = "stoneFork",
+    startNodeUid = "landing",
     startSack={
             "money":  100,
             "points": 0,
@@ -50,16 +50,16 @@ with story:
     ConditionFork(
             uid=            "workshopArrive",
             change =        SackChange( 
-                                plus={"hours":1} 
+                                plus={"hours":2} 
                             ),
-            condition =     "sack.sharp or sack.smithAnger >= 2",
+            condition =     "sack.sharp or sack.smithAnger >= 3",
             falseNodeUid =  "workIntro",
             trueNodeUid =   "ending",
     )
             
     ThroughPage(
         uid=            "workIntro",
-        missPage =      "To begin work go to {{node.goalBox.label}}",
+        missTemplate =      "To begin work go to {{node.goalBox.label}}",
         page =          "You are in your workshop. It's early in the morning but you don't have long to complete the tombstone.",
         goalBoxUid =    workshopBox.uid,
         nextNodeUid =   "work",
@@ -117,7 +117,7 @@ with story:
         uid=            "sharpeningFailure",
         goalBoxUid=     marketBox.uid,
         change = SackChange( 
-                plus = { "smithAnger":1 } 
+            plus = { "smithAnger":1 } 
         ),
         page=   """ 
             {% if sack.smithAnger == 1 %}You walk across the base to the blacksmith's workshop. The blacksmith says 'come back this afternoon, I'm too busy'{% endif %}
@@ -151,8 +151,8 @@ with story:
     NodeFork(
         uid="stoneFork",
         choices = {
-                "stoneAlone":    "Pretend to carry the stone yourself back to the workshop for a total of {{choiceNode.change.remove['money']}} denarii",
-                "stoneDonkey":   "Go to {{story.nodes.stoneDonkey.getGoalBox().description}}, pretend to hire and ride a donkey back to the workshop for a total of {{choiceNode.change.remove['money']}} denarii",
+                "stoneAlone":    "Pretend to carry the stone yourself back to the workshop for a total of {{story.nodes.stoneAlone.change.minus['money']}} denarii",
+                "stoneDonkey":   "Go to {{story.nodes.stoneDonkey.getGoalBox(story).description}}, pretend to hire and ride a donkey back to the workshop for a total of {{story.nodes.stoneDonkey.change.minus['money']}} denarii",
         }
     )
     
@@ -161,7 +161,7 @@ with story:
         goalBoxUid=workshopBox.uid,
         change=SackChange(
             assign={"stone":True},
-            minus={"money":65}
+            minus={"money":50}
         ),
         page="You carried the stone yourself", 
         nextNodeUid="workshopArrive"
@@ -182,7 +182,7 @@ with story:
         uid="ending",
         goalBoxUid=entranceBox.uid,
         page="Respawned. Tap to begin your adventure again",
-        missPage="You completed your adventure with {{sack.points}} points. Return to {{node.goalBox.label}} to respawn.",
+        missTemplate="You completed your adventure with {{sack.points}} points. Return to {{node.goalBox.label}} to respawn.",
         nextNodeUid = "landing",
     )
         
