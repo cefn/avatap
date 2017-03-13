@@ -1,6 +1,6 @@
 from agnostic import io
-from milecastles import AnonymousContainer, Story
-from boilerplate import Compiler
+from milecastles import AnonymousContainer, Holder, Story, signature
+from boilerplate import Compiler, Resolver
 
 class Debug():
     def report(report):
@@ -23,7 +23,12 @@ class Debug():
 
 class Engine(AnonymousContainer):
     required = AnonymousContainer.required + ["box"] # remove "uid"
-    
+    defaults = dict(AnonymousContainer.defaults,
+        card =  None,
+        story = None,
+        node =  None
+    )
+        
     def __init__(self, *a, **k):
         super().__init__(*a, **k)
         self.debug = Debug()
@@ -37,55 +42,77 @@ class Engine(AnonymousContainer):
     def handleCard(self, card):
         self.card = card
         self.story = self.lookupStory(card.storyUid)
-        self.setNodeUid(card.nodeUid)
-        self.node.handleTap(self)
-    
+        currentUid = card.nodeUid
+        while self.node == None:
+            currentNode = self.story.lookupNode(currentUid)
+            redirectedUid = currentNode.activate(self)
+            if redirectedUid != None and redirectedUid != currentUid:
+                currentNode.deactivate(self)
+                currentUid = redirectedUid
+            else:
+                self.setNode(currentNode)
+        self.displayNode(self.node)
+        self.node.deactivate(self)
+        self.node = None
+        self.story = None
+        self.card = None
+            
     def setNodeUid(self, nodeUid):
-        self.setNode(self.story.lookupNode(nodeUid))
-        
+        node = self.story.lookupNode(nodeUid)
+        return self.setNode(node)
+    
     def setNode(self, node):
-        try:
-            if self.node != node:
-                self.node.deactivate(self)
-        except AttributeError:
-            pass
         self.node = node
         self.card.nodeUid = node.uid
-        self.node.activate(self)
+        return self.node
             
     def getEngineContext(self):
         return dict(
             engine =    self, 
+            story =     self.story,
             box =       self.box,
             node =      self.node,
             card =      self.card,
-            sack =      self.card.sack
+            sack =      Holder(**self.card.sack) # enables dot addressing of dictionary
         )
     
     def evaluateExpression(self, expression):
-        return eval(self.expression, self.getEngineContext())
-    
-    def renderTemplate(self, templateString, templateResolver):
-        # prefix template with declaration of standard self, engine args
-        templateString = "{% args engine, box, node, card, sack %}" + templateString
+        return eval(expression, self.getEngineContext())
+   
+    def fillNodeTemplate(self, node, templateString):
+        # prefix the templateString with the standard argument signature
+        templateString = "{% args " + signature + " %}" + templateString
+        # use node as its own resolver
+        templateResolver = Resolver(**node.__dict__)
+        # create streams and wire them
         template_in = io.StringIO(templateString)
         template_out = io.StringIO()
-        c = Compiler(templateResolver, template_in, template_out)
+        c = Compiler(template_in, template_out, loader=templateResolver)
         try:
+            # do a compile run
             c.compile()
             compiled = template_out.getvalue()
             g = dict()
+            # evaluate the compiled code
             exec(compiled, g)
+            # extract the render function which was created during exec
             renderFun = g["render"]
+            # create a string generator by calling the render function
             renderGen = renderFun(**self.getEngineContext())
+            # concatenate the generated strings
             renderOut = io.StringIO()
             for chunk in renderGen:
                 renderOut.write(chunk)
-            self.renderText(renderOut.getvalue())
+            # return concatenated string
+            return renderOut.getvalue()
         except Exception as k:
             import ipdb; ipdb.set_trace()
             raise k
+    
+    def displayNode(self, node):
+        self.displayText(self.fillNodeTemplate(node, node.render(self)))
+
         
     '''Should render some text, in whatever form required by the Engine'''
-    def renderText(self, text):
+    def displayText(self, text):
         raise AssertionError("Not yet implemented")
