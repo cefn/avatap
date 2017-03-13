@@ -12,9 +12,12 @@ class Resolver:
 
     def file_open(self, name):
         assert name in self.templateDict, "Attempted to load template string named " + name + ". No such template"
-        templateString = self.templateDict[name]
-        assert type(templateString) == str, "Attempted to load template string from " + name + " entry not of type 'str'"
-        templateString = " ".join(templateString.split())
+        loadedString = self.templateDict[name]
+        assert type(loadedString) == str, "Attempted to load template string from " + name + " entry not of type 'str'"
+        templateString = ""
+        # remove whitespace, preserving newlines
+        for line in loadedString.split("\n"):
+            templateString += " ".join(line.split()) + "\n"
         #TODO remove this - relates to bug in utemplate https://github.com/pfalcon/utemplate/issues/5
         templateString = " " + templateString
         return io.StringIO(templateString)
