@@ -9,7 +9,7 @@ class MockEngine(Engine):
 		super().__init__(*args, **kwargs)
 		self.render_calls = list()
 		
-	def renderText(self, *args, **kwargs):
+	def displayText(self, *args, **kwargs):
 		self.render_calls.append((args, kwargs))
 
 class EngineContainer(AnonymousContainer):
