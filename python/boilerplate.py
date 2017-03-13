@@ -14,6 +14,9 @@ class Resolver:
         assert name in self.templateDict, "Attempted to load template string named " + name + ". No such template"
         templateString = self.templateDict[name]
         assert type(templateString) == str, "Attempted to load template string from " + name + " entry not of type 'str'"
+        templateString = " ".join(templateString.split())
+        #TODO remove this - relates to bug in utemplate https://github.com/pfalcon/utemplate/issues/5
+        templateString = " " + templateString
         return io.StringIO(templateString)
 
 class Compiler:
