@@ -59,7 +59,7 @@ with story:
             
     ThroughPage(
         uid=            "workIntro",
-        missTemplate =      "To begin work go to {{node.goalBox.label}}",
+        missTemplate =  "To begin work go to {{node.goalBox.label}}",
         page =          "You are in your workshop. It's early in the morning but you don't have long to complete the tombstone.",
         goalBoxUid =    workshopBox.uid,
         nextNodeUid =   "work",

@@ -330,11 +330,10 @@ class ConditionFork(Node):
         else:
             raise AssertionError("Cannot derive goal box for " + type(self).__name__ + "true and false boxes differ")            
 
-# TODO add loading logic which removes preceding spaces and space sequences > 1, making declaration easier
 class Page(Node):
     required = Node.required + ["page"]
     defaults = dict(Node.defaults,
-        template = " {% include 'page' " + signature + " %}"
+        template = "{% include 'page' " + signature + " %}"
     )
                     
     def render(self, engine):
@@ -385,7 +384,7 @@ class NodeFork(Page):
     required = Page.required + ["choices"]
     optional = Page.optional + ["hideChoices"]
     defaults = dict(Page.defaults, 
-        template = " {% include 'page' %}\n{% include 'choiceList' %}",
+        template = "{% include 'page' %}\n{% include 'choiceList' %}",
         page = "Choose from the following:",
         choiceList = " {% for choiceUid in node.choiceNodeUids %}{% if not(node.isHidden(engine, choiceUid)) %}{% include 'choiceItem' choiceUid %}\n{% endif %}{% endfor %}",
         choiceItem = " {% args choiceUid %}{{ engine.fillNodeTemplate(node, node.choices[choiceUid]) }} : {{story.lookupNode(choiceUid).getGoalBox(story).label}}",
