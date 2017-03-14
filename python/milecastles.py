@@ -1,3 +1,43 @@
+"""
+    Avatap provides a model for text adventures in which players travel between distributed stations
+    with lo-res screens, tapping in at each station with an RFID card containing their 'game state'. 
+    
+    On the card is 
+    * a storyUid - identifying which Story they are following
+    * a nodeUid - identifying their position or Node in the Story
+    * a sack - containing accumulated game state in the form of key:value pairs
+    
+    Nodes only represent story structure and temporary data used for screen-rendering logic. The only 
+    persistent state remains in the player's RFID card. Game input takes place purely through the act 
+    of tapping a station. 
+    
+    The basic load and render cycle (visible within engines.Engine) is as follows...
+    *   The card is read, and the box, card, story, and sack are made available as attributes of the 
+        engine. 
+    *   The current node is set as engine.node
+    *   The node's activate() routine is called, passing the engine reference. If activate() returns 
+        a new current nodeUid, the activated node gets a deactivate() call, and the previous step is repeated.
+    *   The final node in the chain (which did not redirect to a different node) will get a render() call
+        causing a template to be generated and sent to the screen
+    *   At this point, the RFID card is rewritten with the new game state, the node gets a deactivate() call
+        and all state related to this player and tap is lost
+    
+    Processing all story logic through transient state within the lifetime of a single tap imposes 
+    substantial limitations on the interaction model available compared to, for example, the Twine framework.
+    
+    The design of this API has focused on guiding authors who are not expert programmers to create their
+    own stories using the primitives of Boxes and various specialised Story 'Nodes' and 'NodeOperators'
+    which respect the fundamental limitations of this unusual medium.
+    
+    In particular, the syntax for authoring is comprehensible, consistent and exposes no python language 
+    structures other than keyword arguments and dicts (lookup tables). 
+    
+    This key:value structure is complemented by limited access to python expressions accessing API objects. 
+    A consistent set of entities is made available using python identifiers within Story templates, routing 
+    and trigger conditions, (recorded in milecastles.signature), currently "engine, story, box, node, card, sack" 
+
+"""
+
 from agnostic import ticks_ms
 
 story = None
