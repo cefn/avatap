@@ -18,8 +18,6 @@ class Resolver:
         # remove whitespace, preserving newlines
         for line in loadedString.split("\n"):
             templateString += " ".join(line.split()) + "\n"
-        #TODO remove this - relates to bug in utemplate https://github.com/pfalcon/utemplate/issues/5
-        templateString = " " + templateString
         return io.StringIO(templateString)
 
 class Compiler:

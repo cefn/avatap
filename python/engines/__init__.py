@@ -81,7 +81,8 @@ class Engine(AnonymousContainer):
    
     def fillNodeTemplate(self, node, templateString):
         # prefix the templateString with the standard argument signature
-        templateString = "{% args " + signature + " %}" + templateString
+        # TODO preceding space is added here as a workaround for https://github.com/pfalcon/utemplate/issues/5
+        templateString = "{% args " + signature + " %}" + " " + templateString
         # use node as its own resolver
         templateResolver = Resolver(**node.__dict__)
         # create streams and wire them
@@ -104,7 +105,9 @@ class Engine(AnonymousContainer):
             for chunk in renderGen:
                 renderOut.write(chunk)
             # return concatenated string
-            return renderOut.getvalue()
+            renderedString = renderOut.getvalue() 
+            # TODO preceding space is removed here as workaround for https://github.com/pfalcon/utemplate/issues/5
+            return renderedString[1:] 
         except Exception as k:
             import ipdb; ipdb.set_trace()
             raise k
