@@ -32,19 +32,37 @@
     In particular, the syntax for authoring is comprehensible, consistent and exposes no python language 
     structures other than keyword arguments and dicts (lookup tables). 
     
-    This key:value structure is complemented by limited access to python expressions accessing API objects. 
+    This approach is enriched by certain values being interpreted as python expressions accessing API objects. 
     A consistent set of entities is made available using python identifiers within Story templates, routing 
-    and trigger conditions, (recorded in milecastles.signature), currently "engine, story, box, node, card, sack" 
+    and trigger conditions, (recorded in milecastles.signature), currently "engine, story, box, node, card, sack"
+    
+    The core components you need to master to create a story are the following three Node types and one NodeOperator...
+    
+    ConditionFork   - Immediately redirects to one of two Nodes in the story, according to whether its 'condition' evaluates to true or not
+                      [Typically this condition will check for the state of things in the sack]
+
+    NodeFork        - Guides the player to choose Nodes hosted at different Boxes. When you choose a Box, redirects to the corresponding Node
+                      [Story validation failes if your choice nodes don't have different goalBoxes]
+
+    ThroughPage     - Guides the player to a specific Box. On arrival at the Box, renders a page, then redirects to a specific Node in the Story 
+                      [the ThroughSequence procedure creates a ThroughPage chain in which Box guidance is not normally triggered; they are at the same box]
+                    
+    SackChange      - If the trigger condition is True (or omitted) the player's sack is changed according to named sets of name:value pairs
+                      ['assign' - sets the values, 'plus' adds them, 'minus' subtracts them, 'reset' must be used on its own and replaces the sack completely]
 
 """
 
 from agnostic import ticks_ms
 
+debug = True
+
 story = None
 
+# The signature of objects passed to templates and routing/trigger conditions
 signature = "engine, story, box, node, card, sack"
 
 def loadStory(storyIdString):
+    """Loads a Story with a given storyIdString, assuming it is at stories.[storyIdString].story"""
     storyModulePath = "stories." + storyIdString
     print("Loading story from " + storyModulePath)
     loaded = __import__(storyModulePath)
@@ -91,7 +109,10 @@ class Item(Holder):
             if not(hasattr(self, name)):
                 missing.append(name)
         if len(missing) > 0:
-            raise AssertionError(itemTypeName + " missing required attributes " + str(missing) )
+            if hasattr(self, "uid"):
+                raise AssertionError(itemTypeName + " '" + self.uid + "' missing required attributes " + str(missing) )
+            else:
+                raise AssertionError(itemTypeName + " missing required attributes " + str(missing) )
 
         # check no unexpected keys passed        
         for key,val in k.items(): 
@@ -132,10 +153,12 @@ class Container(UidItem):
                 if uid in table:
                     return table[uid]
         raise AssertionError("'" + uid + "' not in " + cls.__name__ + " lookup table")
-            
+
+
 class AnonymousContainer(Container):
     required = [n for n in Container.required if n!="uid"]
-    
+
+
 class Story(Container):
     required = Container.required + ["startNodeUid", "startSack"]
     defaults = dict(Container.defaults, 
@@ -187,20 +210,25 @@ class Story(Container):
             nodeUid = self.startNodeUid,
             sack = dict(self.startSack)
         )
-    
+
+
 class Card(UidItem):
     required = UidItem.required + ["storyUid", "nodeUid", "sack"]
+
 
 class Box(UidItem):
     required = UidItem.required + ["label", "description"]
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        getStoryContext().registerBox(self) 
-                        
+        getStoryContext().registerBox(self)
+
+
 class Node(UidItem):
     defaults = dict(UidItem.defaults, 
         change = None
     )
+    optional=UidItem.optional + ["time"]
+    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         getStoryContext().registerNode(self)
@@ -235,7 +263,9 @@ class Node(UidItem):
         
     def activate(self, engine):
         for operator in self.operators:
-            operator.operate(engine)
+            redirectedUid = operator.operate(engine)
+            if redirectedUid:
+                return redirectedUid # allow operators to send a redirect nodeUid
         return None
 
     def render(self,  engine):
@@ -317,6 +347,7 @@ class ConditionFork(Node):
         return engine.evaluateExpression(self.condition)
     
     def activate(self, engine):
+        super().activate(engine)
         if self.evaluate(engine):
             return self.trueNodeUid
         else:
@@ -347,6 +378,13 @@ class GoalPage(Page):
     
     def getGoalBoxUid(self, story):
         return self.goalBoxUid
+
+    def activate(self, engine):
+        # only trigger operators when it's actually the goal box
+        if engine.box == self.goalBox:
+            return super().activate(engine)
+        else:
+            return None
 
     def render(self, engine):
         if engine.box == self.goalBox:
@@ -426,11 +464,13 @@ class NodeFork(Page):
         return False
     
     def activate(self, engine):
-        if engine.box.uid in self.choiceBoxUids: # intercept choosing tap and change node uid
-            chosenPos = self.choiceBoxUids.index(engine.box.uid)
-            return self.choiceNodeUids[chosenPos] 
-        return super().activate(engine)
-            
+        redirectedUid = super().activate(engine)
+        if redirectedUid:
+            return redirectedUid
+        elif engine.box.uid in self.choiceBoxUids: # intercept choosing tap and change node uid
+                chosenPos = self.choiceBoxUids.index(engine.box.uid)
+                return self.choiceNodeUids[chosenPos]
+
 # macro for making ThroughPage node chain , based at the same goalBox, 
 # each having one page from the list 'sequence'
 def ThroughSequence(uid, nextNodeUid, goalBoxUid, sequence, **k):
@@ -439,8 +479,10 @@ def ThroughSequence(uid, nextNodeUid, goalBoxUid, sequence, **k):
     for pos,page in pairs:
         if pos == 0:
             pageUid = uid
+            kwargs = k
         else: # later nodes have uids based on first node uid + position
-            pageUid = uid + str(pos - 1) 
+            pageUid = uid + str(pos - 1)
+            kwargs = {}
         ThroughPage(
             uid =    pageUid,
             page =   page,
