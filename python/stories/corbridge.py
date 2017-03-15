@@ -81,7 +81,7 @@ with story:
     # ROUTE TO ANGRY OR COMPLIANT BLACKSMITH
     ConditionFork(
         uid=           "sharpening",
-        condition =    "sack.hours > 2 and sack.smithAnger < 3",
+        condition =    "sack.hours > 6 and sack.smithAnger < 3",
         trueNodeUid=   "sharpeningSuccess",
         falseNodeUid=  "sharpeningFailure",
     )
@@ -101,7 +101,7 @@ with story:
                 {% if node.change.completed %}
                     It's now the afternoon and the blacksmith is ready for you.
                     Look at the tools in the box and pretend to sharpen a spearhead.
-                    Sharpening costs {{node.change.remove['money']}} denarii. You have {{sack.money}} denarii left.
+                    Sharpening costs {{node.change.minus['money']}} denarii. You have {{sack.money}} denarii left.
                 {% else %}
                     You don't have enough money to sharpen your tools
                 {% endif %}
