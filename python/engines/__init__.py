@@ -1,5 +1,5 @@
 from agnostic import io
-from milecastles import AnonymousContainer, Holder, Story, signature
+from milecastles import AnonymousContainer, Holder, Story, signature,debug
 from boilerplate import Compiler, Resolver
 
 class Debug():
@@ -113,7 +113,12 @@ class Engine(AnonymousContainer):
             raise k
     
     def displayNode(self, node):
-        self.displayText(self.fillNodeTemplate(node, node.render(self)))
+        nodeText = self.fillNodeTemplate(node, node.render(self))
+        if debug:
+            self.displayText(str(self.card.sack) + "\n" + nodeText)
+        else:
+            self.displayText(nodeText)
+            
 
         
     '''Should render some text, in whatever form required by the Engine'''
