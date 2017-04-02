@@ -174,7 +174,7 @@ with story:
         page = """
         You offer wine
         """,
-        goalBoxUid = paddockBox.uid,
+        goalBoxUid = seaBox.uid,
         nextNodeUid = "yardArrive",
         )
 
@@ -196,7 +196,7 @@ with story:
 # ROUTE TO SPOTTING invaders
     ConditionFork(
         uid =       "seaview",
-        condition = "sack.hours >= 1",
+        condition = "sack.hours >= 10",
         falseNodeUid =  "seaviewclear",
         trueNodeUid =   "seaviewinvaders",
         )
