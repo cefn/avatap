@@ -60,7 +60,7 @@ with story:
             uid=            "yardArrive",
             condition =     "sack.superhorse == True",
             falseNodeUid =  "yardIntro",
-            trueNodeUid =   "retirement",
+            trueNodeUid =   "retirementsuccess",
     )
 
     ThroughPage(
@@ -290,16 +290,32 @@ with story:
         up the coastalpath
         but are forced back
         to the wall and die!
+        Mars help us!
         """,
         goalBoxUid =    paddockBox.uid,
         nextNodeUid =   "retirement",
     )
 
     ThroughPage(
-        uid="retirement",
-        goalBoxUid=entranceBox.uid,
-        page="Bad luck. Respawned. Tap to begin your adventure again",
-        missTemplate="You completed your adventure with {{sack.points}} points. Return to {{node.goalBox.label}} to respawn.",
+        uid = "retirement",
+        goalBoxUid = entranceBox.uid,
+        page = "Bad luck. Respawned. Tap to begin your adventure again",
+        missTemplate = "You completed your adventure with {{sack.points}} points. Return to {{node.goalBox.label}} to respawn.",
+        nextNodeUid = "landing",
+    )
+
+    ThroughPage(
+        uid = "retirementsuccess",
+        goalBoxUid = paddockBox.uid,
+        #2345678901234567890123456
+        page = """
+        WELL DONE! VICTORY
+        With this great horse we
+        can breed horses for the
+        next generation of
+        Hadrian's cavalry
+        """,
+        missTemplate = "You completed your adventure with {{sack.points}} points. Return to {{node.goalBox.label}} to respawn.",
         nextNodeUid = "landing",
     )
 
