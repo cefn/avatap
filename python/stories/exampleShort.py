@@ -1,50 +1,41 @@
-from milecastles import Uid, UidRegistry, Story, Box, LinearPage
-# create uids to wire up/trigger story+passages
+from milecastles import Story, Box, ThroughPage, ThroughSequence, ConditionFork, NodeFork, SackChange
+from consoleEngine import ConsoleSiteEmulator
 
-storyUid = Uid("teststory")
-
-nodeUids = UidRegistry(
-    "landing",
-    "ending",
-)
-
-boxUids = UidRegistry(
-    "north",
-    "east",
-    "south",
-    "west"
-)
-
+# inspects the module to figure out the story name (e.g. corbridge)
+storyName = __name__.split(".")[-1]
 
 # create story
 story = Story(
-        uid=storyUid,
-        startNodeUid=nodeUids.landing
-        
+    uid=storyName,
+    startNodeUid="landing",
+    startSack = {
+        "money": 100,
+    }
 )
         
 # populate passages and boxes
 with story:
 
-    # configure boxes            
-    for boxUid in boxUids.getUids():
-        Box(uid=boxUid, label="The box called " + boxUid.idString) 
-    
+    northBox =  Box( uid="north",   label="Box I",      description="the Northern Quarter")
+    eastBox =   Box( uid="east",    label="Box II",     description="the Eastern Promise")
+    southBox =  Box( uid="south",   label="Box III",    description="the Southern White House")
+    westBox =   Box( uid="west",    label="Box IV",     description="the Wild West")
+
     # create a beginning passage which points to the end passage
-    LinearPage(
-        uid=nodeUids.landing,
-        visitBoxUid=boxUids.north,
-        visitBoxText="Welcome to Milecastles.",
-        nextNodeUid=nodeUids.ending
+    ThroughPage(
+        uid="landing",
+        goalBoxUid=northBox.uid,
+        page="Welcome to Milecastles.",
+        nextNodeUid="ending"
     )
 
     # create an ending passage for the story
-    LinearPage(
-        uid=nodeUids.ending,
-        visitBoxUid=boxUids.south,
-        visitBoxText="You have finished your adventure",
-        nextNodeUid=nodeUids.landing
- )
+    ThroughPage(
+        uid="ending",
+        goalBoxUid=southBox.uid,
+        page="You have finished your adventure",
+        nextNodeUid="landing"
+    )
 
 def run():
     print("Loading emulator")
