@@ -3,23 +3,23 @@ from milecastles import AnonymousContainer, Holder, Story, signature,debug
 from boilerplate import Compiler, Resolver
 
 class Debug():
-    def report(report):
+    def report(self, report):
         print(report)
         
-    def debug(msg):
-        print("DEBUG:" + msg)
+    def debug(self, msg):
+        self.report("DEBUG:" + msg)
 
-    def info(msg):
-        print("INFO:" + msg)
+    def info(self, msg):
+        self.report("INFO:" + msg)
 
-    def warn(msg):
-        print("WARN:" + msg)
+    def warn(self, msg):
+        self.report("WARN:" + msg)
 
-    def error(msg):
-        print("ERROR:" + msg)
+    def error(self, msg):
+        self.report("ERROR:" + msg)
 
-    def fatal(msg):
-        print("FATAL:" + msg)
+    def fatal(self, msg):
+        self.report("FATAL:" + msg)
 
 class Engine(AnonymousContainer):
     required = AnonymousContainer.required + ["box"] # remove "uid"
@@ -114,12 +114,9 @@ class Engine(AnonymousContainer):
     
     def displayNode(self, node):
         nodeText = self.fillNodeTemplate(node, node.render(self))
-        if debug:
-            self.displayText(str(self.card.sack) + "\n" + nodeText)
-        else:
-            self.displayText(nodeText)
-            
-
+        if hasattr(self, "debug"):
+            self.debug.debug("SACK" + str(self.card.sack))
+        self.displayText(nodeText)
         
     '''Should render some text, in whatever form required by the Engine'''
     def displayText(self, text):
