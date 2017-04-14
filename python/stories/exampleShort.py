@@ -45,3 +45,12 @@ with story:
         visitBoxText="You have finished your adventure",
         nextNodeUid=nodeUids.landing
  )
+
+def run():
+    print("Loading emulator")
+    emulator = ConsoleSiteEmulator(story=story)
+    print("Running Emulator")
+    emulator.run()
+
+if __name__ == "__main__":
+    run()
