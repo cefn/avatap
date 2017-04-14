@@ -118,14 +118,14 @@ class Item(Holder):
         for key,val in k.items(): 
             assert key in itemRequired or key in itemDefaults or key in itemOptional, itemTypeName + " unexpected parameter '" + key + "'"
         
-'''
-    A common superclass for items with ids. Accepts a string id argument
-    and silently replaces it with a typed Uid object which is required 
-    by other Uid oriented references, this supports implicit validation 
-    of data structures (e.g. encouraging you to refer to myNode.uid in 
-    preference to the possibly "theuid")
-''' 
 class UidItem(Item):
+    '''
+        A common superclass for items with ids. Accepts a string id argument
+        and silently replaces it with a typed Uid object which is required
+        by other Uid oriented references, this supports implicit validation
+        of data structures (e.g. encouraging you to refer to myNode.uid in
+        preference to the possibly "theuid")
+    '''
     required = Item.required + ["uid"]
     
 class Container(UidItem):
