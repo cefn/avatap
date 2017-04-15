@@ -50,7 +50,7 @@ with story:
         nextNodeUid = "house"
     )
 
-ThroughPage(
+    ThroughPage(
         uid="plantbeans",
         time=incrementTime,
         change = SackChange(
@@ -64,8 +64,8 @@ ThroughPage(
 
     ThroughPage(
         uid="ending",
-        page="You have finished your adventure.
-        {% if sack.beans %}You have the beans{% else %}You don't have the beans{% endif %}",
+        page="""You have finished your adventure.
+            {% if sack.beans %}You have the beans{% else %}You don't have the beans{% endif %}""",
         goalBoxUid = homeBox.uid,
         nextNodeUid = "landing"
     )
