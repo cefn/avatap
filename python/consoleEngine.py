@@ -17,7 +17,7 @@ class ConsoleSiteEmulator(AnonymousContainer):
             self.engines[boxUid] = engine
             
         # for each card, register it with the emulator
-        cardIds = ["a","b","c","d"]
+        cardIds = "abcd"
         for cardId in cardIds:
             card = self.story.createBlankCard(cardId)
             self.registerCard(card)
@@ -38,7 +38,7 @@ class ConsoleSiteEmulator(AnonymousContainer):
             cardTable = self._get_table(Card) # use box lookup from story
             if command in cardTable: 
                 self.currentCard = cardTable[command]
-                print("Current card set to '" + command + "'")
+                print("Current card set to '{}'".format(command))
 
             else:
                 # handle commands identifying a box in the story
@@ -46,16 +46,16 @@ class ConsoleSiteEmulator(AnonymousContainer):
                 matchingBoxUids = [boxUid for boxUid in boxUids if command in boxUid]
                 numMatching = len(matchingBoxUids)
                 if numMatching == 0:
-                    print("No box uids match '" + command + "'")
+                    print("No box uids match '{}'".format(command))
                 elif numMatching >= 2:
-                    print("Too many box uids match '" + command + "' : " + str(matchingBoxUids) )
+                    print("Too many box uids match '{}' : {}".format(command, str(matchingBoxUids) ))
                 elif numMatching == 1: # a single box got matched
                     boxUid = matchingBoxUids[0]
                     if self.currentCard != None:
-                        print("Tapping box '" + command + "' with card '" + self.currentCard.uid + "'")
+                        print("Tapping box '{}' with card '{}'".format(command, self.currentCard.uid))
                         self.engines[boxUid].handleCard(self.currentCard)
                     else:
-                        print("Cannot tap box. No card selected. Choose one of " + str(list(cardTable.keys())))            
+                        print("Cannot tap box. No card selected. Choose one of {}".format(str(list(cardTable.keys()))))
     
 class ConsoleEngine(Engine):
     
