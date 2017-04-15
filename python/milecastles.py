@@ -1,3 +1,5 @@
+from agnostic import ticks_ms
+
 """
     Avatap provides a model for text adventures in which players travel between distributed stations
     with lo-res screens, tapping in at each station with an RFID card containing their 'game state'. 
@@ -52,8 +54,6 @@
 
 """
 
-from agnostic import ticks_ms
-
 debug = True
 
 story = None
@@ -71,7 +71,7 @@ def loadStory(storyIdString):
     
 def getStoryContext():
     global story
-    assert story != None, "Code needs to execute in a `with story:` block"
+    assert story != None, "Need `with story:` block"
     return story
 
 class Holder(object):
