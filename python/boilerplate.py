@@ -8,12 +8,12 @@ TODO CH, merge changes from utemplate, and undo space insertion/removal logic wh
 
 class Resolver:
 
-    def __init__(self, **k):
-        self.templateDict = k
+    def __init__(self, sourceObj, *a, **k):
+        self.sourceObj = sourceObj
 
     def file_open(self, name):
-        assert name in self.templateDict, "Loading template {}. No such template".format(name)
-        loadedString = self.templateDict[name]
+        assert hasattr(self.sourceObj, name), "Loading template {}. No such template".format(name)
+        loadedString = getattr(self.sourceObj, name)
         assert type(loadedString) == str, "Loading template {} entry not of type 'str'".format(name)
         templateString = ""
         # remove leading, trailing and doubled whitespace, but preserve newlines
