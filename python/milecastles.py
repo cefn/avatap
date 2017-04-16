@@ -115,8 +115,8 @@ class Item(Holder):
                 raise AssertionError(itemTypeName + " missing required attributes " + str(missing) )
 
         # check no unexpected keys passed        
-        for key,val in k.items(): 
-            assert key in itemRequired or key in itemDefaults or key in itemOptional, itemTypeName + " unexpected parameter '" + key + "'"
+        for key,val in k.items():
+                assert key in itemRequired or key in itemDefaults or key in itemOptional, itemTypeName + " unexpected parameter '" + key + "'"
         
 class UidItem(Item):
     '''
