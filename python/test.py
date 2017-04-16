@@ -1,6 +1,6 @@
 import unittest
 from milecastles import *
-from engines import Engine
+from engine import Engine
 
 from stories import exampleShort
 
@@ -31,11 +31,12 @@ class PageTest(unittest.TestCase):
         # create 'story'
         self.story = exampleShort.story
         # configure engine for each box in the story
-        self.engines = EngineContainer()
-        for boxIdString, box in self.story._get_table(Box).items():
-            engine = MockEngine(uid=boxIdString, box=box)
+        self.engines = dict()
+        boxTable = self.story._get_table(Box)
+        for boxIdString, box in boxTable.items():
+            engine = MockEngine(box=box)
             engine.registerStory(self.story)
-            self.engines.registerEngine(engine)
+            self.engines[boxIdString] = engine
 
     def tearDown(self):
         del self.engines, self.story
@@ -45,7 +46,7 @@ class PageTest(unittest.TestCase):
         card = self.story.createBlankCard("abcdefgh")
 
         # present the card to the relevant engine
-        engine = self.engines.lookupEngine(exampleShort.boxUids.north)
+        engine = self.engines[exampleShort.northBox.uid]
 
         # import pdb; pdb.set_trace()
 
@@ -56,7 +57,7 @@ class PageTest(unittest.TestCase):
         a, k = engine.render_calls[0]
         print(a)
 
-        assert card.nodeUid == exampleShort.nodeUids.ending
+        assert card.nodeUid == "ending"
         return True
 
 
