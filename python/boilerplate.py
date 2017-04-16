@@ -1,9 +1,10 @@
-# os module is loaded on demand
-#import os
-
-# based on utemplate from @pfalcon on github
-
 from agnostic import io
+"""
+This is based on utemplate from @pfalcon on github
+It allows templating functions to be generated from Jinja2-style string templates on the fly.
+In the long-term these can be cached or compiled to bytecode for optimisation
+TODO CH, merge changes from utemplate, and undo space insertion/removal logic which was added as workaround
+"""
 
 class Resolver:
 
@@ -11,11 +12,11 @@ class Resolver:
         self.templateDict = k
 
     def file_open(self, name):
-        assert name in self.templateDict, "Attempted to load template string named " + name + ". No such template"
+        assert name in self.templateDict, "Loading template {}. No such template".format(name)
         loadedString = self.templateDict[name]
-        assert type(loadedString) == str, "Attempted to load template string from " + name + " entry not of type 'str'"
+        assert type(loadedString) == str, "Loading template {} entry not of type 'str'".format(name)
         templateString = ""
-        # remove whitespace, preserving newlines
+        # remove leading, trailing and doubled whitespace, but preserve newlines
         for line in loadedString.split("\n"):
             templateString += " ".join(line.split()) + "\n"
         return io.StringIO(templateString)
@@ -125,7 +126,6 @@ class Compiler:
                 if not self.in_literal and l == "\n":
                     break
             elif sel == self.EXPR:
-    #            print("EXPR")
                 end = l.find(self.EXPR_END)
                 assert end > 0
                 expr = l[start + len(self.START_CHAR + self.EXPR):end].strip()
