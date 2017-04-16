@@ -1,38 +1,19 @@
 from agnostic import io
-from milecastles import AnonymousContainer, Holder, Story, signature,debug
+from milecastles import AnonymousContainer, Holder, Story, signature, required, optional, debug
 from boilerplate import Compiler, Resolver
 
-class Debug():
-    def report(self, report):
-        print(report)
-        
-    def debug(self, msg):
-        self.report("DEBUG:" + msg)
-
-    def info(self, msg):
-        self.report("INFO:" + msg)
-
-    def warn(self, msg):
-        self.report("WARN:" + msg)
-
-    def error(self, msg):
-        self.report("ERROR:" + msg)
-
-    def fatal(self, msg):
-        self.report("FATAL:" + msg)
+# TODO space added after args as workaround for https://github.com/pfalcon/utemplate/issues/5
+templatePrefix = "{% args " + signature + " %} "
 
 class Engine(AnonymousContainer):
-    required = AnonymousContainer.required + ["box"]
-    defaults = dict(AnonymousContainer.defaults,
-        card =  None,
-        story = None,
-        node =  None
-    )
-        
+    box = required
+    card = None,
+    story = None,
+    node = None
+
     def __init__(self, *a, **k):
         super().__init__(*a, **k)
-        self.debug = Debug()
-        
+
     def registerStory(self, story):
         return self._register(Story, story)
     
@@ -81,8 +62,7 @@ class Engine(AnonymousContainer):
    
     def fillNodeTemplate(self, node, templateString):
         # prefix the templateString with the standard argument signature
-        # TODO preceding space is added here as a workaround for https://github.com/pfalcon/utemplate/issues/5
-        templateString = "{% args " + signature + " %}" + " " + templateString
+        templateString = templatePrefix + templateString
         # use node as its own resolver
         templateResolver = Resolver(**node.__dict__)
         # create streams and wire them
@@ -98,7 +78,7 @@ class Engine(AnonymousContainer):
             exec(compiled, g)
             # extract the render function which was created during exec
             renderFun = g["render"]
-            # create a string generator by calling the render function
+            # create a string generator by calling the render function, passing context arguments
             renderGen = renderFun(**self.getEngineContext())
             # concatenate the generated strings
             renderOut = io.StringIO()
@@ -106,7 +86,7 @@ class Engine(AnonymousContainer):
                 renderOut.write(chunk)
             # return concatenated string
             renderedString = renderOut.getvalue() 
-            # TODO preceding space is removed here as workaround for https://github.com/pfalcon/utemplate/issues/5
+            # TODO preceding space removed here as workaround for https://github.com/pfalcon/utemplate/issues/5
             return renderedString[1:] 
         except Exception as k:
             import ipdb; ipdb.set_trace()
@@ -114,10 +94,10 @@ class Engine(AnonymousContainer):
     
     def displayNode(self, node):
         nodeText = self.fillNodeTemplate(node, node.render(self))
-        if hasattr(self, "debug"):
-            self.debug.debug("SACK" + str(self.card.sack))
+        if debug:
+            debug.debug("SACK" + str(self.card.sack))
         self.displayText(nodeText)
-        
+
     '''Should render some text, in whatever form required by the Engine'''
     def displayText(self, text):
         raise AssertionError("Not yet implemented")
