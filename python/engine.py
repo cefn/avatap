@@ -64,7 +64,7 @@ class Engine(AnonymousContainer):
         # prefix the templateString with the standard argument signature
         templateString = templatePrefix + templateString
         # use node as its own resolver
-        templateResolver = Resolver(**node.__dict__)
+        templateResolver = Resolver(node)
         # create streams and wire them
         template_in = io.StringIO(templateString)
         template_out = io.StringIO()
@@ -89,7 +89,6 @@ class Engine(AnonymousContainer):
             # TODO preceding space removed here as workaround for https://github.com/pfalcon/utemplate/issues/5
             return renderedString[1:] 
         except Exception as k:
-            import ipdb; ipdb.set_trace()
             raise k
     
     def displayNode(self, node):
