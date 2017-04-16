@@ -1,8 +1,8 @@
-from milecastles import AnonymousContainer, Box, Card
+from milecastles import AnonymousContainer, Box, Card, required
 from engine import Engine
 
 class ConsoleSiteEmulator(AnonymousContainer):
-    required = AnonymousContainer.required + ["story"]
+    story = required
 
     def __init__(self, *a, **k):
         super().__init__(*a, **k)
