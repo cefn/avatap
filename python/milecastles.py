@@ -54,18 +54,39 @@ from agnostic import ticks_ms
 
 """
 
-debug = True
+class Debug():
+    def report(self, report):
+        print(report)
+
+    def debug(self, msg):
+        self.report("DEBUG:" + msg)
+
+    def info(self, msg):
+        self.report("INFO:" + msg)
+
+    def warn(self, msg):
+        self.report("WARN:" + msg)
+
+    def error(self, msg):
+        self.report("ERROR:" + msg)
+
+    def fatal(self, msg):
+        self.report("FATAL:" + msg)
+
+debug = None
+debug = Debug()
 
 story = None
+
+required = object()
+optional = object()
 
 # The signature of objects passed to templates and routing/trigger conditions
 signature = "engine, story, box, node, card, sack"
 
 def loadStory(storyIdString):
     """Loads a Story with a given storyIdString, assuming it is at stories.[storyIdString].story"""
-    storyModulePath = "stories." + storyIdString
-    print("Loading story from " + storyModulePath)
-    loaded = __import__(storyModulePath)
+    loaded = __import__("stories." + storyIdString)
     module = getattr(loaded, storyIdString)
     return module.story
     
@@ -79,45 +100,40 @@ class Holder(object):
         for key,val in k.items():
             setattr(self, key, val)
 
+    def assert_attr(self, name, check, msg):
+        if not(check):
+            raise AssertionError("Param Err {} {} {} {}".format(type(self), self.uid  if hasattr(self, "uid") else "" , str(name), msg))
+
+
+class StrictHolder(Holder):
+    """
+    Enforces that no attributes are previously unknown.
+    They are expected to already be set to a default value, or are set to milecastles.required or milecastles.optional.
+    """
+    def __init__(self, *a, **k):
+        for key, val in k.items():
+            self.assert_attr(key, hasattr(self, key), "unknown param")
+        super().__init__(self, *a, **k)
+
 '''
 Base class which treats all named arguments as attributes and 
 all positional arguments as dicts containing named attributes
 '''
 class Item(Holder):
-    required=[]
-    optional=[]
-    defaults={}
-    
+
     # populate attributes from positional dicts and keyword args
     def __init__(self, *a, **k):
         super().__init__(self, *a, **k)
 
-        itemType = type(self)
-        itemTypeName = itemType.__name__
-        itemRequired = itemType.required
-        itemOptional = itemType.optional
-        itemDefaults = itemType.defaults
-                
-        # populate missing attributes from defaults
-        for key,val in itemDefaults.items():
-            if not hasattr(self, key):
-                setattr(self, key, val)
+        names = dir(self)
 
-        # raise error if any 'required' attributes still missing   
-        missing = list()
-        for name in itemRequired:
-            if not(hasattr(self, name)):
-                missing.append(name)
-        if len(missing) > 0:
-            if hasattr(self, "uid"):
-                raise AssertionError(itemTypeName + " '" + self.uid + "' missing required attributes " + str(missing) )
-            else:
-                raise AssertionError(itemTypeName + " missing required attributes " + str(missing) )
+        # raise error if any 'required' attributes still missing
+        for name in names:
+            value = getattr(self, name)
+            if value == optional:
+                setattr(self, name, None)
+            self.assert_attr(name, value != required, "attribute required")
 
-        # check no unexpected keys passed        
-        for key,val in k.items():
-                assert key in itemRequired or key in itemDefaults or key in itemOptional, itemTypeName + " unexpected parameter '" + key + "'"
-        
 class UidItem(Item):
     '''
         A common superclass for items with ids. Accepts a string id argument
@@ -126,8 +142,8 @@ class UidItem(Item):
         of data structures (e.g. encouraging you to refer to myNode.uid in
         preference to the possibly "theuid")
     '''
-    required = Item.required + ["uid"]
-    
+    uid = required
+
 class Container(UidItem):
     
     def _get_table(self, cls):
@@ -156,15 +172,17 @@ class Container(UidItem):
 
 
 class AnonymousContainer(Container):
-    required = [n for n in Container.required if n!="uid"]
-
+    uid = optional
 
 class Story(Container):
-    required = Container.required + ["startNodeUid", "startSack"]
-    defaults = dict(Container.defaults, 
-        startSack = dict()
-    )
-                        
+    startNodeUid = required
+    startSack = optional
+
+    def __init__(self, *a, **k):
+        super().__init__(self, *a, **k)
+        if self.startSack is None:
+            self.startSack = dict()
+
     def __enter__(self):
         global story
         story = self
@@ -179,18 +197,13 @@ class Story(Container):
             raise exceptionValue
                
     def validate(self):
-        assert type(self.startSack) == dict, "'sack' must be of type dict"
         # construct an easy dot lookup mechanism from within templates
         self.nodes = Holder(**self._get_table(Node))
         self.boxes = Holder(**self._get_table(Box))
         # delegate validation to nodes
         for nodeUid, node in self._get_table(Node).items():
-            try:
-                node.validate(self)
-            except Exception as e:
-                print("Problem validating Node, uid:" + node.uid)
-                raise e
-    
+            node.validate(self)
+
     def registerNode(self, node):
         return self._register(Node, node)
     
@@ -213,35 +226,36 @@ class Story(Container):
 
 
 class Card(UidItem):
-    required = UidItem.required + ["storyUid", "nodeUid", "sack"]
-
+    storyUid = required
+    nodeUid = required
+    sack = required
 
 class Box(UidItem):
-    required = UidItem.required + ["label", "description"]
+    label = required
+    description = required
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         getStoryContext().registerBox(self)
 
 
 class Node(UidItem):
-    defaults = dict(UidItem.defaults, 
-        change = None
-    )
-    optional=UidItem.optional + ["time"]
-    
+    change = None
+    time = optional
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         getStoryContext().registerNode(self)
 
     def validate(self, story):
         # lookup box/node uids, generate new attributes pointing to boxes and nodes
-        print("Validating " + type(self).__name__ + " with uid " + self.uid)
+        print("Validating {} with uid {}".format(type(self).__name__, self.uid))
         uidSuffix = "Uid"
         for cls in [Node, Box]:
             clsSuffix = (cls.__name__ + uidSuffix)
             for key in dict(self.__dict__):
                 if key.endswith(clsSuffix):
-                    uidPrefix = key[:-len(uidSuffix)] 
+                    uidPrefix = key[:-len(uidSuffix)]
                     item = story._lookup(cls, getattr(self, key))
                     setattr(self, uidPrefix, item)
                     
@@ -273,7 +287,8 @@ class Node(UidItem):
 
     def deactivate(self,  engine):
         return None
-        
+
+# TODO add MultiNodeOperator as wrapper around (non-strict) Holder, allowing addressing of operators by name using dot notation even when multiple
 class NodeOperator(Item):
 
     def validate(self, story):
@@ -281,22 +296,31 @@ class NodeOperator(Item):
 
     def operate(self,  engine):
         pass
-        
+
+
 # See also https://twine2.neocities.org/1.html for Twine reference features around variables and execution
 class SackChange(NodeOperator):
-    optional = ["trigger", "assign","plus","minus","reset"]
-    defaults = dict(NodeOperator.defaults,
-        stayPositive = True,
-    )
-    
+    trigger = optional
+    assign = optional
+    plus = optional
+    minus = optional
+    reset = optional
+    stayPositive = True,
+
     def validate(self, story):
-        assert hasattr(self, "assign") or hasattr(self, "plus") or hasattr(self, "minus") or hasattr(self, "reset"), type(self).__Name__ + " should have one of either 'assign', 'plus', 'minus' or 'reset'"
-        assert not(hasattr(self, "reset"))  or ( not(hasattr(self, "assign")) and not(hasattr(self, "plus")) and not(hasattr(self, "minus")) ), type(self).__Name__ + " reset is incompatible with assign, plus or minus"
-        assert not(hasattr(self, "assign")) or type(self.assign) == dict, type(self).__Name__ + " assign should be'" + str(dict)
-        assert not(hasattr(self, "plus"))   or type(self.plus) == dict,   type(self).__Name__ + " plus should be"    + str(dict)
-        assert not(hasattr(self, "minus"))  or type(self.minus) == dict,  type(self).__Name__ + " minus should be"   + str(dict)
-        assert not(hasattr(self, "reset"))  or type(self.reset) == dict,  type(self).__Name__ + " reset should be"   + str(dict)
-                           
+        assignName = "assign"
+        plusName = "plus"
+        minusName = "minus"
+        resetName = "reset"
+        changeNames = [assignName, plusName, minusName, resetName]
+        dictMessage = "should be dict"
+        self.assert_attr("[required]", any([hasattr(self, changeName) for changeName in changeNames]), "needs one of " + str(changeNames))
+        self.assert_attr(resetName,  self.reset is None or all([self.assign is None, self.plus is None, self.reset is None]), "obliterates " + str([name for name in changeNames if not name is resetName]))
+        self.assert_attr(assignName, self.assign is None or type(self.assign) == dict, dictMessage)
+        self.assert_attr(plusName,   self.plus is None or   type(self.plus) == dict,   dictMessage)
+        self.assert_attr(minusName,  self.minus is None or  type(self.minus) == dict,  dictMessage)
+        self.assert_attr(resetName,  self.reset is None or  type(self.reset) == dict,  dictMessage)
+
     def operate(self, engine):
         # reset the flags
         self.triggered = False
@@ -308,7 +332,7 @@ class SackChange(NodeOperator):
             
             if self.stayPositive:
                 # check if 'minus' transactions might incorrectly send a value negative
-                if(hasattr(self, "minus")):
+                if(hasattr(self, minusName)):
                     for key,val in self.minus.items():
                         if key not in sack or sack[key] <= val:
                             # refuse the change
@@ -317,31 +341,33 @@ class SackChange(NodeOperator):
             # can trigger change(s)
             
             # handle setting (any python value)
-            if hasattr(self, "assign"):
+            if self.assign is not None:
                 for key,val in self.assign.items():
                     sack[key]=val
             # handle addition (to a number)
-            if hasattr(self, "plus"):
+            if self.plus is not None:
                 for key,val in self.plus.items():
                     if key in sack:
                         sack[key] = sack[key] + val
                     else:
                         sack[key] = val
             # handle removal (from a number)
-            if hasattr(self, "minus"):
+            if self.minus is not None:
                 for key,val in self.minus.items():
                     if key in sack:
                         sack[key] = sack[key] - val
                     else:
                         sack[key] = - val
             
-            if hasattr(self, "reset"):
+            if self.reset is not None:
                 engine.card.sack = dict(self.reset)
             
             self.completed = True
 
 class ConditionFork(Node):
-    required = Node.required + ["condition", "trueNodeUid", "falseNodeUid"]
+    condition = required
+    trueNodeUid = required
+    falseNodeUid = required
 
     def evaluate(self, engine):
         return engine.evaluateExpression(self.condition)
@@ -356,26 +382,20 @@ class ConditionFork(Node):
     def getGoalBoxUid(self, story):
         trueBoxUid = story.lookupNode(self.trueNodeUid).getGoalBoxUid(story)
         falseBoxUid = story.lookupNode(self.falseNodeUid).getGoalBoxUid(story)
-        if trueBoxUid == falseBoxUid: # well-defined only if true and false have same goal box
-            return trueBoxUid
-        else:
-            raise AssertionError("Cannot derive goal box for " + type(self).__name__ + "true and false boxes differ")            
+        self.assert_attr("goalBoxUid", trueBoxUid == falseBoxUid, "true and false boxes differ")
+        return trueBoxUid
 
 class Page(Node):
-    required = Node.required + ["page"]
-    defaults = dict(Node.defaults,
-        template = "{% include 'page' " + signature + " %}"
-    )
-                    
+    page = required
+    template = "{% include 'page' " + signature + " %}"
+
     def render(self, engine):
         return self.template
 
 class GoalPage(Page):
-    required = Page.required + ["goalBoxUid"]
-    defaults = dict(Page.defaults,
-        missTemplate="Please go to {{node.goalBox.label}} to continue your adventure"
-    )
-    
+    goalBoxUid = required
+    missTemplate="Please go to {{node.goalBox.label}} to continue your adventure"
+
     def getGoalBoxUid(self, story):
         return self.goalBoxUid
 
@@ -393,8 +413,8 @@ class GoalPage(Page):
             return self.missTemplate            # render a miss
         
 class ThroughPage(GoalPage):
-    required = GoalPage.required + ["nextNodeUid"]
-        
+    nextNodeUid = required
+
     def deactivate(self, engine):
         # progress the player to the next node once rendered
         if engine.box == self.goalBox:
@@ -419,15 +439,13 @@ class WaitPage(ThroughPage):
 """    
 
 class NodeFork(Page):
-    required = Page.required + ["choices"]
-    optional = Page.optional + ["hideChoices"]
-    defaults = dict(Page.defaults, 
-        template = "{% include 'page' %}\n{% include 'choiceList' %}",
-        page = "Choose from the following:",
-        choiceList = " {% for choiceUid in node.choiceNodeUids %}{% if not(node.isHidden(engine, choiceUid)) %}{% include 'choiceItem' choiceUid %}\n{% endif %}{% endfor %}",
-        choiceItem = " {% args choiceUid %}{{ engine.fillNodeTemplate(node, node.choices[choiceUid]) }} : {{story.lookupNode(choiceUid).getGoalBox(story).label}}",
-    )
-    
+    choices = required
+    hideChoices = optional
+    template = "{% include 'page' %}\n{% include 'choiceList' %}",
+    page = "Choose from the following:",
+    choiceList = " {% for choiceUid in node.choiceNodeUids %}{% if not(node.isHidden(engine, choiceUid)) %}{% include 'choiceItem' choiceUid %}\n{% endif %}{% endfor %}",
+    choiceItem = " {% args choiceUid %}{{ engine.fillNodeTemplate(node, node.choices[choiceUid]) }} : {{story.lookupNode(choiceUid).getGoalBox(story).label}}",
+
     def validate(self, story):
         super().validate(story)
         
@@ -436,22 +454,22 @@ class NodeFork(Page):
         
         choices = self.choices
 
-        assert type(choices) == dict, "'choices' must be a dict mapping node uids to string templates. Cannot accept " + str(choices)
+        self.assert_attr("choices", type(choices) == dict, "should map node uids to templates ")
         choiceNodeUids = list(choices.keys())
         choiceLabels = [choices[key] for key in choiceNodeUids]
         
         badTemplates = [val for val in choiceLabels if not(isinstance(val, str))]
-        assert len(badTemplates)==0, "ChoicePage: choice templates must be string values. Cannot accept " + str(badTemplates)
-        
+        self.assert_attr("choiceLabels", len(badTemplates)==0, "not strings; " + str(badTemplates))
+
         badNodeUids = [val for val in choiceNodeUids if not(val in nodeTable)]
-        assert len(badNodeUids)==0, "ChoicePage: choice node uid values must be found in story table. Cannot accept " + str(badNodeUids)
+        self.assert_attr("choiceNodeUids", len(badNodeUids)==0, "not in story;" + str(badNodeUids))
 
         choiceNodes = [story.lookupNode(nodeUid) for nodeUid in choiceNodeUids]
         
         choiceBoxUids = [node.getGoalBoxUid(story) for node in choiceNodes]
         badBoxUids = [val for val in choiceBoxUids if not(val in boxTable)]
-        assert len(badBoxUids)==0, "ChoicePage: box uid values must be found in story table. Cannot accept " + str(badBoxUids)
-        assert len(choiceBoxUids) == len(set(choiceBoxUids)), "Some Nodes referenced by 'choices' share the same goalBoxUid. Cannot accept " + str(choiceBoxUids)
+        self.assert_attr("choiceBoxUids", len(badBoxUids)==0, "not in story;" +  str(badBoxUids))
+        self.assert_attr("choiceBoxUids", len(choiceBoxUids) == len(set(choiceBoxUids)), "duplicate goalBoxUids;" +  str(badBoxUids))
 
         # save nodes and boxes
         self.choiceNodeUids = choiceNodeUids
