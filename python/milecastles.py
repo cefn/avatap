@@ -305,7 +305,7 @@ class SackChange(NodeOperator):
     plus = optional
     minus = optional
     reset = optional
-    stayPositive = True,
+    stayPositive = True
 
     def validate(self, story):
         assignName = "assign"
@@ -315,7 +315,7 @@ class SackChange(NodeOperator):
         changeNames = [assignName, plusName, minusName, resetName]
         dictMessage = "should be dict"
         self.assert_attr("[required]", any([hasattr(self, changeName) for changeName in changeNames]), "needs one of " + str(changeNames))
-        self.assert_attr(resetName,  self.reset is None or all([self.assign is None, self.plus is None, self.reset is None]), "obliterates " + str([name for name in changeNames if not name is resetName]))
+        self.assert_attr(resetName,  self.reset is None or all([self.assign is None, self.plus is None, self.minus is None]), "obliterates " + str([name for name in changeNames if not name is resetName]))
         self.assert_attr(assignName, self.assign is None or type(self.assign) == dict, dictMessage)
         self.assert_attr(plusName,   self.plus is None or   type(self.plus) == dict,   dictMessage)
         self.assert_attr(minusName,  self.minus is None or  type(self.minus) == dict,  dictMessage)
@@ -326,13 +326,13 @@ class SackChange(NodeOperator):
         self.triggered = False
         self.completed = False
         # process logic
-        if not(hasattr(self, "trigger")) or engine.evaluateExpression(self.trigger):
+        if self.trigger is None or engine.evaluateExpression(self.trigger):
             self.triggered = True
             sack = engine.card.sack
             
             if self.stayPositive:
                 # check if 'minus' transactions might incorrectly send a value negative
-                if(hasattr(self, minusName)):
+                if self.minus is not None:
                     for key,val in self.minus.items():
                         if key not in sack or sack[key] <= val:
                             # refuse the change
@@ -441,10 +441,10 @@ class WaitPage(ThroughPage):
 class NodeFork(Page):
     choices = required
     hideChoices = optional
-    template = "{% include 'page' %}\n{% include 'choiceList' %}",
-    page = "Choose from the following:",
-    choiceList = " {% for choiceUid in node.choiceNodeUids %}{% if not(node.isHidden(engine, choiceUid)) %}{% include 'choiceItem' choiceUid %}\n{% endif %}{% endfor %}",
-    choiceItem = " {% args choiceUid %}{{ engine.fillNodeTemplate(node, node.choices[choiceUid]) }} : {{story.lookupNode(choiceUid).getGoalBox(story).label}}",
+    template = "{% include 'page' %}\n{% include 'choiceList' %}"
+    page = "Choose from the following:"
+    choiceList = " {% for choiceUid in node.choiceNodeUids %}{% if not(node.isHidden(engine, choiceUid)) %}{% include 'choiceItem' choiceUid %}\n{% endif %}{% endfor %}"
+    choiceItem = " {% args choiceUid %}{{ engine.fillNodeTemplate(node, node.choices[choiceUid]) }} : {{story.lookupNode(choiceUid).getGoalBox(story).label}}"
 
     def validate(self, story):
         super().validate(story)
@@ -476,7 +476,7 @@ class NodeFork(Page):
         self.choiceBoxUids = choiceBoxUids
         
     def isHidden(self, engine, choiceNodeUid):
-        if hasattr(self, "hideChoices"):
+        if self.hideChoices is not None:
             if choiceNodeUid in self.hideChoices:
                 return engine.evaluateExpression(self.hideChoices[choiceNodeUid])
         return False
