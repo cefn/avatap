@@ -22,7 +22,7 @@ class Debug():
         self.report("FATAL:" + msg)
 
 class Engine(AnonymousContainer):
-    required = AnonymousContainer.required + ["box"] # remove "uid"
+    required = AnonymousContainer.required + ["box"]
     defaults = dict(AnonymousContainer.defaults,
         card =  None,
         story = None,
