@@ -119,7 +119,7 @@ class StrictHolder(Holder):
 Base class which treats all named arguments as attributes and 
 all positional arguments as dicts containing named attributes
 '''
-class Item(Holder):
+class Item(StrictHolder):
 
     # populate attributes from positional dicts and keyword args
     def __init__(self, *a, **k):
@@ -442,7 +442,7 @@ class NodeFork(Page):
     choices = required
     hideChoices = optional
     template = "{% include 'page' %}\n{% include 'choiceList' %}"
-    page = "Choose from the following:"
+    page = "Choose from :"
     choiceList = " {% for choiceUid in node.choiceNodeUids %}{% if not(node.isHidden(engine, choiceUid)) %}{% include 'choiceItem' choiceUid %}\n{% endif %}{% endfor %}"
     choiceItem = " {% args choiceUid %}{{ engine.fillNodeTemplate(node, node.choices[choiceUid]) }} : {{story.lookupNode(choiceUid).getGoalBox(story).label}}"
 
