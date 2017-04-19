@@ -594,9 +594,7 @@ with story:
 
 
 def run():
-    print("Loading emulator")
     emulator = ConsoleSiteEmulator(story=story)
-    print("Running Emulator")
     emulator.run()
 
 
