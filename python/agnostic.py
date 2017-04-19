@@ -9,11 +9,17 @@ allows them to be used without lots of platform-detection logic strewn through o
 
 assert hasattr(sys, "implementation"), "FATAL: Cannot run in Python 2"
 if sys.implementation.name == "micropython":
+    import micropython
     from micropython import const
+    import gc
     from utime import time
     from utime import ticks_ms
     import uos as os
     import uio as io
+    def report_collect():
+        micropython.mem_info()
+        gc.collect()
+        micropython.mem_info()
 else:
     from time import time
     def ticks_ms():
@@ -22,3 +28,5 @@ else:
         return val
     import os as os
     import io as io
+    def report_collect():
+        pass
