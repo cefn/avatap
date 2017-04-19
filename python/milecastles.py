@@ -1,4 +1,5 @@
 from agnostic import ticks_ms
+import sys
 
 """
     Avatap provides a model for text adventures in which players travel between distributed stations
@@ -55,23 +56,34 @@ from agnostic import ticks_ms
 """
 
 class Debug():
-    def report(self, report):
-        print(report)
+    # TODO CH MEMORY Eliminate string concatenation here
+    def report(self, msg):
+        sys.stdout.write(msg)
 
     def debug(self, msg):
-        self.report("DEBUG:" + msg)
+        self.report("DEBUG:")
+        self.report(msg)
+        self.report("\n")
 
     def info(self, msg):
-        self.report("INFO:" + msg)
+        self.report("INFO:")
+        self.report(msg)
+        self.report("\n")
 
     def warn(self, msg):
-        self.report("WARN:" + msg)
+        self.report("WARN:")
+        self.report(msg)
+        self.report("\n")
 
     def error(self, msg):
-        self.report("ERROR:" + msg)
+        self.report("ERROR:")
+        self.report(msg)
+        self.report("\n")
 
     def fatal(self, msg):
-        self.report("FATAL:" + msg)
+        self.report("FATAL:")
+        self.report(msg)
+        self.report("\n")
 
 debug = None
 debug = Debug()
@@ -100,10 +112,14 @@ class Holder(object):
         for key,val in k.items():
             setattr(self, key, val)
 
-    def assert_attr(self, name, check, msg):
-        if not(check):
-            raise AssertionError("Param Err {} {} {} {}".format(type(self), self.uid  if hasattr(self, "uid") else "" , str(name), msg))
+    def report_property(self, name, msg):
+        return "Param Err {} {} {} {}".format(type(self), self.uid if hasattr(self, "uid") else "", str(name), msg)
 
+    def raise_property(self, name, msg):
+        raise AssertionError(self.report_property(name, msg))
+
+    def name_properties(self):
+        return [name for name in dir(self) if not name.startswith('__') and not callable(getattr(self, name))]
 
 class StrictHolder(Holder):
     """
@@ -112,7 +128,7 @@ class StrictHolder(Holder):
     """
     def __init__(self, *a, **k):
         for key, val in k.items():
-            self.assert_attr(key, hasattr(self, key), "unknown param")
+            if not hasattr(self, key): self.raise_property(key, "unknown param")
         super().__init__(self, *a, **k)
 
 '''
@@ -130,9 +146,10 @@ class Item(StrictHolder):
         # raise error if any 'required' attributes still missing
         for name in names:
             value = getattr(self, name)
-            if value == optional:
+            if value is optional:
                 setattr(self, name, None)
-            self.assert_attr(name, value != required, "attribute required")
+            if value is required:
+                self.raise_property(name, "attribute required")
 
 class UidItem(Item):
     '''
@@ -248,20 +265,21 @@ class Node(UidItem):
         getStoryContext().registerNode(self)
 
     def validate(self, story):
+        names = self.name_properties()
         # lookup box/node uids, generate new attributes pointing to boxes and nodes
-        print("Validating {} with uid {}".format(type(self).__name__, self.uid))
+        print("{} {} ..".format(type(self).__name__, self.uid))
         uidSuffix = "Uid"
-        for cls in [Node, Box]:
-            clsSuffix = (cls.__name__ + uidSuffix)
-            for key in dict(self.__dict__):
-                if key.endswith(clsSuffix):
-                    uidPrefix = key[:-len(uidSuffix)]
-                    item = story._lookup(cls, getattr(self, key))
+        for cls,clsSuffix in [(Node, "NodeUid"), (Box, "BoxUid")]:
+            for name in names:
+                if name.endswith(clsSuffix):
+                    uidPrefix = name[:-len(uidSuffix)]
+                    item = story._lookup(cls, getattr(self, name))
                     setattr(self, uidPrefix, item)
                     
         # allow operators to validate themselves
         self.operators = []
-        for key,val in self.__dict__.items():
+        for name in names:
+            val = getattr(self, name)
             if isinstance(val, NodeOperator):
                 self.operators.append(val)
                 val.validate(story)
@@ -314,12 +332,12 @@ class SackChange(NodeOperator):
         resetName = "reset"
         changeNames = [assignName, plusName, minusName, resetName]
         dictMessage = "should be dict"
-        self.assert_attr("[required]", any([hasattr(self, changeName) for changeName in changeNames]), "needs one of " + str(changeNames))
-        self.assert_attr(resetName,  self.reset is None or all([self.assign is None, self.plus is None, self.minus is None]), "obliterates " + str([name for name in changeNames if not name is resetName]))
-        self.assert_attr(assignName, self.assign is None or type(self.assign) == dict, dictMessage)
-        self.assert_attr(plusName,   self.plus is None or   type(self.plus) == dict,   dictMessage)
-        self.assert_attr(minusName,  self.minus is None or  type(self.minus) == dict,  dictMessage)
-        self.assert_attr(resetName,  self.reset is None or  type(self.reset) == dict,  dictMessage)
+        if not any([hasattr(self, changeName) for changeName in changeNames]): self.raise_property("[required]", "needs one of " + str(changeNames))
+        if not (self.reset is None or all([self.assign is None, self.plus is None, self.minus is None]) ): self.raise_property(resetName, "obliterates " + str([name for name in changeNames if not name is resetName]))
+        if not (self.assign is None or type(self.assign) == dict): self.raise_property(assignName, dictMessage)
+        if not (self.plus is None or type(self.plus) == dict) : self.raise_property(plusName, dictMessage)
+        if not(self.minus is None or type(self.minus) == dict) : self.raise_property(minusName, dictMessage)
+        if not(self.reset is None or type(self.reset) == dict) : self.raise_property(resetName, dictMessage)
 
     def operate(self, engine):
         # reset the flags
@@ -382,12 +400,12 @@ class ConditionFork(Node):
     def getGoalBoxUid(self, story):
         trueBoxUid = story.lookupNode(self.trueNodeUid).getGoalBoxUid(story)
         falseBoxUid = story.lookupNode(self.falseNodeUid).getGoalBoxUid(story)
-        self.assert_attr("goalBoxUid", trueBoxUid == falseBoxUid, "true and false boxes differ")
+        if trueBoxUid is not falseBoxUid: self.raise_property("goalBoxUid", "true and false boxes differ")
         return trueBoxUid
 
 class Page(Node):
     page = required
-    template = "{% include 'page' " + signature + " %}"
+    template = "{{% include 'page' {} %}}".format(signature)
 
     def render(self, engine):
         return self.template
@@ -438,13 +456,23 @@ class WaitPage(ThroughPage):
     pass
 """    
 
+# TODO CH, choiceItem workaround uses concatenateGeneratedStrings directly - recursion explains eval explosion? messes with caching strategy!
+# how else to support arbitrary strings not resolved against noderesolver? Can these be resolved via noderesolver?
+# instead of {{ engine.concatenateGeneratedStrings(node, node.choices[choiceUid]) }}
+# use {% include 'choices[choiceUid]' %}#
 class NodeFork(Page):
     choices = required
     hideChoices = optional
     template = "{% include 'page' %}\n{% include 'choiceList' %}"
     page = "Choose from :"
-    choiceList = " {% for choiceUid in node.choiceNodeUids %}{% if not(node.isHidden(engine, choiceUid)) %}{% include 'choiceItem' choiceUid %}\n{% endif %}{% endfor %}"
-    choiceItem = " {% args choiceUid %}{{ engine.fillNodeTemplate(node, node.choices[choiceUid]) }} : {{story.lookupNode(choiceUid).getGoalBox(story).label}}"
+
+    def __init__(self, *a, **k):
+        super().__init__(*a, **k)
+        # populate the choiceList template
+        self.choiceList = ""
+        # TODO CH any way around this concatenation in RAM?
+        for key,label in self.choices.items():
+            self.choiceList += "{{% if not(node.isHidden(engine, '{key}')) %}}{label} : {{{{story.lookupNode('{key}').getGoalBox(story).label}}}}\n{{% endif %}}".format(key=key, label=label)
 
     def validate(self, story):
         super().validate(story)
@@ -454,27 +482,27 @@ class NodeFork(Page):
         
         choices = self.choices
 
-        self.assert_attr("choices", type(choices) == dict, "should map node uids to templates ")
+        if type(choices) is not dict: self.raise_property("choices", "should map node uids to templates ")
         choiceNodeUids = list(choices.keys())
         choiceLabels = [choices[key] for key in choiceNodeUids]
         
         badTemplates = [val for val in choiceLabels if not(isinstance(val, str))]
-        self.assert_attr("choiceLabels", len(badTemplates)==0, "not strings; " + str(badTemplates))
+        if len(badTemplates) is not 0: self.raise_property("choiceLabels", "not strings; " + str(badTemplates))
 
         badNodeUids = [val for val in choiceNodeUids if not(val in nodeTable)]
-        self.assert_attr("choiceNodeUids", len(badNodeUids)==0, "not in story;" + str(badNodeUids))
+        if len(badNodeUids) is not 0: self.raise_property("choiceNodeUids", "not in story;" + str(badNodeUids))
 
         choiceNodes = [story.lookupNode(nodeUid) for nodeUid in choiceNodeUids]
         
         choiceBoxUids = [node.getGoalBoxUid(story) for node in choiceNodes]
         badBoxUids = [val for val in choiceBoxUids if not(val in boxTable)]
-        self.assert_attr("choiceBoxUids", len(badBoxUids)==0, "not in story;" +  str(badBoxUids))
-        self.assert_attr("choiceBoxUids", len(choiceBoxUids) == len(set(choiceBoxUids)), "duplicate goalBoxUids;" +  str(badBoxUids))
+        if len(badBoxUids) is not 0: self.raise_property("choiceBoxUids", "not in story;" + str(badBoxUids))
+        if len(choiceBoxUids) is not len(set(choiceBoxUids)): self.raise_property("choiceBoxUids", "duplicate goalBoxUids;" + str(badBoxUids))
 
         # save nodes and boxes
         self.choiceNodeUids = choiceNodeUids
         self.choiceBoxUids = choiceBoxUids
-        
+
     def isHidden(self, engine, choiceNodeUid):
         if self.hideChoices is not None:
             if choiceNodeUid in self.hideChoices:
@@ -495,21 +523,21 @@ def ThroughSequence(uid, nextNodeUid, goalBoxUid, sequence, **k):
     pairs = list(enumerate(sequence))
     pairs.reverse()
     for pos,page in pairs:
-        if pos == 0:
-            pageUid = uid
-            kwargs = k
-        else: # later nodes have uids based on first node uid + position
-            pageUid = uid + str(pos - 1)
-            kwargs = {}
+        if pos == 0: # first node
+            pageUid = uid # has uid of sequence
+            kwargs = k # inherits all operators etc
+        else: # later nodes
+            pageUid = uid + str(pos - 1) # have uids based on first node uid + position
+            kwargs = {} # don't inherit operators etc
         ThroughPage(
             uid =    pageUid,
             page =   page,
             goalBoxUid =    goalBoxUid,
             nextNodeUid =   nextNodeUid,
-            **k
+            **kwargs
         )
         nextNodeUid = pageUid
-        
+
 # Condition render
 # and text rendering from sack
 # Condition routing
