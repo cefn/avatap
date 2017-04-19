@@ -71,9 +71,10 @@ with story:
         the wall.
         {% if sack.hours <= 4 %}It's early in the morning
         and you can smell
-        the sea air{% endif %}
+        the sea air.
+        {% endif %}
         {% if sack.hours > 4 and sack.hours < 12 %}It's lunchtime and people
-        hurry by{% endif %}
+        hurry by.{% endif %}
         {% if sack.hours == 12 %}It's raining {% endif %}
         {% if sack.hours > 12 %}The night is closing in{% endif %}
         """,
@@ -89,7 +90,7 @@ with story:
         """,
         choices = {
             "altars":   "Make a spiritual visit to the altars",
-            "seaview":  "Look our for attack from the Northern Sea!",
+            "seaview":  "Look out for attack from the Northern Sea!",
             },
         )
 
@@ -166,6 +167,7 @@ with story:
         page = """
         {% if node.change.triggered %}
             {% if node.change.completed %}
+                Mars!
                 We need great warriors!
                 And we need to enforce
                 peace and prosperity!
@@ -175,6 +177,8 @@ with story:
         {% else %}
             You feel strong!
             Mars is with us already!
+            He also helps with the
+            harvest you know...
         {% endif %}
         """,
         nextNodeUid = "marsoffers",
@@ -234,10 +238,6 @@ with story:
 
     NodeFork(
         #2345678901234567890123456
-        page = """
-        You must make an offering
-        to Mars!
-        """,
         uid =   "marsoffers",
         choices = {
             "marswine": "Offer some wine",
@@ -247,11 +247,10 @@ with story:
 
     ThroughSequence(
         uid =   "marswine",
-        goalBoxUid = seaBox.uid,
+        goalBoxUid = altarBox.uid,
         time = incrementTime,
         change = SackChange(
-            assign = { "epona":False },
-            minus = { "points":1 },
+            plus = { "marspoints":2 }
         ),
         sequence = [
         """
@@ -271,14 +270,24 @@ with story:
         uid =   "marsgrain",
         goalBoxUid = paddockBox.uid,
         change = SackChange(
-            minus = { "marspoints":2 },
+            trigger = "sack.mars == True",
+            assign = {"mars":False},
         ),
-        time = incrementTime,
         page = """
-        You offer grain from the
-        local harvest. What is he
-        supposed to do with this?
-        He's not Bruno Mars!
+        {% if node.change.triggered %}
+            {% if node.change.completed %}
+            You offer grain from the
+            local harvest. What is he
+            supposed to do with this?
+            He's not Bruno Mars!
+            {% else %}
+            Mars is bored of grain
+            He encourages harvests
+            but its no fun!
+            {% endif %}
+        {% else %}
+        Mars is satisfied
+        {% endif %}
         """,
         nextNodeUid = "yardArrive",
         missTemplate =  "To continue your adventure {{node.goalBox.label}}",
@@ -349,7 +358,7 @@ with story:
         change = SackChange(
             trigger =   "sack.superhorse == False",
             assign =    { "superhorse":True},
-            plus  =     { "mars":4 },
+            plus  =     { "marspoints":4 },
         ),
         page = """
             {% if node.change.triggered %}
@@ -396,18 +405,32 @@ with story:
         nextNodeUid = "landing",
     )
 
-    ThroughPage(
+    ThroughSequence(
         uid = "retirementsuccess",
         goalBoxUid = paddockBox.uid,
         #2345678901234567890123456
-        page = """
-        WELL DONE! VICTORY
-        With this great horse we
-        can breed horses for the
-        next generation of
-        Hadrian's cavalry
+        sequence = [
+        """
+        WELL DONE! VICTORY!
+        The gods must be with you!
         """,
-        missTemplate = "You completed your adventure with {{sack.points}} points. Return to {{node.goalBox.label}} to respawn.",
+        """{% if sack.eponapoints < 10 %}
+        You've driven back
+        the hordes but will
+        you manage next time?
+        Will we have the
+        right horses?
+        {% endif %}
+        {% if sack.eponapoints >= 10 %}
+        With this horse
+        we can breed horses
+        for the next generation
+        of Hadrian's cavalry
+        {% endif %}
+        """,
+        """You completed your adventure with {{sack.eponapoints}} points. Return to {{node.goalBox.label}} to respawn.""",
+        ],
+        missTemplate = "You completed your adventure with {{sack.eponapoints}} points. Return to {{node.goalBox.label}} to respawn.",
         nextNodeUid = "landing",
     )
 
