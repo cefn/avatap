@@ -21,6 +21,12 @@ if sys.implementation.name == "micropython":
         gc.collect()
         micropython.mem_info()
 else:
+    def noop():
+        pass
+    class AttrObj:
+        pass
+    gc = AttrObj()
+    setattr(gc, "collect", noop)
     from time import time
     def ticks_ms():
         return int(time()*1000)
