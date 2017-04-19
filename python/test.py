@@ -60,7 +60,6 @@ class PageTest(unittest.TestCase):
         assert card.nodeUid == "ending"
         return True
 
-
 '''
 class TullieStoryTest(unittest.TestCase):
 	def __init__(self, story, *args, **kwargs):
@@ -78,5 +77,8 @@ def suite():
     return suite
 '''
 
-if __name__ == "__main__":
+def run():
     unittest.main()
+
+if __name__ == "__main__":
+    run()
