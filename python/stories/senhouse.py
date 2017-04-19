@@ -97,7 +97,6 @@ with story:
     ThroughSequence(
         uid =   "altars",
         time = incrementTime,
-        #2345678901234567890123456
         sequence = [ """
         You are in the temple
         There are many altars
@@ -167,10 +166,9 @@ with story:
         page = """
         {% if node.change.triggered %}
             {% if node.change.completed %}
-                Mars!
+                Mars! MIME how
+                strong you are!
                 We need great warriors!
-                And we need to enforce
-                peace and prosperity!
             {% else %}
                 Mars is displeased
             {% endif %}
@@ -228,7 +226,7 @@ with story:
             plus = { "eponapoints":10 },
         ),
         page = """
-        You offer grain
+        PRETEND to offer grain
         from the local
         harvest
         """,
@@ -254,12 +252,13 @@ with story:
         ),
         sequence = [
         """
-        You leave a cup of wine
+        LEAVE a cup of wine
         for him. He also helps with
-        the harvest which help us
+        the harvest you know!
         """,
         """
-        Make more wine!
+        Which helps us
+        make more wine!
         """
         ],
         nextNodeUid = "yardArrive",
@@ -277,9 +276,10 @@ with story:
         {% if node.change.triggered %}
             {% if node.change.completed %}
             You offer grain from the
-            local harvest. What is he
+            store. What is he
             supposed to do with this?
             He's not Bruno Mars!
+            DANCE like Bruno Mars!
             {% else %}
             Mars is bored of grain
             He encourages harvests
@@ -360,20 +360,20 @@ with story:
             assign =    { "superhorse":True},
             plus  =     { "marspoints":4 },
         ),
+                    #2345678901234567890123456
         page = """
             {% if node.change.triggered %}
                 {% if node.change.completed %}
                     You bravely hold back the
-                    wall so the cavalry can
-                    charge down the coastal
-                    path to victory.
-                    You kill the fleeing barbarian
-                    and take his horse
+                    invaders! CHARGE down
+                    the coastal path!
+                    You kill the fleeing
+                    celts taking a horse
                 {% else %}
                     You hold back the wall as
-                    best you can but are driven
-                    back! the coastal path may be
-                    over run!
+                    best you can but are
+                    driven back! the coastal
+                    path may be over run!
                 {% endif %}
             {% else %}
                 A desperate battle took place here
@@ -382,17 +382,17 @@ with story:
         nextNodeUid = "yardArrive"
     )
 
-    ThroughPage(
+    ThroughSequence(
         uid =           "battleFailure",
         time = incrementTime,
-        page = """
+        sequence = [ """
         You bravely hold back
         the invaders charging
         up the coastalpath
-        but are forced back
-        to the wall and die!
-        Mars help us!
-        """,
+        but are forced back!""",
+        """You run to the wall
+        and die! Mars help us!"""
+        ],
         goalBoxUid =    paddockBox.uid,
         nextNodeUid =   "retirement",
     )
