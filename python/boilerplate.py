@@ -6,19 +6,27 @@ In the long-term these can be cached or compiled to bytecode for optimisation
 TODO CH, merge changes from utemplate, and undo space insertion/removal logic which was added as workaround
 """
 
+#TODO CH generate python3/micropython consistent hash identifier for all templateStrings
+#Attempt to read frozen bytecode template matching hash, otherwise construct it and load it
+
 class Resolver:
 
     def __init__(self, sourceObj, *a, **k):
         self.sourceObj = sourceObj
 
     def file_open(self, name):
-        assert hasattr(self.sourceObj, name), "Loading template {}. No such template".format(name)
+        # TODO CH MEMORY eliminate potential fragmentation from whitespace manipulation
+        assert hasattr(self.sourceObj, name), "Template missing {}".format(name)
         loadedString = getattr(self.sourceObj, name)
-        assert type(loadedString) == str, "Loading template {} entry not of type 'str'".format(name)
+        assert type(loadedString) == str, "Template entry {} not 'str'".format(name)
+        templateString = loadedString
+        # CH Temporary to reduce fragmentation
+        """
         templateString = ""
         # remove leading, trailing and doubled whitespace, but preserve newlines
         for line in loadedString.split("\n"):
             templateString += " ".join(line.split()) + "\n"
+        """
         return io.StringIO(templateString)
 
 class Compiler:
@@ -74,6 +82,9 @@ class Compiler:
             else:
                 self.args = ""
         elif tokens[0] == "include":
+            if not self.flushed_header:
+                # If there was no other output, we still need a header now
+                self.indent()
             tokens = tokens[1].split(None, 1)
             file_path = tokens[0][1:-1]
             with self.loader.file_open(file_path) as inc:
