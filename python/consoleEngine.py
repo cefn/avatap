@@ -1,3 +1,5 @@
+import agnostic
+import gc
 from milecastles import AnonymousContainer, Box, Card, required
 from engine import Engine
 
@@ -8,7 +10,6 @@ class ConsoleSiteEmulator(AnonymousContainer):
         super().__init__(*a, **k)
         
         # get boxes from story registry, create+store an engine for each 
-        #import pdb; pdb.set_trace()
         boxTable = self.story._get_table(Box)
         self.engines = dict()        
         for boxUid,box in boxTable.items():
@@ -32,13 +33,14 @@ class ConsoleSiteEmulator(AnonymousContainer):
         
     def run(self):
         while True:
+            agnostic.report_collect()
             command = input()
             
             # handle commands indentifying a card in the emulator
             cardTable = self._get_table(Card) # use box lookup from story
             if command in cardTable: 
                 self.currentCard = cardTable[command]
-                print("Current card set to '{}'".format(command))
+                print("Card:'{}'".format(command))
 
             else:
                 # handle commands identifying a box in the story
@@ -46,16 +48,16 @@ class ConsoleSiteEmulator(AnonymousContainer):
                 matchingBoxUids = [boxUid for boxUid in boxUids if command in boxUid]
                 numMatching = len(matchingBoxUids)
                 if numMatching == 0:
-                    print("No box uids match '{}'".format(command))
+                    print("No matching box '{}'".format(command))
                 elif numMatching >= 2:
-                    print("Too many box uids match '{}' : {}".format(command, str(matchingBoxUids) ))
+                    print(">1 matching boxes '{}' : {}".format(command, str(matchingBoxUids) ))
                 elif numMatching == 1: # a single box got matched
                     boxUid = matchingBoxUids[0]
                     if self.currentCard != None:
-                        print("Tapping box '{}' with card '{}'".format(command, self.currentCard.uid))
+                        print("Tap '{}' with '{}'".format(command, self.currentCard.uid))
                         self.engines[boxUid].handleCard(self.currentCard)
                     else:
-                        print("Cannot tap box. No card selected. Choose one of {}".format(str(list(cardTable.keys()))))
+                        print("No card. Choose from {}".format(str(list(cardTable.keys()))))
     
 class ConsoleEngine(Engine):
     
