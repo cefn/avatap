@@ -16,10 +16,12 @@ if sys.implementation.name == "micropython":
     from utime import ticks_ms
     import uos as os
     import uio as io
+
     def report_collect():
-        micropython.mem_info()
+        heap = gc.mem_free()
         gc.collect()
-        micropython.mem_info()
+        sys.stdout.write(str(heap - gc.mem_free()))
+
 else:
     def noop():
         pass
