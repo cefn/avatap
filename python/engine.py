@@ -1,8 +1,19 @@
 from agnostic import io,gc
 from milecastles import AnonymousContainer, Holder, Story, signature, required, optional, debug
-from boilerplate import Compiler, Resolver
+import boilerplate
 
 templatePrefix = "{{% args {} %}}".format(signature)
+
+def getTemplateId(story, node, templateName):
+    return "{}_{}_{}".format(story.uid, node.uid, templateName)
+
+def cacheTemplate(story, node, templateName):
+    templateId = getTemplateId(story, node, templateName) # calculate the id
+    templateResolver = boilerplate.Resolver(node)  # use node as resolver (referenced templates also attributes of node)
+    templateJinja = getattr(node, templateName)  # get jinja source from attribute of node
+    templateJinja = templatePrefix + templateJinja  # prefix the templateString with the standard argument signature
+    templatePython = boilerplate.jinjaToPython(templateResolver, templateJinja) # create the python for the generatorFactory
+    boilerplate.saveTemplatePython(templateId, templatePython) # place it as expected
 
 class Engine(AnonymousContainer):
     box = required
@@ -59,26 +70,10 @@ class Engine(AnonymousContainer):
     def evaluateExpression(self, expression):
         return eval(expression, self.getEngineContext())
 
-    # CH TODO factor out into boilerplate
-    def jinjaToPython(self, templateResolver, templateString):
-        # prefix the templateString with the standard argument signature
-        templateString = templatePrefix + templateString
-        # create streams and wire them
-        template_in = io.StringIO(templateString)
-        template_out = io.StringIO()
-        c = Compiler(template_in, template_out, loader=templateResolver)
-        # do a compile run
-        try:
-            c.compile()
-            gc.collect()
-            return template_out.getvalue()
-        except Exception as k:
-            raise k
-
+    """
     def loadGeneratorFactory(self, node, templateString):
         try:
-            compiled = self.jinjaToPython(node, templateString)
-            # TODO CH MEMORY 'Cache' pre-compiled modules, indexed by MD5 hash of templateString (use import from filesystem/frozen module not exec from memory)
+            compiled = jinjaToPython(Resolver(node), templateString)
             g = dict()
             # evaluate the compiled code
             exec(compiled, g)
@@ -106,36 +101,31 @@ class Engine(AnonymousContainer):
         gc.collect()
         return renderedString
 
-    def saveTemplatePython(self, templateId, templatePython):
-        with open("templates/t_{}.py".format(templateId), "w") as f:
-            f.write(templatePython)
-
-    def loadTemplateGeneratorFactory(self, templateId):
-        templateModule = __import__("templates.t_{}".format(templateId), globals(), locals(), ["render"] )
-        return templateModule.render
+    """
 
     def displayNode(self, node):
         templateName = node.getRenderedTemplateName(self)
-        templateId = "{}_{}_{}".format(self.story.uid, node.uid, templateName)
+        templateId = getTemplateId(self.story, node, templateName)
+        # TODO CH consider use of string hash of the template for lazy recompilation
 
         # CH suppress behaviour of dynamically compiling, runtime evaluating
         # generator = self.constructGenerator(node, templateString)
 
+        # TODO CH add flag to suppress caching in development
         # CH instead load from module, (optionally lazy-create module)
         try:
-            generatorFactory = self.loadTemplateGeneratorFactory(templateId)
+            generatorFactory = boilerplate.loadTemplateGeneratorFactory(templateId)
         except ImportError as e:
-            templateResolver = Resolver(node) # use node as resolver (referenced templates also attributes of node)
-            templateJinja = getattr(node, templateName) # get jinja source from attribute of node
-            self.saveTemplatePython(templateId, self.jinjaToPython(templateResolver, templateJinja))
-            generatorFactory = self.loadTemplateGeneratorFactory(templateId)
+            cacheTemplate(self.story, node, templateName)
+            generatorFactory = boilerplate.loadTemplateGeneratorFactory(templateId)
 
         generator = generatorFactory(**self.getEngineContext())
-        nodeText = self.concatenateGeneratedStrings(generator)
+
         if debug:
             debug.debug("SACK" + str(self.card.sack))
-        self.displayText(nodeText)
+
+        self.displayGeneratedText(generator)
 
     '''Should render some text, in whatever form required by the Engine'''
-    def displayText(self, text):
+    def displayGeneratedText(self, text):
         raise AssertionError("Not yet implemented")
