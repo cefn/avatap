@@ -1,62 +1,64 @@
 import unittest
 from milecastles import *
-from engines import Engine
+from engine import Engine
 
 from stories import exampleShort
 
+
 class MockEngine(Engine):
-	def __init__(self, *args, **kwargs):
-		super().__init__(*args, **kwargs)
-		self.render_calls = list()
-		
-	def displayText(self, *args, **kwargs):
-		self.render_calls.append((args, kwargs))
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.render_calls = list()
+
+    def displayText(self, *args, **kwargs):
+        self.render_calls.append((args, kwargs))
+
 
 class EngineContainer(AnonymousContainer):
-	def registerEngine(self, engine):
-		return self._register(Engine, engine)
-	
-	def lookupEngine(self, engineUid):
-		return self._lookup(Engine, engineUid)	
-	
+    def registerEngine(self, engine):
+        return self._register(Engine, engine)
+
+    def lookupEngine(self, engineUid):
+        return self._lookup(Engine, engineUid)
+
+
 class PageTest(unittest.TestCase):
-	
-	def __init__(self, *a, **k): # note multiple inheritance
-		super().__init__(*a, **k)
-		self.num_boxes = 4
-		
-	def setUp(self):
+    def __init__(self, *a, **k):  # note multiple inheritance
+        super().__init__(*a, **k)
+        self.num_boxes = 4
 
-		# create 'story' 
-		self.story = exampleShort.story
-		# configure engine for each box in the story
-		self.engines = EngineContainer()
-		for boxIdString,box in self.story._get_table(Box).items():
-			engine = MockEngine(uid=boxIdString, box=box)
-			engine.registerStory(self.story)
-			self.engines.registerEngine(engine)
+    def setUp(self):
+        # create 'story'
+        self.story = exampleShort.story
+        # configure engine for each box in the story
+        self.engines = dict()
+        boxTable = self.story._get_table(Box)
+        for boxIdString, box in boxTable.items():
+            engine = MockEngine(box=box)
+            engine.registerStory(self.story)
+            self.engines[boxIdString] = engine
 
-	def tearDown(self):
-		del self.engines, self.story
-			
-	def test_show_text(self):
-		# create an imaginary card
-		card = self.story.createBlankCard("abcdefgh")
-				
-		# present the card to the relevant engine
-		engine = self.engines.lookupEngine(exampleShort.boxUids.north)
-		
-		#import pdb; pdb.set_trace()
+    def tearDown(self):
+        del self.engines, self.story
 
-		engine.handleCard(card)
+    def test_show_text(self):
+        # create an imaginary card
+        card = self.story.createBlankCard("abcdefgh")
 
-		# check results
-		assert len(engine.render_calls) == 1
-		a, k = engine.render_calls[0]
-		print(a)
-		
-		assert card.nodeUid == exampleShort.nodeUids.ending
-		return True
+        # present the card to the relevant engine
+        engine = self.engines[exampleShort.northBox.uid]
+
+        # import pdb; pdb.set_trace()
+
+        engine.handleCard(card)
+
+        # check results
+        assert len(engine.render_calls) == 1
+        a, k = engine.render_calls[0]
+        print(a)
+
+        assert card.nodeUid == "ending"
+        return True
 
 '''
 class TullieStoryTest(unittest.TestCase):
@@ -75,5 +77,8 @@ def suite():
     return suite
 '''
 
+def run():
+    unittest.main()
+
 if __name__ == "__main__":
-	unittest.main()
+    run()
