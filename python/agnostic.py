@@ -1,4 +1,5 @@
 import sys
+from time import sleep
 """
 Provides platform-agnostic exported symbols which may be provided in different ways on different platforms.
 For example, the const() symbol provides for values which are treated as constant by the micropython bytecode
@@ -17,10 +18,29 @@ if sys.implementation.name == "micropython":
     import uos as os
     import uio as io
 
-    def report_collect():
-        heap = gc.mem_free()
+    def collect():
         gc.collect()
-        sys.stdout.write(str(heap - gc.mem_free()))
+        gc.threshold(gc.mem_free() // 4 + gc.mem_alloc())
+
+    def report_collect():
+        wasfree = gc.mem_free()
+        collect()
+        sys.stdout.write(str(wasfree))
+        sys.stdout.write("+")
+        sys.stdout.write(str(gc.mem_free() - wasfree))
+        sys.stdout.write("=")
+        sys.stdout.write(str(gc.mem_free()))
+        sys.stdout.write("\n")
+
+    def do_import(moduleName):
+        __import__(moduleName)
+
+    def report_import(moduleName):
+        sys.stdout.write(moduleName)
+        sys.stdout.write("\n")
+        do_import(moduleName)
+        sleep(1)
+        report_collect()
 
 else:
     def noop():
@@ -36,5 +56,9 @@ else:
         return val
     import os as os
     import io as io
+    def collect():
+        pass
     def report_collect():
+        pass
+    def report_import():
         pass
