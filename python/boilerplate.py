@@ -6,7 +6,6 @@ In the long-term these can be cached or compiled to bytecode for optimisation
 TODO CH, merge changes from utemplate, and undo space insertion/removal logic which was added as workaround
 """
 
-
 def jinjaToPython(templateResolver, templateJinja):
     # create streams and wire them
     template_in = io.StringIO(templateJinja)
@@ -19,14 +18,15 @@ def jinjaToPython(templateResolver, templateJinja):
     except Exception as k:
         raise k
 
+def getTemplateModuleName(templateId):
+    return "templates.t_{}".format(templateId)
 
 def saveTemplatePython(templateId, templatePython):
     with open("templates/t_{}.py".format(templateId), "w") as f:
         f.write(templatePython)
 
-
 def loadTemplateGeneratorFactory(templateId):
-    templateModule = __import__("templates.t_{}".format(templateId), globals(), locals(), ["render"] )
+    templateModule = __import__(getTemplateModuleName(templateId), globals(), locals(), ["render"] )
     return templateModule.render
 
 class Resolver:
@@ -36,9 +36,9 @@ class Resolver:
 
     def file_open(self, name):
         # TODO CH MEMORY eliminate potential fragmentation from whitespace manipulation
-        assert hasattr(self.sourceObj, name), "Template missing {}".format(name)
+        assert hasattr(self.sourceObj, name), "Missing {}".format(name)
         loadedString = getattr(self.sourceObj, name)
-        assert type(loadedString) == str, "Template entry {} not 'str'".format(name)
+        assert type(loadedString) == str, "Entry {} not 'str'".format(name)
         templateString = ""
         # remove leading, trailing and doubled whitespace, but preserve newlines
         for line in loadedString.split("\n"):
