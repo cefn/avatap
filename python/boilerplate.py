@@ -6,8 +6,28 @@ In the long-term these can be cached or compiled to bytecode for optimisation
 TODO CH, merge changes from utemplate, and undo space insertion/removal logic which was added as workaround
 """
 
-#TODO CH generate python3/micropython consistent hash identifier for all templateStrings
-#Attempt to read frozen bytecode template matching hash, otherwise construct it and load it
+
+def jinjaToPython(templateResolver, templateJinja):
+    # create streams and wire them
+    template_in = io.StringIO(templateJinja)
+    template_out = io.StringIO()
+    c = Compiler(template_in, template_out, loader=templateResolver)
+    # do a compile run
+    try:
+        c.compile()
+        return template_out.getvalue()
+    except Exception as k:
+        raise k
+
+
+def saveTemplatePython(templateId, templatePython):
+    with open("templates/t_{}.py".format(templateId), "w") as f:
+        f.write(templatePython)
+
+
+def loadTemplateGeneratorFactory(templateId):
+    templateModule = __import__("templates.t_{}".format(templateId), globals(), locals(), ["render"] )
+    return templateModule.render
 
 class Resolver:
 
