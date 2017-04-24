@@ -59,11 +59,10 @@ class Engine(AnonymousContainer):
     def evaluateExpression(self, expression):
         return eval(expression, self.getEngineContext())
 
-    def compileGeneratorFactory(self, node, templateString):
+    # CH TODO factor out into boilerplate
+    def jinjaToPython(self, templateResolver, templateString):
         # prefix the templateString with the standard argument signature
         templateString = templatePrefix + templateString
-        # use node as its own resolver (named templates referenced should be attributes of node)
-        templateResolver = Resolver(node)
         # create streams and wire them
         template_in = io.StringIO(templateString)
         template_out = io.StringIO()
@@ -78,7 +77,7 @@ class Engine(AnonymousContainer):
 
     def loadGeneratorFactory(self, node, templateString):
         try:
-            compiled = self.compileGeneratorFactory(node, templateString)
+            compiled = self.jinjaToPython(node, templateString)
             # TODO CH MEMORY 'Cache' pre-compiled modules, indexed by MD5 hash of templateString (use import from filesystem/frozen module not exec from memory)
             g = dict()
             # evaluate the compiled code
@@ -97,8 +96,7 @@ class Engine(AnonymousContainer):
         return generator
 
     # TODO CH MEMORY - Avoid fragmentation from concatenating strings - pass generator directly to newly improved bitfont (which accepts generators)
-    def concatenateGeneratedStrings(self, node, templateString):
-        renderGen = self.constructGenerator(node, templateString)
+    def concatenateGeneratedStrings(self, renderGen):
         # concatenate the generated strings
         renderOut = io.StringIO()
         for chunk in renderGen:
@@ -108,10 +106,32 @@ class Engine(AnonymousContainer):
         gc.collect()
         return renderedString
 
+    def saveTemplatePython(self, templateId, templatePython):
+        with open("templates/t_{}.py".format(templateId), "w") as f:
+            f.write(templatePython)
+
+    def loadTemplateGeneratorFactory(self, templateId):
+        templateModule = __import__("templates.t_{}".format(templateId), globals(), locals(), ["render"] )
+        return templateModule.render
+
     def displayNode(self, node):
-        templateName = node.getTemplateName(self)
-        templateString = getattr(node, templateName)
-        nodeText = self.concatenateGeneratedStrings(node, templateString)
+        templateName = node.getRenderedTemplateName(self)
+        templateId = "{}_{}_{}".format(self.story.uid, node.uid, templateName)
+
+        # CH suppress behaviour of dynamically compiling, runtime evaluating
+        # generator = self.constructGenerator(node, templateString)
+
+        # CH instead load from module, (optionally lazy-create module)
+        try:
+            generatorFactory = self.loadTemplateGeneratorFactory(templateId)
+        except ImportError as e:
+            templateResolver = Resolver(node) # use node as resolver (referenced templates also attributes of node)
+            templateJinja = getattr(node, templateName) # get jinja source from attribute of node
+            self.saveTemplatePython(templateId, self.jinjaToPython(templateResolver, templateJinja))
+            generatorFactory = self.loadTemplateGeneratorFactory(templateId)
+
+        generator = generatorFactory(**self.getEngineContext())
+        nodeText = self.concatenateGeneratedStrings(generator)
         if debug:
             debug.debug("SACK" + str(self.card.sack))
         self.displayText(nodeText)
