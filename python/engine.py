@@ -109,7 +109,9 @@ class Engine(AnonymousContainer):
         return renderedString
 
     def displayNode(self, node):
-        nodeText = self.concatenateGeneratedStrings(node, node.render(self))
+        templateName = node.getTemplateName(self)
+        templateString = getattr(node, templateName)
+        nodeText = self.concatenateGeneratedStrings(node, templateString)
         if debug:
             debug.debug("SACK" + str(self.card.sack))
         self.displayText(nodeText)
