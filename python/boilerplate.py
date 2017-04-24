@@ -19,14 +19,10 @@ class Resolver:
         assert hasattr(self.sourceObj, name), "Template missing {}".format(name)
         loadedString = getattr(self.sourceObj, name)
         assert type(loadedString) == str, "Template entry {} not 'str'".format(name)
-        templateString = loadedString
-        # CH Temporary to reduce fragmentation
-        """
         templateString = ""
         # remove leading, trailing and doubled whitespace, but preserve newlines
         for line in loadedString.split("\n"):
             templateString += " ".join(line.split()) + "\n"
-        """
         return io.StringIO(templateString)
 
 class Compiler:
