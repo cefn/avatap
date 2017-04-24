@@ -1,3 +1,4 @@
+import sys
 import agnostic
 import gc
 from milecastles import AnonymousContainer, Box, Card, required
@@ -33,7 +34,7 @@ class ConsoleSiteEmulator(AnonymousContainer):
         
     def run(self):
         while True:
-            agnostic.report_collect()
+            #agnostic.report_collect()
             command = input()
             
             # handle commands indentifying a card in the emulator
@@ -61,9 +62,10 @@ class ConsoleSiteEmulator(AnonymousContainer):
     
 class ConsoleEngine(Engine):
     
-    def displayText(self, text):
-        print(text)
-        
+    def displayGeneratedText(self, generator):
+        for chunk in generator:
+            sys.stdout.write(chunk)
+
 if __name__ == "__main__":
     from milecastles import loadStory
     story = loadStory("exampleShort")
