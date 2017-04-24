@@ -137,14 +137,10 @@ with story:
             ),
         page = """
         {% if node.change.triggered %}
-            {% if node.change.completed %}
                 Epona protector of horses!
                 May our mounts stay strong
                 steady and fertile!
                 we must make an offering!
-            {% else %}
-                Epona is displeased
-            {% endif %}
         {% else %}
             Epona is with us already!
         {% endif %}
@@ -165,13 +161,9 @@ with story:
         ),
         page = """
         {% if node.change.triggered %}
-            {% if node.change.completed %}
                 Mars! MIME how
                 strong you are!
                 We need great warriors!
-            {% else %}
-                Mars is displeased
-            {% endif %}
         {% else %}
             You feel strong!
             Mars is with us already!
@@ -202,16 +194,11 @@ with story:
         ),
         page = """
         {% if node.change.triggered %}
-            {% if node.change.completed %}
-                You leave a cup of wine
-                for her. Should she really
-                drink and ride?
-            {% else %}
-            Epona can be seen with
-            ears of grain
-            {% endif %}
+            You leave a cup of wine
+            for her. Should she really
+            drink and ride?
         {% else %}
-        Epona is satisfied
+            Epona is satisfied
         {% endif %}
         """,
         nextNodeUid = "yardArrive",
@@ -274,19 +261,13 @@ with story:
         ),
         page = """
         {% if node.change.triggered %}
-            {% if node.change.completed %}
             You offer grain from the
             store. What is he
             supposed to do with this?
             He's not Bruno Mars!
             DANCE like Bruno Mars!
-            {% else %}
-            Mars is bored of grain
-            He encourages harvests
-            but its no fun!
-            {% endif %}
         {% else %}
-        Mars is satisfied
+            Mars is bored of grain
         {% endif %}
         """,
         nextNodeUid = "yardArrive",
@@ -363,19 +344,16 @@ with story:
                     #2345678901234567890123456
         page = """
             {% if node.change.triggered %}
-                {% if node.change.completed %}
-                    You bravely hold back the
-                    invaders! CHARGE down
-                    the coastal path!
-                    You kill the fleeing
-                    celts taking a horse
-                {% else %}
-                    You hold back the wall as
-                    best you can but are
-                    driven back! the coastal
-                    path may be over run!
-                {% endif %}
+                You bravely hold back the
+                invaders! CHARGE down
+                the coastal path!
+                You kill the fleeing
+                celts taking a horse
             {% else %}
+                You hold back the wall as
+                best you can but are
+                driven back! the coastal
+                path may be over run!
                 A desperate battle took place here
             {% endif %}
         """,
