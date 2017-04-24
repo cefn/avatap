@@ -1,4 +1,5 @@
-from agnostic import io,gc
+import sys
+import agnostic
 from milecastles import AnonymousContainer, Holder, Story, signature, required, optional, debug
 import boilerplate
 
@@ -68,40 +69,9 @@ class Engine(AnonymousContainer):
         )
     
     def evaluateExpression(self, expression):
-        return eval(expression, self.getEngineContext())
-
-    """
-    def loadGeneratorFactory(self, node, templateString):
-        try:
-            compiled = jinjaToPython(Resolver(node), templateString)
-            g = dict()
-            # evaluate the compiled code
-            exec(compiled, g)
-            # extract the render function which was created during exec
-            gc.collect()
-            return g["render"]
-        except Exception as k:
-            raise k
-
-    def constructGenerator(self, node, templateString):
-        renderFun = self.loadGeneratorFactory(node, templateString)
-        # create a string generator by calling the render function, passing context arguments
-        generator = renderFun(**self.getEngineContext())
-        gc.collect()
-        return generator
-
-    # TODO CH MEMORY - Avoid fragmentation from concatenating strings - pass generator directly to newly improved bitfont (which accepts generators)
-    def concatenateGeneratedStrings(self, renderGen):
-        # concatenate the generated strings
-        renderOut = io.StringIO()
-        for chunk in renderGen:
-            renderOut.write(chunk)
-        # return concatenated string
-        renderedString = renderOut.getvalue()
-        gc.collect()
-        return renderedString
-
-    """
+        result = eval(expression, self.getEngineContext())
+        agnostic.collect()
+        return result
 
     def displayNode(self, node):
         templateName = node.getRenderedTemplateName(self)
@@ -115,16 +85,16 @@ class Engine(AnonymousContainer):
         # CH instead load from module, (optionally lazy-create module)
         try:
             generatorFactory = boilerplate.loadTemplateGeneratorFactory(templateId)
+            sys.stdout.write("Hit Cache\n")
         except ImportError as e:
             cacheTemplate(self.story, node, templateName)
             generatorFactory = boilerplate.loadTemplateGeneratorFactory(templateId)
 
         generator = generatorFactory(**self.getEngineContext())
-
-        if debug:
-            debug.debug("SACK" + str(self.card.sack))
+        agnostic.collect()
 
         self.displayGeneratedText(generator)
+        agnostic.collect()
 
     '''Should render some text, in whatever form required by the Engine'''
     def displayGeneratedText(self, text):
