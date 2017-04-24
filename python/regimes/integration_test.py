@@ -22,6 +22,3 @@ def run():
                 screen.clear()
                 font.draw_para(para, plotter)
                 screen.redraw()
-
-if __name__ == "__main__":
-    run()
