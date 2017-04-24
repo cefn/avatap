@@ -300,8 +300,8 @@ class Node(UidItem):
                 return redirectedUid # allow operators to send a redirect nodeUid
         return None
 
-    def render(self,  engine):
-        return None
+    def getTemplateName(self, engine):
+        raise AssertionError("Not yet implemented")
 
     def deactivate(self,  engine):
         return None
@@ -407,8 +407,8 @@ class Page(Node):
     page = required
     template = "{{% include 'page' {} %}}".format(signature)
 
-    def render(self, engine):
-        return self.template
+    def getTemplateName(self, engine):
+        return "template"
 
 class GoalPage(Page):
     goalBoxUid = required
@@ -424,11 +424,11 @@ class GoalPage(Page):
         else:
             return None
 
-    def render(self, engine):
+    def getTemplateName(self, engine):
         if engine.box == self.goalBox:
-            return self.template # render as usual
+            return "template" # render as usual
         else:
-            return self.missTemplate            # render a miss
+            return  "missTemplate" # render a miss
         
 class ThroughPage(GoalPage):
     nextNodeUid = required
