@@ -259,6 +259,7 @@ class Box(UidItem):
 class Node(UidItem):
     change = None
     time = optional
+    templateNames = []
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -300,7 +301,7 @@ class Node(UidItem):
                 return redirectedUid # allow operators to send a redirect nodeUid
         return None
 
-    def getTemplateName(self, engine):
+    def getRenderedTemplateName(self, engine):
         raise AssertionError("Not yet implemented")
 
     def deactivate(self,  engine):
@@ -406,13 +407,15 @@ class ConditionFork(Node):
 class Page(Node):
     page = required
     template = "{{% include 'page' {} %}}".format(signature)
+    templateNames = ["template"]
 
-    def getTemplateName(self, engine):
+    def getRenderedTemplateName(self, engine):
         return "template"
 
 class GoalPage(Page):
     goalBoxUid = required
     missTemplate="Please go to {{node.goalBox.label}} to continue your adventure"
+    templateNames = Page.templateNames + ["missTemplate"]
 
     def getGoalBoxUid(self, story):
         return self.goalBoxUid
@@ -424,12 +427,12 @@ class GoalPage(Page):
         else:
             return None
 
-    def getTemplateName(self, engine):
+    def getRenderedTemplateName(self, engine):
         if engine.box == self.goalBox:
             return "template" # render as usual
         else:
             return  "missTemplate" # render a miss
-        
+
 class ThroughPage(GoalPage):
     nextNodeUid = required
 
