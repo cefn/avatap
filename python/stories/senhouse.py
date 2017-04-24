@@ -380,7 +380,7 @@ with story:
         uid = "retirement",
         goalBoxUid = entranceBox.uid,
         page = "Bad luck. Respawned. Tap to begin your adventure again",
-        missTemplate = "You completed your adventure with {{sack.points}} points. Return to {{node.goalBox.label}} to respawn.",
+        missTemplate = "You completed your adventure with {{sack.eponapoints}} points. Return to {{node.goalBox.label}} to respawn.",
         nextNodeUid = "landing",
     )
 
