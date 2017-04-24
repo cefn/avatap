@@ -1,4 +1,4 @@
-from agnostic import ticks_ms
+import agnostic
 import sys
 
 """
@@ -86,7 +86,7 @@ class Debug():
         self.report("\n")
 
 debug = None
-debug = Debug()
+#debug = Debug()
 
 story = None
 
@@ -173,10 +173,8 @@ class Container(UidItem):
     '''register any subclass of item to be looked up later by its id'''
     def _register(self, cls, item):
         table = self._get_table(cls)
-        if not(item.uid in table):
-            table[item.uid]=item
-        else:
-            raise AssertionError(type(self).__name__ + ": " +  cls.__name__ + " table already contains '" + item.uid + "'")
+        assert not(item.uid in table), "Duplicate id {} in {} {} table".format(item.uid, type(self).__name__, cls.__name__)
+        table[item.uid]=item
 
     ''''''
     def _lookup(self, cls, uid):
@@ -185,8 +183,7 @@ class Container(UidItem):
                 table = self.registry[cls.__name__]
                 if uid in table:
                     return table[uid]
-        raise AssertionError("'" + uid + "' not in " + cls.__name__ + " lookup table")
-
+        assert False, "{} not in {} table".format(uid, cls.__name__)
 
 class AnonymousContainer(Container):
     uid = optional
@@ -217,9 +214,11 @@ class Story(Container):
         # construct an easy dot lookup mechanism from within templates
         self.nodes = Holder(**self._get_table(Node))
         self.boxes = Holder(**self._get_table(Box))
+        agnostic.collect()
         # delegate validation to nodes
         for nodeUid, node in self._get_table(Node).items():
             node.validate(self)
+            agnostic.collect()
 
     def registerNode(self, node):
         return self._register(Node, node)
@@ -268,7 +267,8 @@ class Node(UidItem):
     def validate(self, story):
         names = self.name_properties()
         # lookup box/node uids, generate new attributes pointing to boxes and nodes
-        print("{} {} ..".format(type(self).__name__, self.uid))
+        if debug:
+            debug.debug("{} {} ..".format(type(self).__name__, self.uid))
         uidSuffix = "Uid"
         for cls,clsSuffix in [(Node, "NodeUid"), (Box, "BoxUid")]:
             for name in names:
@@ -477,6 +477,7 @@ class NodeFork(Page):
         for key,label in self.choices.items():
             self.choiceList += "{{% if not(node.isHidden(engine, '{key}')) %}}{label} : {{{{story.lookupNode('{key}').getGoalBox(story).label}}}}\n{{% endif %}}".format(key=key, label=label)
 
+
     def validate(self, story):
         super().validate(story)
         
@@ -539,6 +540,7 @@ def ThroughSequence(uid, nextNodeUid, goalBoxUid, sequence, **k):
             nextNodeUid =   nextNodeUid,
             **kwargs
         )
+        agnostic.collect()
         nextNodeUid = pageUid
 
 # Condition render
