@@ -1,8 +1,8 @@
 from consoleEngine import ConsoleSiteEmulator
 from milecastles import Story, Box, ThroughPage, ThroughSequence, ConditionFork, NodeFork, SackChange
+import agnostic
 
-# inspects the module to figure out the story name (e.g. corbridge)
-storyName = __name__.split(".")[-1]
+storyName = "corbridge"
 
 # create story
 story = Story(
@@ -20,13 +20,17 @@ story = Story(
         "afternoon": False,
     }
 )
+agnostic.collect()
 
 with story:
     # populate with boxes
 
     smithBox = Box(uid="1", label="Box I", description="the Blacksmith")
+    agnostic.collect()
     workshopBox = Box(uid="2", label="Box II", description="the Workshop")
+    agnostic.collect()
     tombBox = Box(uid="3", label="Box III", description="the Tomb")
+    agnostic.collect()
     quarryBox = Box(uid="4", label="Box IV", description="the Quarry")
 
     entranceBox = smithBox
@@ -61,6 +65,7 @@ with story:
                 Spend it wisely!""",
         ],
     )
+    agnostic.collect()
 
     # 1b Blacksmith am/pm
 
@@ -71,6 +76,7 @@ with story:
         goalBoxUid=smithBox.uid,
         nextNodeUid="sharpening",
     )
+    agnostic.collect()
 
     ConditionFork(
         uid="sharpening",
@@ -78,6 +84,8 @@ with story:
         trueNodeUid="sharpeningSuccess",
         falseNodeUid="sharpeningFailure",
     )
+    agnostic.collect()
+
     # changed this to ThroughPage as logic wont work so well in a ThroughSequence
     ThroughPage(
         uid="sharpeningSuccess",
@@ -107,6 +115,7 @@ with story:
         """,
         nextNodeUid="sharpened",
     )
+    agnostic.collect()
 
     ThroughPage(
         uid="sharpened",
@@ -124,6 +133,8 @@ with story:
         goalBoxUid=smithBox.uid,
         nextNodeUid="fromSmith",
     )
+    agnostic.collect()
+
     # Now our sharpening fail
     ThroughPage(
         uid="sharpeningFailure",
@@ -140,6 +151,7 @@ with story:
         goalBoxUid=smithBox.uid,
         nextNodeUid="workshop1",
     )
+    agnostic.collect()
 
     # BOX II
 
@@ -157,6 +169,7 @@ with story:
         goalBoxUid=workshopBox.uid,
         nextNodeUid="workshop2",
     )
+    agnostic.collect()
 
     NodeFork(
         uid="workshop2",
@@ -171,6 +184,7 @@ with story:
             "smith1": "sack.smithAnger==True",
         },
     )
+    agnostic.collect()
 
     # 2b Afternoon / Second Workshop Fork
 
@@ -187,6 +201,7 @@ with story:
             """,
         ],
     )
+    agnostic.collect()
 
     ThroughPage(
         uid="firstSnack",
@@ -206,6 +221,7 @@ with story:
         """,
         goalBoxUid=workshopBox.uid,
     )
+    agnostic.collect()
 
     ThroughPage(
         uid="fromSmith",
@@ -214,6 +230,7 @@ with story:
         goalBoxUid=workshopBox.uid,
         nextNodeUid="workshop4",
     )
+    agnostic.collect()
 
     NodeFork(
         uid="workshop4",
@@ -228,6 +245,7 @@ with story:
             "smith1": "sack.smithAnger==True",
         },
     )
+    agnostic.collect()
 
     # 2c - Carving Fork
 
@@ -241,6 +259,7 @@ with story:
         goalBoxUid=workshopBox.uid,
         nextNodeUid="carve",
     )
+    agnostic.collect()
 
     ConditionFork(
         uid="carve",
@@ -248,6 +267,7 @@ with story:
         trueNodeUid="goodCarve",
         falseNodeUid="badCarve",
     )
+    agnostic.collect()
 
     ThroughPage(
         uid="goodCarve",
@@ -262,6 +282,7 @@ with story:
         goalBoxUid=workshopBox.uid,
         nextNodeUid="painter1",
     )
+    agnostic.collect()
 
     ThroughPage(
         uid="badCarve",
@@ -277,6 +298,7 @@ with story:
         goalBoxUid=workshopBox.uid,
         nextNodeUid="painter1",
     )
+    agnostic.collect()
 
     # BOX III
 
@@ -292,6 +314,7 @@ with story:
         goalBoxUid=tombBox.uid,
         nextNodeUid="inspire2",
     )
+    agnostic.collect()
 
     ThroughSequence(
         uid="inspire2",
@@ -311,6 +334,7 @@ with story:
                 """,
         ],
     )
+    agnostic.collect()
 
     # 3b - Burial Club
 
@@ -328,6 +352,7 @@ with story:
         goalBoxUid=tombBox.uid,
         nextNodeUid="burial2",
     )
+    agnostic.collect()
 
     NodeFork(
         uid="burial2",
@@ -336,6 +361,7 @@ with story:
             "inspire3": "You should look at Flavinus' helmet plate",
         },
     )
+    agnostic.collect()
 
     ThroughSequence(
         uid="inspire3",
@@ -360,6 +386,7 @@ with story:
                 """,
         ],
     )
+    agnostic.collect()
 
     ThroughSequence(
         uid="drink",
@@ -377,6 +404,7 @@ with story:
             # seperated this from logic with a thru page
         ],
     )
+    agnostic.collect()
 
     # Seperated this from story.node.drink sequence so logic works
     ThroughPage(
@@ -395,6 +423,7 @@ with story:
         goalBoxUid=tombBox.uid,
         nextNodeUid="workshop5",
     )
+    agnostic.collect()
 
     # 3c - Painter fork
 
@@ -406,6 +435,7 @@ with story:
         goalBoxUid=tombBox.uid,
         nextNodeUid="painter2",
     )
+    agnostic.collect()
 
     ConditionFork(
         uid="painter2",
@@ -414,6 +444,7 @@ with story:
         trueNodeUid="goodPaint",
         falseNodeUid="badPaint",
     )
+    agnostic.collect()
 
     ThroughPage(
         uid="goodPaint",
@@ -430,6 +461,7 @@ with story:
         goalBoxUid=tombBox.uid,
         nextNodeUid="endingGood",
     )
+    agnostic.collect()
 
     ThroughPage(
         uid="badPaint",
@@ -446,6 +478,7 @@ with story:
         goalBoxUid=tombBox.uid,
         nextNodeUid="endingBad",
     )
+    agnostic.collect()
 
     # 3d - Endings
 
@@ -466,6 +499,7 @@ with story:
             he was.' they say.""",
         ]
     )
+    agnostic.collect()
     # Added the node.change.plus code so checks against logic
 
     ThroughPage(
@@ -481,6 +515,7 @@ with story:
         goalBoxUid=tombBox.uid,
         nextNodeUid="ending",
     )
+    agnostic.collect()
 
     ThroughSequence(
         uid="endingBad",
@@ -500,6 +535,7 @@ with story:
                 They refuse to pay you.""",
         ],
     )
+    agnostic.collect()
 
     ThroughPage(
         uid="refund",
@@ -514,6 +550,7 @@ with story:
         goalBoxUid=tombBox.uid,
         nextNodeUid="ending",
     )
+    agnostic.collect()
 
     # BOX IV
 
@@ -526,6 +563,7 @@ with story:
         goalBoxUid=quarryBox.uid,
         nextNodeUid="stone2",
     )
+    agnostic.collect()
 
     ThroughPage(
         uid="stone2",
@@ -537,6 +575,7 @@ with story:
         goalBoxUid=quarryBox.uid,
         nextNodeUid="stoneFork",
     )
+    agnostic.collect()
 
     NodeFork(
         uid="stoneFork",
@@ -549,6 +588,7 @@ with story:
             "stoneDonkey": "Go to {{story.nodes.stoneDonkey.getGoalBox(story).label}}, to hire a donkey and PRETEND to ride it back to the workshop.",
         }
     )
+    agnostic.collect()
 
     ThroughPage(
         uid="stoneAlone",
@@ -558,6 +598,7 @@ with story:
         """,
         nextNodeUid="workshop1"
     )
+    agnostic.collect()
 
     ThroughPage(
         uid="stoneDonkey",
@@ -568,6 +609,7 @@ with story:
         page="You hired a donkey to carry the stone, now ride the donkey back to the workshop. It costs {{node.change.minus['money']}} Denarii, leaving you with {{sack.money}} Denarii.",
         nextNodeUid="stoneTime"
     )
+    agnostic.collect()
 
     ConditionFork(
         uid="stoneTime",
@@ -575,6 +617,7 @@ with story:
         trueNodeUid="workshop1",
         falseNodeUid="fromSmith",
     )
+    agnostic.collect()
 
     ThroughPage(
         uid="ending",
@@ -591,7 +634,7 @@ with story:
         goalBoxUid=entranceBox.uid,
         # goalBoxUid = tombBox.uid,
     )
-
+    agnostic.collect()
 
 def run():
     emulator = ConsoleSiteEmulator(story=story)
