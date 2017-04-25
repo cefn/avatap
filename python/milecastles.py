@@ -302,7 +302,7 @@ class Node(UidItem):
         return None
 
     def getRenderedTemplateName(self, engine):
-        raise AssertionError("Not yet implemented")
+        assert False, "Not yet implemented"
 
     def deactivate(self,  engine):
         return None
@@ -316,7 +316,6 @@ class NodeOperator(Item):
     def operate(self,  engine):
         pass
 
-
 # See also https://twine2.neocities.org/1.html for Twine reference features around variables and execution
 class SackChange(NodeOperator):
     trigger = optional
@@ -327,20 +326,17 @@ class SackChange(NodeOperator):
     stayPositive = True
 
     def validate(self, story):
-        assignName = "assign"
-        plusName = "plus"
-        minusName = "minus"
-        resetName = "reset"
-        changeNames = [assignName, plusName, minusName, resetName]
-        dictMessage = "should be dict"
-        if not any([hasattr(self, changeName) for changeName in changeNames]): self.raise_property("[required]", "needs one of " + str(changeNames))
-        if not (self.reset is None or all([self.assign is None, self.plus is None, self.minus is None]) ): self.raise_property(resetName, "obliterates " + str([name for name in changeNames if not name is resetName]))
-        if not (self.assign is None or type(self.assign) == dict): self.raise_property(assignName, dictMessage)
-        if not (self.plus is None or type(self.plus) == dict) : self.raise_property(plusName, dictMessage)
-        if not(self.minus is None or type(self.minus) == dict) : self.raise_property(minusName, dictMessage)
-        if not(self.reset is None or type(self.reset) == dict) : self.raise_property(resetName, dictMessage)
+        validAtts = any([hasattr(self, changeName) for changeName in ["assign", "plus", "minus", "reset"]])
+        if not validAtts: self.raise_property("[required]", "needs one of; assign, plus, minus, reset")
+        del validAtts
+        if not (self.reset is None or all([self.assign is None, self.plus is None, self.minus is None]) ): self.raise_property("reset", "obliterates plus, minus, assign" )
+        if not (self.assign is None or type(self.assign) == dict): self.raise_property("assign","should be dict")
+        if not (self.plus is None or type(self.plus) == dict) : self.raise_property("plus",     "should be dict")
+        if not(self.minus is None or type(self.minus) == dict) : self.raise_property("minus",   "should be dict")
+        if not(self.reset is None or type(self.reset) == dict) : self.raise_property("minus",   "should be dict")
 
     def operate(self, engine):
+        # TODO CH add agnostic.collect() in finally clause, given evaluateExpression and use of items()
         # reset the flags
         self.triggered = False
         self.completed = False
@@ -357,9 +353,11 @@ class SackChange(NodeOperator):
                             # refuse the change
                             self.completed = False
                             return                        
-            # can trigger change(s)
+
+            # proceed with change(s)
             
             # handle setting (any python value)
+            # TODO can this be done without items() generator? cost of items() ?
             if self.assign is not None:
                 for key,val in self.assign.items():
                     sack[key]=val
@@ -390,7 +388,7 @@ class ConditionFork(Node):
 
     def evaluate(self, engine):
         return engine.evaluateExpression(self.condition)
-    
+
     def activate(self, engine):
         super().activate(engine)
         if self.evaluate(engine):
@@ -524,9 +522,9 @@ class NodeFork(Page):
 # macro for making ThroughPage node chain , based at the same goalBox, 
 # each having one page from the list 'sequence'
 def ThroughSequence(uid, nextNodeUid, goalBoxUid, sequence, **k):
-    pairs = list(enumerate(sequence))
-    pairs.reverse()
-    for pos,page in pairs:
+    pos = len(sequence) - 1
+    while pos >= 0:
+        page = sequence[pos]
         if pos == 0: # first node
             pageUid = uid # has uid of sequence
             kwargs = k # inherits all operators etc
@@ -540,8 +538,9 @@ def ThroughSequence(uid, nextNodeUid, goalBoxUid, sequence, **k):
             nextNodeUid =   nextNodeUid,
             **kwargs
         )
-        agnostic.collect()
         nextNodeUid = pageUid
+        pos -= 1
+        agnostic.collect()
 
 # Condition render
 # and text rendering from sack
