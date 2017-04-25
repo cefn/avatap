@@ -14,11 +14,11 @@ from machine import Pin
 
 screen = Screen(slaveSelectPin=Pin(15))
 
-def plot(x, y):
+def plotter(x, y):
     screen.plot(x, y)
 
 screen.clear()
-font.draw_line("Hello World", plot)
+font.draw_line("Hello World", plotter)
 screen.redraw()
 report_collect()
 
