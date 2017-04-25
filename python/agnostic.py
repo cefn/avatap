@@ -1,5 +1,4 @@
 import sys
-from time import sleep
 """
 Provides platform-agnostic exported symbols which may be provided in different ways on different platforms.
 For example, the const() symbol provides for values which are treated as constant by the micropython bytecode
@@ -13,8 +12,7 @@ if sys.implementation.name == "micropython":
     import micropython
     from micropython import const
     import gc
-    from utime import time
-    from utime import ticks_ms
+    from utime import sleep,ticks_ms
     import uos as os
     import uio as io
 
@@ -49,7 +47,7 @@ else:
         pass
     gc = AttrObj()
     setattr(gc, "collect", noop)
-    from time import time
+    from time import sleep,time
     def ticks_ms():
         return int(time()*1000)
     def const(val):
