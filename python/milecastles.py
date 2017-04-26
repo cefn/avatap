@@ -1,4 +1,4 @@
-from agnostic import ticks_ms
+import agnostic
 import sys
 
 """
@@ -86,7 +86,7 @@ class Debug():
         self.report("\n")
 
 debug = None
-debug = Debug()
+#debug = Debug()
 
 story = None
 
@@ -173,10 +173,8 @@ class Container(UidItem):
     '''register any subclass of item to be looked up later by its id'''
     def _register(self, cls, item):
         table = self._get_table(cls)
-        if not(item.uid in table):
-            table[item.uid]=item
-        else:
-            raise AssertionError(type(self).__name__ + ": " +  cls.__name__ + " table already contains '" + item.uid + "'")
+        assert not(item.uid in table), "Duplicate id {} in {} {} table".format(item.uid, type(self).__name__, cls.__name__)
+        table[item.uid]=item
 
     ''''''
     def _lookup(self, cls, uid):
@@ -185,8 +183,7 @@ class Container(UidItem):
                 table = self.registry[cls.__name__]
                 if uid in table:
                     return table[uid]
-        raise AssertionError("'" + uid + "' not in " + cls.__name__ + " lookup table")
-
+        assert False, "{} not in {} table".format(uid, cls.__name__)
 
 class AnonymousContainer(Container):
     uid = optional
@@ -217,9 +214,11 @@ class Story(Container):
         # construct an easy dot lookup mechanism from within templates
         self.nodes = Holder(**self._get_table(Node))
         self.boxes = Holder(**self._get_table(Box))
+        agnostic.collect()
         # delegate validation to nodes
         for nodeUid, node in self._get_table(Node).items():
             node.validate(self)
+            agnostic.collect()
 
     def registerNode(self, node):
         return self._register(Node, node)
@@ -268,7 +267,8 @@ class Node(UidItem):
     def validate(self, story):
         names = self.name_properties()
         # lookup box/node uids, generate new attributes pointing to boxes and nodes
-        print("{} {} ..".format(type(self).__name__, self.uid))
+        if debug:
+            debug.debug("{} {} ..".format(type(self).__name__, self.uid))
         uidSuffix = "Uid"
         for cls,clsSuffix in [(Node, "NodeUid"), (Box, "BoxUid")]:
             for name in names:
@@ -302,7 +302,7 @@ class Node(UidItem):
         return None
 
     def getRenderedTemplateName(self, engine):
-        raise AssertionError("Not yet implemented")
+        assert False, "Not yet implemented"
 
     def deactivate(self,  engine):
         return None
@@ -316,7 +316,6 @@ class NodeOperator(Item):
     def operate(self,  engine):
         pass
 
-
 # See also https://twine2.neocities.org/1.html for Twine reference features around variables and execution
 class SackChange(NodeOperator):
     trigger = optional
@@ -327,20 +326,17 @@ class SackChange(NodeOperator):
     stayPositive = True
 
     def validate(self, story):
-        assignName = "assign"
-        plusName = "plus"
-        minusName = "minus"
-        resetName = "reset"
-        changeNames = [assignName, plusName, minusName, resetName]
-        dictMessage = "should be dict"
-        if not any([hasattr(self, changeName) for changeName in changeNames]): self.raise_property("[required]", "needs one of " + str(changeNames))
-        if not (self.reset is None or all([self.assign is None, self.plus is None, self.minus is None]) ): self.raise_property(resetName, "obliterates " + str([name for name in changeNames if not name is resetName]))
-        if not (self.assign is None or type(self.assign) == dict): self.raise_property(assignName, dictMessage)
-        if not (self.plus is None or type(self.plus) == dict) : self.raise_property(plusName, dictMessage)
-        if not(self.minus is None or type(self.minus) == dict) : self.raise_property(minusName, dictMessage)
-        if not(self.reset is None or type(self.reset) == dict) : self.raise_property(resetName, dictMessage)
+        validAtts = any([hasattr(self, changeName) for changeName in ["assign", "plus", "minus", "reset"]])
+        if not validAtts: self.raise_property("[required]", "needs one of; assign, plus, minus, reset")
+        del validAtts
+        if not (self.reset is None or all([self.assign is None, self.plus is None, self.minus is None]) ): self.raise_property("reset", "obliterates plus, minus, assign" )
+        if not (self.assign is None or type(self.assign) == dict): self.raise_property("assign","should be dict")
+        if not (self.plus is None or type(self.plus) == dict) : self.raise_property("plus",     "should be dict")
+        if not(self.minus is None or type(self.minus) == dict) : self.raise_property("minus",   "should be dict")
+        if not(self.reset is None or type(self.reset) == dict) : self.raise_property("minus",   "should be dict")
 
     def operate(self, engine):
+        # TODO CH add agnostic.collect() in finally clause, given evaluateExpression and use of items()
         # reset the flags
         self.triggered = False
         self.completed = False
@@ -357,9 +353,11 @@ class SackChange(NodeOperator):
                             # refuse the change
                             self.completed = False
                             return                        
-            # can trigger change(s)
+
+            # proceed with change(s)
             
             # handle setting (any python value)
+            # TODO can this be done without items() generator? cost of items() ?
             if self.assign is not None:
                 for key,val in self.assign.items():
                     sack[key]=val
@@ -390,7 +388,7 @@ class ConditionFork(Node):
 
     def evaluate(self, engine):
         return engine.evaluateExpression(self.condition)
-    
+
     def activate(self, engine):
         super().activate(engine)
         if self.evaluate(engine):
@@ -477,6 +475,7 @@ class NodeFork(Page):
         for key,label in self.choices.items():
             self.choiceList += "{{% if not(node.isHidden(engine, '{key}')) %}}{label} : {{{{story.lookupNode('{key}').getGoalBox(story).label}}}}\n{{% endif %}}".format(key=key, label=label)
 
+
     def validate(self, story):
         super().validate(story)
         
@@ -523,9 +522,9 @@ class NodeFork(Page):
 # macro for making ThroughPage node chain , based at the same goalBox, 
 # each having one page from the list 'sequence'
 def ThroughSequence(uid, nextNodeUid, goalBoxUid, sequence, **k):
-    pairs = list(enumerate(sequence))
-    pairs.reverse()
-    for pos,page in pairs:
+    pos = len(sequence) - 1
+    while pos >= 0:
+        page = sequence[pos]
         if pos == 0: # first node
             pageUid = uid # has uid of sequence
             kwargs = k # inherits all operators etc
@@ -540,6 +539,8 @@ def ThroughSequence(uid, nextNodeUid, goalBoxUid, sequence, **k):
             **kwargs
         )
         nextNodeUid = pageUid
+        pos -= 1
+        agnostic.collect()
 
 # Condition render
 # and text rendering from sack

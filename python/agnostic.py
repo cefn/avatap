@@ -12,15 +12,33 @@ if sys.implementation.name == "micropython":
     import micropython
     from micropython import const
     import gc
-    from utime import time
-    from utime import ticks_ms
+    from utime import sleep,ticks_ms
     import uos as os
     import uio as io
 
-    def report_collect():
-        heap = gc.mem_free()
+    def collect():
         gc.collect()
-        sys.stdout.write(str(heap - gc.mem_free()))
+        gc.threshold(gc.mem_free() // 4 + gc.mem_alloc())
+
+    def report_collect():
+        wasfree = gc.mem_free()
+        collect()
+        sys.stdout.write(str(wasfree))
+        sys.stdout.write("+")
+        sys.stdout.write(str(gc.mem_free() - wasfree))
+        sys.stdout.write("=")
+        sys.stdout.write(str(gc.mem_free()))
+        sys.stdout.write("\n")
+
+    def do_import(moduleName):
+        __import__(moduleName)
+
+    def report_import(moduleName):
+        sys.stdout.write(moduleName)
+        sys.stdout.write("\n")
+        do_import(moduleName)
+        sleep(1)
+        report_collect()
 
 else:
     def noop():
@@ -29,12 +47,16 @@ else:
         pass
     gc = AttrObj()
     setattr(gc, "collect", noop)
-    from time import time
+    from time import sleep,time
     def ticks_ms():
         return int(time()*1000)
     def const(val):
         return val
     import os as os
     import io as io
+    def collect():
+        pass
     def report_collect():
+        pass
+    def report_import():
         pass
