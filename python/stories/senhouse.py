@@ -118,7 +118,6 @@ with story:
     NodeFork(
         uid = "chooseGod",
         choices  = {
-            #2345678901234567890123456
             "epona" : "Epona, protector of horses",
             "mars"  : "Mars, god of war & peace",
         },
@@ -128,7 +127,6 @@ with story:
     ThroughPage(
         uid = "epona",
         time = incrementTime,
-        #2345678901234567890123456
         change = SackChange(
             trigger = "sack.epona == False",
             assign = { "epona":True },
@@ -151,7 +149,6 @@ with story:
         uid = "mars",
         goalBoxUid = seaBox.uid,
         time = incrementTime,
-        #2345678901234567890123456
         change = SackChange(
             trigger = "sack.mars == False",
             assign = { "mars":True },
@@ -184,13 +181,20 @@ with story:
         goalBoxUid = seaBox.uid,
         change = SackChange(
             trigger = "sack.epona == True",
-            assign = {"epona":False},
+            assign = { "epona":False },
+            minus = { "eponapoints":1 },
         ),
         page =
-        """{% if node.change.triggered %}You leave a cup of wine
-            for her. Should she really
-            drink and ride?
-        {% else %}Epona is satisfied
+        """{% if node.change.triggered %}
+                {% if node.change.completed %}
+                    You leave a cup of wine
+                    for her. Should she really
+                    drink and ride?
+                {% else %}
+                    You are out of favour!
+                {% endif %}
+        {% else %}
+            Epona is satisfied.
         {% endif %}
         """,
         nextNodeUid = "yardArrive",
@@ -206,8 +210,10 @@ with story:
         ),
         page =
         """PRETEND to offer grain
-        from the local
-        harvest
+        from the local harvest
+        Epona is often depicted
+        with grain. She also
+        is a god of fertility
         """,
         nextNodeUid = "yardArrive",
     )
@@ -250,8 +256,8 @@ with story:
         page = """{% if node.change.triggered %}You offer grain from the
             store. What is he
             supposed to do with this?
-            He's not Bruno Mars!
-            DANCE like Bruno Mars!
+            He's not a horse!
+            GALLOP away mortal!
         {% else %}Mars is bored of grain
         {% endif %}
         """,
@@ -323,13 +329,12 @@ with story:
             assign =    { "superhorse":True},
             plus  =     { "marspoints":4 },
         ),
-                    #2345678901234567890123456
         page = """{% if node.change.triggered %}You bravely hold back the
                 invaders! CHARGE down
                 the coastal path!
                 You kill the fleeing
                 celts taking a horse
-            {% else %}You hold back the wall as
+            {% else %}You HOLD back the invaders
                 best you can but are
                 driven back! the coastal
                 path may be over run!
@@ -344,12 +349,12 @@ with story:
         uid =           "battleFailure",
         time = incrementTime,
         sequence = [
-            """You bravely hold back
+            """You bravely HOLD back
             the invaders charging
             up the coastalpath
             but are forced back!""",
-            """You run to the wall
-            and die! Mars help us!"""
+            """You RUN to the wall
+            and DIE! Mars help us!"""
         ],
         goalBoxUid =    paddockBox.uid,
         nextNodeUid =   "retirement",
@@ -359,7 +364,12 @@ with story:
     ThroughPage(
         uid = "retirement",
         goalBoxUid = entranceBox.uid,
-        page = "Bad luck. Respawned. Tap to begin your adventure again",
+        #12345678901234567890123456
+        page = """Bad luck. Respawned.
+        Begin your adventure again",
+        You completed your adventure
+        with {{sack.eponapoints}} points.
+        """,
         missTemplate =
         """You completed your adventure with {{sack.eponapoints}} points.
         Return to {{node.goalBox.label}} to respawn.""",
@@ -381,13 +391,21 @@ with story:
             {% endif %}{% if sack.eponapoints >= 10 %}With this horse
             we can breed horses
             for the next generation
-            of Hadrian's cavalry
+            of Hadrian's cavalry!
             {% endif %}
             """,
-            """You completed your adventure with {{sack.eponapoints}} points.
+            """Your adventure is over.
+            You have {{sack.eponapoints}} Epona points.
+            Mars gives you {{sack.marspoints}} gold pieces
+            in the afterlife.
             Return to {{node.goalBox.label}} to respawn.""",
         ],
-        missTemplate = "You completed your adventure with {{sack.eponapoints}} points. Return to {{node.goalBox.label}} to respawn.",
+        missTemplate = """Your adventure is over.
+            You have {{sack.eponapoints}} Epona points.
+            Mars gives you {{sack.marspoints}} gold pieces
+            in the afterlife.
+            Return to {{node.goalBox.label}} to respawn.""",
+
         nextNodeUid = "landing",
     )
     agnostic.collect()
