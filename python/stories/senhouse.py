@@ -11,11 +11,11 @@ story = Story(
     #startNodeUid = "stoneFork",
     startNodeUid = "landing",
     startSack={
-        "epona":0,
-        "mars":0,
+        "epona":False,
+        "mars":False,
         "superhorse":False,
-        "dead":False,
-        "points":0,
+        "eponapoints":0,
+        "marspoints":0,
         "hours":0,
         }
 )
@@ -46,7 +46,7 @@ with story:
             the numbered boxes and use
             your card on them to play!""",
             """You are an officer at the
-            coastal fort at Senhosue.
+            coastal fort at Senhouse.
             You must watch the coast
             for attack from the sea!""",
             """You must also care for
@@ -72,15 +72,16 @@ with story:
         the wall.
         {% if sack.hours <= 4 %}It's early in the morning
         and you can smell
-        the sea air{% endif %}
+        the sea air.
+        {% endif %}
         {% if sack.hours > 4 and sack.hours < 12 %}It's lunchtime and people
-        hurry by{% endif %}
+        hurry by.{% endif %}
         {% if sack.hours == 12 %}It's raining {% endif %}
         {% if sack.hours > 12 %}The night is closing in{% endif %}
         """,
         goalBoxUid =    paddockBox.uid,
         nextNodeUid =   "work",
-        #missTemplate =  "To continue your adventure {{node.goalBox.label}}",
+        missTemplate =  "To continue your adventure {{node.goalBox.label}}",
     )
 
     NodeFork(
@@ -90,7 +91,7 @@ with story:
         """,
         choices = {
             "altars":   "Make a spiritual visit to the altars",
-            "seaview":  "Look our for attack from the Northern Sea!",
+            "seaview":  "Look out for attack from the Northern Sea!",
             },
         )
 
@@ -100,99 +101,180 @@ with story:
         sequence = [ """
         You are in the temple
         There are many altars
-        Each attributed to a
-        great warrior or cavalry
-        commander
+        Each belongs to a great
+        warrior or nobleman
         """,
-        """We must pay tribute
-        to make sure they favour
-        our work here
+        """We must pay tribute to
+        the gods!
         But who in your heart do
         you seek guidance from?""",
         ],
         goalBoxUid = altarBox.uid,
         nextNodeUid = "chooseGod",
+        missTemplate =  "To continue your adventure {{node.goalBox.label}}",
         )
 
     NodeFork(
         uid = "chooseGod",
         choices  = {
+            #2345678901234567890123456
             "epona" : """
-            Epona a northerners goddess
+            Epona, protector of horses
             """,
             "mars"  : """
-            Mars the great god of war
+            Mars, god of war & peace
             """,
-            },
-        hideChoices = {
-            "epona" : "sack.epona == 2",
-            "mars": "sack.mars == 2",
             },
         )
 
     ThroughPage(
         uid = "epona",
         time = incrementTime,
+        #2345678901234567890123456
+        change = SackChange(
+            trigger = "sack.epona == False",
+            assign = { "epona":True },
+            plus = { "eponapoints":1 },
+            ),
         page = """
-        We need favoured horses
-        and she surely would
-        foster in our beasts
-        stregnth and loyalty
+        {% if node.change.triggered %}
+                Epona protector of horses!
+                May our mounts stay strong
+                steady and fertile!
+                we must make an offering!
+        {% else %}
+            Epona is with us already!
+        {% endif %}
         """,
         goalBoxUid = paddockBox.uid,
-        nextNodeUid = "libation",
-        )
+        nextNodeUid = "eponaoffers",
+        missTemplate =  "To continue goto {{node.goalBox.label}}"
+        ,)
 
     ThroughPage(
         uid = "mars",
-        time = incrementTime,
-        page = """
-        We need great warriors!
-        He would
-        foster in our beasts
-        stregnth and skill in
-        the art of death!
-        """,
         goalBoxUid = seaBox.uid,
-        nextNodeUid = "libation",
+        time = incrementTime,
+        #2345678901234567890123456
+        change = SackChange(
+            trigger = "sack.mars == False",
+            assign = { "mars":True },
+        ),
+        page = """
+        {% if node.change.triggered %}
+                Mars! MIME how
+                strong you are!
+                We need great warriors!
+        {% else %}
+            You feel strong!
+            Mars is with us already!
+            He also helps with the
+            harvest you know...
+        {% endif %}
+        """,
+        nextNodeUid = "marsoffers",
+        missTemplate =  "To continue goto {{node.goalBox.label}}"
         )
 
-# GOD AND LIBATION FORK
+
+
     NodeFork(
-        uid =   "libation",
-        choices = {
-            "wine": "Look for some wine",
-            "food": "Look for some food to offer",
-        },
-    )
+            uid =   "eponaoffers",
+            choices = {
+                "eponawine": "Offer some wine",
+                "eponagrain": "Seek some ears of grain"
+                },
+            )
 
     ThroughPage(
-        uid =   "wine",
-        time = incrementTime,
-        change = SackChange(
-            plus = { "mars":2 },
-            ),
-        page = """
-        You offer wine
-        """,
+        uid =   "eponawine",
         goalBoxUid = seaBox.uid,
+        change = SackChange(
+            trigger = "sack.epona == True",
+            assign = {"epona":False},
+        ),
+        page = """
+        {% if node.change.triggered %}
+            You leave a cup of wine
+            for her. Should she really
+            drink and ride?
+        {% else %}
+            Epona is satisfied
+        {% endif %}
+        """,
         nextNodeUid = "yardArrive",
+        missTemplate =  "To continue your adventure {{node.goalBox.label}}",
         )
 
     ThroughPage(
-        uid =   "food",
+        uid =   "eponagrain",
+        goalBoxUid = altarBox.uid,
         change = SackChange(
-            plus = { "epona":2 },
-            ),
-        time = incrementTime,
+            assign = { "epona":True },
+            plus = { "eponapoints":10 },
+        ),
         page = """
-        You offer food
+        PRETEND to offer grain
         from the local
         harvest
         """,
-        goalBoxUid = altarBox.uid,
         nextNodeUid = "yardArrive",
+        missTemplate =  "To continue your adventure {{node.goalBox.label}}",
         )
+
+    NodeFork(
+        #2345678901234567890123456
+        uid =   "marsoffers",
+        choices = {
+            "marswine": "Offer some wine",
+            "marsgrain": "Seek some ears of grain",
+        },
+        )
+
+    ThroughSequence(
+        uid =   "marswine",
+        goalBoxUid = altarBox.uid,
+        time = incrementTime,
+        change = SackChange(
+            plus = { "marspoints":2 }
+        ),
+        sequence = [
+        """
+        LEAVE a cup of wine
+        for him. He also helps with
+        the harvest you know!
+        """,
+        """
+        Which helps us
+        make more wine!
+        """
+        ],
+        nextNodeUid = "yardArrive",
+        missTemplate =  "To continue your adventure {{node.goalBox.label}}",
+        )
+
+    ThroughPage(
+        uid =   "marsgrain",
+        goalBoxUid = paddockBox.uid,
+        change = SackChange(
+            trigger = "sack.mars == True",
+            assign = {"mars":False},
+        ),
+        page = """
+        {% if node.change.triggered %}
+            You offer grain from the
+            store. What is he
+            supposed to do with this?
+            He's not Bruno Mars!
+            DANCE like Bruno Mars!
+        {% else %}
+            Mars is bored of grain
+        {% endif %}
+        """,
+        nextNodeUid = "yardArrive",
+        missTemplate =  "To continue your adventure {{node.goalBox.label}}",
+        )
+
 
 # ROUTE TO SPOTTING invaders
     ConditionFork(
@@ -245,7 +327,7 @@ with story:
     # ROUTE TO SUCCESSFUL BATTLE
     ConditionFork(
         uid=           "battle",
-        condition =    "sack.mars > 1",
+        condition =    "sack.mars == True",
         trueNodeUid=   "battleSuccess",
         falseNodeUid=  "battleFailure",
     )
@@ -258,41 +340,38 @@ with story:
         change = SackChange(
             trigger =   "sack.superhorse == False",
             assign =    { "superhorse":True},
-            plus  =     { "mars":4 },
+            plus  =     { "marspoints":4 },
         ),
+                    #2345678901234567890123456
         page = """
             {% if node.change.triggered %}
-                {% if node.change.completed %}
-                    You bravely hold back the
-                    wall so the cavalry can
-                    charge down the coastal
-                    path to victory.
-                    You kill the fleeing barbarian
-                    and take his horse
-                {% else %}
-                    You hold back the wall as
-                    best you can but are driven
-                    back! the coastal path may be
-                    over run!
-                {% endif %}
+                You bravely hold back the
+                invaders! CHARGE down
+                the coastal path!
+                You kill the fleeing
+                celts taking a horse
             {% else %}
+                You hold back the wall as
+                best you can but are
+                driven back! the coastal
+                path may be over run!
                 A desperate battle took place here
             {% endif %}
         """,
         nextNodeUid = "yardArrive"
     )
 
-    ThroughPage(
+    ThroughSequence(
         uid =           "battleFailure",
         time = incrementTime,
-        page = """
+        sequence = [ """
         You bravely hold back
         the invaders charging
         up the coastalpath
-        but are forced back
-        to the wall and die!
-        Mars help us!
-        """,
+        but are forced back!""",
+        """You run to the wall
+        and die! Mars help us!"""
+        ],
         goalBoxUid =    paddockBox.uid,
         nextNodeUid =   "retirement",
     )
@@ -301,22 +380,36 @@ with story:
         uid = "retirement",
         goalBoxUid = entranceBox.uid,
         page = "Bad luck. Respawned. Tap to begin your adventure again",
-        missTemplate = "You completed your adventure with {{sack.points}} points. Return to {{node.goalBox.label}} to respawn.",
+        missTemplate = "You completed your adventure with {{sack.eponapoints}} points. Return to {{node.goalBox.label}} to respawn.",
         nextNodeUid = "landing",
     )
 
-    ThroughPage(
+    ThroughSequence(
         uid = "retirementsuccess",
         goalBoxUid = paddockBox.uid,
         #2345678901234567890123456
-        page = """
-        WELL DONE! VICTORY
-        With this great horse we
-        can breed horses for the
-        next generation of
-        Hadrian's cavalry
+        sequence = [
+        """
+        WELL DONE! VICTORY!
+        The gods must be with you!
         """,
-        missTemplate = "You completed your adventure with {{sack.points}} points. Return to {{node.goalBox.label}} to respawn.",
+        """{% if sack.eponapoints < 10 %}
+        You've driven back
+        the hordes but will
+        you manage next time?
+        Will we have the
+        right horses?
+        {% endif %}
+        {% if sack.eponapoints >= 10 %}
+        With this horse
+        we can breed horses
+        for the next generation
+        of Hadrian's cavalry
+        {% endif %}
+        """,
+        """You completed your adventure with {{sack.eponapoints}} points. Return to {{node.goalBox.label}} to respawn.""",
+        ],
+        missTemplate = "You completed your adventure with {{sack.eponapoints}} points. Return to {{node.goalBox.label}} to respawn.",
         nextNodeUid = "landing",
     )
 
