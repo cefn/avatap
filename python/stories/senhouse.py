@@ -395,13 +395,14 @@ with story:
             {% endif %}
             """,
             """Your adventure is over.
-            You have {{sack.eponapoints}} Epona points.
+            Epona will favour {{sack.eponapoints}}
             Mars gives you {{sack.marspoints}} gold pieces
             in the afterlife.
             Return to {{node.goalBox.label}} to respawn.""",
         ],
         missTemplate = """Your adventure is over.
-            You have {{sack.eponapoints}} Epona points.
+            Epona will favour {{sack.eponapoints}}
+            of your garrison's horses.
             Mars gives you {{sack.marspoints}} gold pieces
             in the afterlife.
             Return to {{node.goalBox.label}} to respawn.""",
