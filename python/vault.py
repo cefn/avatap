@@ -7,7 +7,7 @@ rdr = MFRC522(0, 2, 4, 5, 14)
 """The number of banks available in the tag. Only one is active, and has its length stored in the lengths block"""
 numBanks = 3
 """Default Mifare key which authenticates access to card sectors"""
-# TODO CH change below to bytearray so it can be frozen
+# TODO CH change below to bytearray so it can be frozen (requires change to mfrc522 library
 # key = b'\xff\xff\xff\xff\xff\xff'
 key = [255, 255, 255, 255, 255, 255]
 """Number of bytes per block"""
@@ -36,27 +36,51 @@ def fill(count, value):
         count -= 1
 """
 
-
-def getRealIndex(safeIndex):
-    safeIndex = safeIndex + numReservedDataBlocks  # offset to skip reserved editable blocks
-    return ((safeIndex // 3) * 4) + (safeIndex % 3)  # calculate index, skipping auth blocks
-
 selectedTagUid=None
 
+def awaitPresence(expectTagUid=None):
+    while True:
+        try:
+            print("Antenna...")
+            (stat, tag_type) = rdr.request(MFRC522.REQIDL)  # check if antenna idle
+            if stat is not MFRC522.OK: raise AssertionError("No tag")
+            print("Collision...")
+            (stat, tagUid) = rdr.anticoll()
+            if stat is not MFRC522.OK: raise AssertionError("Collision")
+            print("Match...")
+            if expectTagUid is not None:
+                if not(tagUid == expectTagUid): raise AssertionError("Wrong Tag")
+            return tagUid
+        except Exception as e:
+            eType = type(e)
+            if eType == AssertionError:
+                pass
+            elif eType == KeyboardInterrupt:
+                raise e
+            else:
+                print(eType.__name__, end="")
+                print(e)
+
+def awaitAbsence():
+    errThreshold = 2
+    errCount = 0
+    while errCount < errThreshold:
+        (stat, tag_type) = rdr.request(MFRC522.REQIDL)  # check if antenna idle
+        if stat is MFRC522.OK:
+            errCount = 0
+        errCount += 1
+    return
+
+# reimplemented as blocking via await presence
 def selectTag(tagUid=None):
     global selectedTagUid
     if tagUid is None or not(selectedTagUid==tagUid):
         if selectedTagUid is not None:
             print("Previous tag still selected")
             unselectTag()
-        (stat, tag_type) = rdr.request(rdr.REQIDL)
-        if stat is not MFRC522.OK: raise AssertionError("Idle")
-        (stat, raw_uid) = rdr.anticoll()
-        if stat is not MFRC522.OK: raise AssertionError("Collision")
-        if tagUid is not None and not(tagUid == raw_uid):
-            raise AssertionError("Wrong tag")
-        if rdr.select_tag(raw_uid) is not MFRC522.OK: raise AssertionError("Selection")
-        selectedTagUid = raw_uid
+        tagUid = awaitPresence(tagUid)
+        if rdr.select_tag(tagUid) is not MFRC522.OK: raise AssertionError("Selection")
+        selectedTagUid = tagUid
     else:
         print("Tag already selected")
     return selectedTagUid
@@ -65,6 +89,10 @@ def unselectTag():
     global selectedTagUid
     selectedTagUid = None
     rdr.stop_crypto1()
+
+def getRealIndex(safeIndex):
+    safeIndex = safeIndex + numReservedDataBlocks  # offset to skip reserved editable blocks
+    return ((safeIndex // 3) * 4) + (safeIndex % 3)  # calculate index, skipping auth blocks
 
 def readBlock(realBlockIndex):
     if selectedTagUid is None: raise AssertionError("Not selected")
