@@ -160,8 +160,7 @@ def readJson(tagUid=None, unselect=True):
 
 def writeJson(obj, tagUid=None, unselect=True):
     try:
-        tagUid = selectTa
-        g(tagUid)
+        tagUid = selectTag(tagUid)
         lengthsBlock = readLengthsBlock()
         activeBank = getActiveBank(lengthsBlock)
         if activeBank is not None:
