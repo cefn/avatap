@@ -85,7 +85,6 @@ class Engine(AnonymousContainer):
         # CH instead load from module, (optionally lazy-create module)
         try:
             generatorFactory = boilerplate.loadTemplateGeneratorFactory(templateId)
-            sys.stdout.write("Hit Cache\n")
         except ImportError as e:
             cacheTemplate(self.story, node, templateName)
             generatorFactory = boilerplate.loadTemplateGeneratorFactory(templateId)
