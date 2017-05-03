@@ -412,7 +412,7 @@ class Page(Node):
 
 class GoalPage(Page):
     goalBoxUid = required
-    missTemplate="Please go to {{node.goalBox.label}} to continue your adventure"
+    missTemplate = """Please go to {{node.goalBox.label}}\nto continue your adventure"""
     templateNames = Page.templateNames + ["missTemplate"]
 
     def getGoalBoxUid(self, story):
