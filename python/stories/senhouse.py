@@ -55,6 +55,12 @@ with story:
                 the gods with libations.
                 """,
             ],
+            missTemplate = """Your adventure is over.
+            Epona will favour {{sack.eponapoints}}
+            of your garrison's horses.
+            Mars gives you {{sack.marspoints}} gold pieces
+            in the afterlife.
+            Return to {{node.goalBox.label}} to respawn.""",
     )
     agnostic.collect()
 
@@ -400,12 +406,6 @@ with story:
             in the afterlife.
             Return to {{node.goalBox.label}} to respawn.""",
         ],
-        missTemplate = """Your adventure is over.
-            Epona will favour {{sack.eponapoints}}
-            of your garrison's horses.
-            Mars gives you {{sack.marspoints}} gold pieces
-            in the afterlife.
-            Return to {{node.goalBox.label}} to respawn.""",
 
         nextNodeUid = "landing",
     )
