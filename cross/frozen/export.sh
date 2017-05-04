@@ -28,6 +28,11 @@ cd ../../
 # AVATAP LIBRARIES
 find avatap/python -maxdepth 1 -type f -name '*.py' -exec $COPYPATHCMD {} $MODULEDIR \;
 
+# AVATAP REGIMES (e.g. INTEGRATION TEST)
+$RMPATHCMD -R $MODULEDIR/regimes || true
+$CREATEPATHCMD $MODULEDIR/regimes
+$COPYPATHCMD avatap/python/regimes/integration_test.py $MODULEDIR/regimes/
+
 # MUSEUM STORIES
 $RMPATHCMD -rf $MODULEDIR/stories
 $CREATEPATHCMD $MODULEDIR/stories
@@ -46,15 +51,16 @@ find avatap/python/regimes -maxdepth 1 -type f -name '*.py' -exec $COPYPATHCMD -
 # SCREEN LIBRARY
 $COPYPATHCMD micropython-st7920/st7920.py $MODULEDIR
 # READER LIBRARY
-$COPYPATHCMD micropython-mfrc522/mfrc522.py $MODULEDIR
-$COPYPATHCMD micropython-mfrc522/examples/read.py $MODULEDIR
-$COPYPATHCMD micropython-mfrc522/examples/write.py $MODULEDIR
+$COPYPATHCMD micropython-mfrc522-cefn/mfrc522.py $MODULEDIR
+# CH TODO REMOVE READER EXAMPLES
+$COPYPATHCMD micropython-mfrc522-cefn/examples/read.py $MODULEDIR
+$COPYPATHCMD micropython-mfrc522-cefn/examples/write.py $MODULEDIR
 # FONT LIBRARY
 $COPYPATHCMD bitfont/python/bitfont.py $MODULEDIR
 # FONT FACES
-$RMPATHCMD -R $MODULEDIR/faces
+$RMPATHCMD -R $MODULEDIR/faces || true
 $CREATEPATHCMD $MODULEDIR/faces
-touch $MODULEDIR/faces/__init__.py
+$COPYPATHCMD bitfont/python/faces/__init__.py $MODULEDIR/faces/
 $COPYPATHCMD bitfont/python/faces/font_5x7.py $MODULEDIR/faces/
 $COPYPATHCMD bitfont/python/faces/font_ArtosSerif_8.py $MODULEDIR/faces/
 
