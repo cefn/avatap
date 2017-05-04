@@ -1,7 +1,9 @@
 import gc
 gc.threshold((gc.mem_free() + gc.mem_alloc()) // 4)
 import uos
-"""
+
+
+""" # TODO CH Disable Filesystem again to max memory
 from flashbdev import bdev
 
 try:
@@ -13,8 +15,8 @@ except OSError:
     import inisetup
     vfs = inisetup.setup()
 """
+
 gc.collect()
 
 # run the integration test
-from regimes import integration_test as test
-test.run()
+#from regimes.avatap import runBox; runBox("4")
