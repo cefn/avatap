@@ -1,4 +1,4 @@
-from consoleEngine import ConsoleSiteEmulator
+from engines.console import ConsoleSiteEmulator
 from milecastles import Story, Box, ThroughPage, ThroughSequence, ConditionFork, NodeFork, SackChange
 import agnostic
 

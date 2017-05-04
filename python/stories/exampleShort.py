@@ -1,5 +1,5 @@
 from milecastles import Story, Box, ThroughPage
-from consoleEngine import ConsoleSiteEmulator
+from engines.console import ConsoleSiteEmulator
 
 # inspects the module to figure out the story name (e.g. corbridge)
 storyName = __name__.split(".")[-1]

@@ -1,4 +1,4 @@
-from consoleEngine import ConsoleSiteEmulator
+from engines.console import ConsoleSiteEmulator
 from milecastles import Story, Box, ThroughPage, SackChange
 
 # inspects the module to figure out the story name (e.g. corbridge)

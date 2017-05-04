@@ -1,5 +1,5 @@
 import agnostic
-from consoleEngine import ConsoleSiteEmulator
+from engines.console import ConsoleSiteEmulator
 from milecastles import Story, Box, ThroughPage, ThroughSequence, ConditionFork, NodeFork, SackChange
 
 # inspects the module to figure out the story name (e.g. corbridge)
@@ -356,13 +356,16 @@ with story:
     )
     agnostic.collect()
 
+    finalReport = (
+        """You completed your adventure with {{sack.eponapoints}} points.
+        Return to {{node.goalBox.label}} to respawn."""
+    )
+
     ThroughPage(
         uid = "retirement",
         goalBoxUid = entranceBox.uid,
         page = "Bad luck. Respawned. Tap to begin your adventure again",
-        missTemplate =
-        """You completed your adventure with {{sack.eponapoints}} points.
-        Return to {{node.goalBox.label}} to respawn.""",
+        missTemplate = finalReport,
         nextNodeUid = "landing",
     )
     agnostic.collect()
@@ -384,10 +387,8 @@ with story:
             of Hadrian's cavalry
             {% endif %}
             """,
-            """You completed your adventure with {{sack.eponapoints}} points.
-            Return to {{node.goalBox.label}} to respawn.""",
         ],
-        missTemplate = "You completed your adventure with {{sack.eponapoints}} points. Return to {{node.goalBox.label}} to respawn.",
+        missTemplate = finalReport,
         nextNodeUid = "landing",
     )
     agnostic.collect()
