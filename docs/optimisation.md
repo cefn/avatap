@@ -18,3 +18,7 @@ Change evaled expressions to be compiled functions as well.
 Change integer indexes in bitfont to use array/ustruct/uctypes as per footer comment in https://docs.micropython.org/en/latest/esp8266/reference/constrained.html
 
 Modify bitfont library to allow inclusion of only a subset of characters - e.g. all caps of a high-res font (with friendly fallback behaviour for characters outside range)
+
+Remove examples from reader library export
+
+Remove unused modules from frozen modules list (e.g. webrepl ds18x20)
