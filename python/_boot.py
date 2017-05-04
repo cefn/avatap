@@ -14,3 +14,7 @@ except OSError:
     vfs = inisetup.setup()
 """
 gc.collect()
+
+# run the integration test
+from regimes import integration_test as test
+test.run()
