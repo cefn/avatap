@@ -1,14 +1,16 @@
+import loader
 import milecastles
-import engine
+import engines
 import boilerplate
 
 def cacheTemplates():
 
     storyIds = [
+        loader.storyUid
         #"arbeia",
         #"corbridge",
         #"housesteads",
-        "senhouse",
+        #"senhouse",
     ]
 
     qstrings = {
@@ -31,10 +33,10 @@ def cacheTemplates():
             nodeType = type(node)
             if nodeType.templateNames is not None:
                 for templateName in nodeType.templateNames:
-                    engine.cacheTemplate(story, node, templateName)
+                    engines.cacheTemplate(story, node, templateName)
 
                     # calculate the qstrings which will be used to load info
-                    moduleName = boilerplate.getTemplateModuleName(engine.getTemplateId(story, node, templateName))
+                    moduleName = boilerplate.getTemplateModuleName(engines.getTemplateId(story, node, templateName))
                     qstrings.add(moduleName)
                     for moduleNameFrag in moduleName.split("."):
                         qstrings.add(moduleNameFrag)
