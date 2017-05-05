@@ -1,5 +1,7 @@
 # Optimisation
 
+Make debug validation logic depend on Milecastles debug flag, to accelerate story loading
+
 TODO replace non-debug asserts with if and AssertionError? This will permit future optimisation by toggling a flag
 
 Toggle optimisation on in boot.py to save RAM, using...
@@ -17,4 +19,8 @@ Use string hash of template source to identify template to save/load, instead of
 Change evaled expressions to be compiled functions as well.
 Change integer indexes in bitfont to use array/ustruct/uctypes as per footer comment in https://docs.micropython.org/en/latest/esp8266/reference/constrained.html
 
-Modify bitfont library to allow inclusion of only a subset of characters - e.g. all caps of a high-res font (with friendly fallback behaviour for characters outside range)
+Modify bitfont library to allow inclusion of only a subset of characters - e.g. all caps of a high-res font (with friendly fallback behaviour for characters outside range). Promote firstAsciiChar and endAsciiChar to be on a per-typeface basis.
+
+Remove examples from reader library export
+
+Remove unused modules from frozen modules list (e.g. webrepl ds18x20)
