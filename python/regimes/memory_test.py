@@ -24,12 +24,12 @@ report_collect()
 
 report_import("milecastles")
 report_import("boilerplate")
-report_import("engine")
-report_import("consoleEngine")
+report_import("engines")
+report_import("engines.console")
 report_import("stories.senhouse")
 from stories.senhouse import story
 
-from consoleEngine import ConsoleSiteEmulator
+from engines.console import ConsoleSiteEmulator
 
 emulator = ConsoleSiteEmulator(story=story)
 report_collect()
