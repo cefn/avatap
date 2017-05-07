@@ -18,7 +18,7 @@ from vault import BankVault
 from stories.corbridge import story
 agnostic.collect()
 
-spi = SPI(1, baudrate=1800000, polarity=0, phase=0)
+spi = SPI(1, baudrate=1000000, polarity=0, phase=0)
 spi.init()
 agnostic.collect()
 

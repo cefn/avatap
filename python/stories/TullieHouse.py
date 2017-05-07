@@ -108,7 +108,7 @@ with story:
 
     ThroughPage(
 		uid="trojan1",
-		missTemplate =  """ This isn't the fort!
+		missTemplate =  """ This isn't the {{node.goalBox.description}}!
 							Go to {{node.goalBox.label}}""",
         page=			""" You search the armoury
 							at the fort and find a
@@ -126,7 +126,7 @@ with story:
 							assign={"trojan":True},
 							plus={"sword":10}
 							),
-		missTemplate =  """ This isn't the fort!
+		missTemplate =  """ This isn't the {{node.goalBox.description}}!
 							Go to {{node.goalBox.label}}""",
         page=			""" You chose Trojan!
 							Your sword skills went up
@@ -159,7 +159,7 @@ with story:
 							assign={"amazon":True},
 							plus={"archery":10}
 							),
-		missTemplate =  """ This isn't the fort!
+		missTemplate =  """ This isn't the {{node.goalBox.description}}!
 							Go to {{node.goalBox.label}}""",
         page=			""" You chose Trojan! Your
 							archery skills went up
@@ -224,7 +224,7 @@ with story:
 		change =        SackChange(
 							assign={"arstech":True},
 							),
-		missTemplate =  """ This isn't the fort!
+		missTemplate =  """ This isn't the {{node.goalBox.description}}!
 							Go to {{node.goalBox.label}}""",
         page=			""" You track down Victor
 							and he lets you read
@@ -241,13 +241,13 @@ with story:
 		change =        SackChange(
 							plus={"horse":20},
 							),
-		missTemplate =  """ This isn't the garrison!
+		missTemplate =  """ This isn't the {{node.goalBox.description}}!
 							Go to {{node.goalBox.label}}""",
         page=			""" You return to your
 							garrison and find the
 							altar you brought with
 							you from Senhouse.
-							Make an offfering of
+							Make an offering of
 							wine to Epona, increasing
 							your horse skills by {{node.change.plus['horse']}}.""",
 		goalBoxUid = garrisonBox.uid,
@@ -268,7 +268,7 @@ with story:
 		change =        SackChange(
 							plus={"archery":20},
 							),
-		missTemplate =  """ This isn't the arena!
+		missTemplate =  """ This isn't the {{node.goalBox.description}}!
 							Go to {{node.goalBox.label}}""",
         page=			""" The arena is quiet
 							before the games.
@@ -285,7 +285,7 @@ with story:
 		change =        SackChange(
 							plus={"sword":20},
 							),
-		missTemplate =  """ This isn't the arena!
+		missTemplate =  """ This isn't the {{node.goalBox.description}}!
 							Go to {{node.goalBox.label}}""",
         page=			""" The arena is quiet
 							before the games.
@@ -303,7 +303,7 @@ with story:
     ThroughSequence(
 		uid =           "rest1",
 		goalBoxUid =    fortBox.uid,
-		nextNodeUid =   "landing",
+		nextNodeUid =   "games1",
         sequence = [
             """ You take a short
 				rest after your
@@ -324,6 +324,18 @@ with story:
 				Ready?""",
         ],
     )
+
+    ThroughPage(
+            uid = "games1",
+            goalBoxUid = arenaBox.uid,
+            page="""The arena is busy
+            with people preparing
+            for the games
+            Your adventure has just
+            begun!
+            """,
+            nextNodeUid ="gate1",
+            )
 
 if __name__ == "__main__":
     print("Loading emulator")
