@@ -93,6 +93,9 @@ story = None
 required = object()
 optional = object()
 
+def raiser(*a, **k):
+    raise NotImplementedError()
+
 # The signature of objects passed to templates and routing/trigger conditions
 signature = "engine, story, box, node, card, sack"
 
