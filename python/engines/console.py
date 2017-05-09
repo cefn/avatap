@@ -1,36 +1,76 @@
+from time import sleep
 import sys
+from math import floor
+from os import urandom
 import agnostic
-import gc
-from milecastles import AnonymousContainer, Box, Card, required
+from milecastles import AnonymousContainer, Box, Card, required, raiser
 from engines import Engine
 
-class ConsoleSiteEmulator(AnonymousContainer):
+def log2approx(val):
+    val = floor(val)
+    approx = 0
+    while val != 0:
+        val &= ~ (1 << approx)
+        approx = approx + 1
+    return approx
+
+def randint(minVal, maxVal=None):
+    if (maxVal != None):
+        return minVal + randint(maxVal - minVal)
+    else:
+        maxVal = minVal
+    byteCount = (log2approx(maxVal) // 8) + 1  # each byte is 8 powers of two
+    val = 0
+    randBytes = urandom(byteCount)
+    idx = 0
+    while idx < len(randBytes):
+        val |= randBytes[idx] << (idx * 8)
+        idx += 1
+    del randBytes
+    return val % maxVal
+
+def fuzz(emulator):
+    emulator.handleInput("a")
+    while True:
+        emulator.handleInput(command=str(randint(1,4)))
+        agnostic.report_collect()
+        sleep(1)
+
+class SiteEmulator(AnonymousContainer):
+
     story = required
+
+    createEngine = raiser
 
     def __init__(self, *a, **k):
         super().__init__(*a, **k)
-        
-        # get boxes from story registry, create+store an engine for each 
+
+        # get boxes from story registry, create+store an engine for each
         boxTable = self.story._get_table(Box)
-        self.engines = dict()        
-        for boxUid,box in boxTable.items():
-            engine = ConsoleEngine(box=box)
+        self.engines = dict()
+        for boxUid, box in boxTable.items():
+            engine = self.createEngine(box=box)
             engine.registerStory(self.story)
             self.engines[boxUid] = engine
-            
+
         # for each card, register it with the emulator
         cardIds = "a"
         for cardId in cardIds:
             card = self.story.createBlankCard(cardId)
             self.registerCard(card)
-            
+
         self.currentCard = None
-    
+
     def registerCard(self, card):
         self._register(Card, card)
-        
+
     def lookupCard(self, cardUid):
         self._lookup(Card, cardUid)
+
+class ConsoleSiteEmulator(SiteEmulator):
+
+    def createEngine(self, box):
+        return ConsoleEngine(box=box)
 
     def handleInput(self, command=None):
         if command is None:
@@ -64,11 +104,12 @@ class ConsoleSiteEmulator(AnonymousContainer):
             self.handleInput()
             agnostic.collect()
 
+
 class ConsoleEngine(Engine):
-    
     def displayGeneratedText(self, generator):
         for chunk in generator:
             sys.stdout.write(chunk)
+
 
 if __name__ == "__main__":
     from milecastles import loadStory
