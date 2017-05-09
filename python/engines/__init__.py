@@ -1,6 +1,6 @@
 import sys
 import agnostic
-from milecastles import AnonymousContainer, Holder, Story, signature, required, optional, debug
+from milecastles import AnonymousContainer, Holder, Story, Card, signature, required, optional, debug
 import boilerplate
 
 templatePrefix = "{{% args {} %}}".format(signature)
@@ -15,6 +15,21 @@ def cacheTemplate(story, node, templateName):
     templateJinja = templatePrefix + templateJinja  # prefix the templateString with the standard argument signature
     templatePython = boilerplate.jinjaToPython(templateResolver, templateJinja) # create the python for the generatorFactory
     boilerplate.saveTemplatePython(templateId, templatePython) # place it as expected
+
+def cardToDict(story, card):
+    return dict(
+        storyUid=story.uid,
+        nodeUid=card.nodeUid,
+        sack=card.sack
+    )
+
+def dictToCard(tagUid, cardDict):
+    return Card(
+        uid=tagUid,
+        storyUid=cardDict["storyUid"],
+        nodeUid=cardDict["nodeUid"],
+        sack=cardDict["sack"]
+    )
 
 class Engine(AnonymousContainer):
     box = required
