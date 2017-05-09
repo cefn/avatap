@@ -16,16 +16,16 @@ def cacheTemplate(story, node, templateName):
     templatePython = boilerplate.jinjaToPython(templateResolver, templateJinja) # create the python for the generatorFactory
     boilerplate.saveTemplatePython(templateId, templatePython) # place it as expected
 
-def cardToDict(story, card):
+def cardToDict(card):
     return dict(
-        storyUid=story.uid,
+        storyUid=card.storyUid,
         nodeUid=card.nodeUid,
         sack=card.sack
     )
 
-def dictToCard(tagUid, cardDict):
+def dictToCard(cardUid, cardDict):
     return Card(
-        uid=tagUid,
+        uid=cardUid,
         storyUid=cardDict["storyUid"],
         nodeUid=cardDict["nodeUid"],
         sack=cardDict["sack"]
