@@ -29,6 +29,14 @@ def loadTemplateGeneratorFactory(templateId):
     templateModule = __import__(getTemplateModuleName(templateId), globals(), locals(), ["render"] )
     return templateModule.render
 
+def normaliseTemplate(loadedString):
+    templateString = ""
+    # remove leading, trailing and doubled whitespace, but preserve newlines
+    lines = [line for line in loadedString.split("\n") if line is not ""]
+    for line in lines:
+        templateString += " ".join(line.split()) + "\n"
+    return templateString
+
 class Resolver:
 
     def __init__(self, sourceObj, *a, **k):
@@ -39,11 +47,8 @@ class Resolver:
         assert hasattr(self.sourceObj, name), "Missing {}".format(name)
         loadedString = getattr(self.sourceObj, name)
         assert type(loadedString) == str, "Entry {} not 'str'".format(name)
-        templateString = ""
-        # remove leading, trailing and doubled whitespace, but preserve newlines
-        for line in loadedString.split("\n"):
-            templateString += " ".join(line.split()) + "\n"
-        return io.StringIO(templateString)
+        normalised = normaliseTemplate(loadedString)
+        return io.StringIO(normalised)
 
 class Compiler:
 
