@@ -71,8 +71,13 @@ with story:
 
     ThroughPage(
         uid="smith1",
-        missTemplate="This isn't the blacksmith! {{node.goalBox.label}}",
-        page="You walk across the fort to the blacksmith's workshop. The sign says 'Half day opening today'.",
+        missTemplate="""This isn't the
+                        blacksmith's workshop!
+                        Go to {{node.goalBox.label}}""",
+        page="""You walk across the fort
+                to the blacksmith's
+                workshop. A sign says
+                'Half day opening today'.""",
         goalBoxUid=smithBox.uid,
         nextNodeUid="sharpening",
     )
@@ -119,16 +124,16 @@ with story:
 
     ThroughPage(
         uid="sharpened",
-        missTemplate="This isn't the blacksmith! {{node.goalBox.label}}",
+        missTemplate="""This isn't the
+                        blacksmith's workshop!
+                        Go to {{node.goalBox.label}}""",
         # 2345678901234567890123456| 26 char limit
-        page="""
-        Look at the tools in the
-        display and PRETEND to
-        sharpen a spearhead.
-        Now your tools are sharp,
-        you can add lots of detail
-        to the carving!
-        """,
+        page="""Look at the tools in the
+                display and PRETEND to
+                sharpen a spearhead.
+                Now your tools are sharp,
+                you can add lots of
+                detail to the carving!""",
         # superfluous {{story.nodes.fromSmith.getGoalBox(story).description}} to the workshop.",
         goalBoxUid=smithBox.uid,
         nextNodeUid="fromSmith",
@@ -138,16 +143,16 @@ with story:
     # Now our sharpening fail
     ThroughPage(
         uid="sharpeningFailure",
-        missTemplate="This isn't the blacksmith! {{node.goalBox.label}}",
+        missTemplate="""This isn't the
+                        blacksmith's workshop!
+                        Go to {{node.goalBox.label}}""",
         change=SackChange(
             assign={"smithAnger": True},
         ),
         # 2345678901234567890123456| 26 char limit
-        page="""
-        The Blacksmith is furious!
-        'You're banned... no sharp
-        tools for you!'
-        """,
+        page="""The Blacksmith is furious
+                'You're banned...no sharp
+                tools for you!'""",
         goalBoxUid=smithBox.uid,
         nextNodeUid="workshop1",
     )
@@ -159,13 +164,11 @@ with story:
 
     ThroughPage(
         uid="workshop1",
-        missTemplate="To begin work go to {{node.goalBox.label}}",
-        page="""
-        You are in your workshop.
-        It's early in the morning
-        but you don't have long to
-        complete the tombstone.
-        """,
+        missTemplate="Begin work at {{node.goalBox.label}}!",
+        page="""You are in your workshop.
+                It's early morning but
+                you don't have long to
+                complete the tombstone.""",
         goalBoxUid=workshopBox.uid,
         nextNodeUid="workshop2",
     )
@@ -174,9 +177,11 @@ with story:
     NodeFork(
         uid="workshop2",
         choices={
-            "smith1": "Get your tools sharpened at the blacksmith",
-            "stone1": "Go outside to order stone from the quarry",
-            "inspire1": "Look for inspiration",
+            "smith1": """Sharpen your tools at the
+                        blacksmith's""",
+            "stone1": """Go outside to order stone
+                        from the quarry""",
+            "inspire1": """Seek inspiration""",
         },
         hideChoices={
             "smith1": "sack.sharp==True",
@@ -188,18 +193,15 @@ with story:
 
     # 2b Afternoon / Second Workshop Fork
 
-    ThroughSequence(
+    ThroughPage(
         uid="workshop3",
         goalBoxUid=workshopBox.uid,
         nextNodeUid="firstSnack",
-        sequence=[
-            " You've done a good morning's work!",
-            """You think about your home
-            and how you first traveled
-            here with the army to
-            service the camp.
-            """,
-        ],
+        page="""A good morning's work!
+                You think about your home
+                and how you first
+                traveled here with the
+                army to service the camp.""",
     )
     agnostic.collect()
 
@@ -217,7 +219,7 @@ with story:
         You stop for some food
         at a local inn. It costs
         {{node.change.minus['money']}} denarii.
-        You now have {{sack.money}} denarii left.
+        You have {{sack.money}} denarii left.
         """,
         goalBoxUid=workshopBox.uid,
     )
@@ -225,8 +227,9 @@ with story:
 
     ThroughPage(
         uid="fromSmith",
-        missTemplate="To carry on working, go to {{node.goalBox.label}}",
-        page="You're feeling more equipped!",
+        missTemplate="""To carry on working,
+                        go to {{node.goalBox.label}}""",
+        page="You're feeling equipped!",
         goalBoxUid=workshopBox.uid,
         nextNodeUid="workshop4",
     )
@@ -235,9 +238,9 @@ with story:
     NodeFork(
         uid="workshop4",
         choices={
-            "smith1": "Get your tools sharpened",
-            "stone1": "I need to order stone!",
-            "burial1": "Talk to Burial Club"
+            "smith1": "Sharpen your tools",
+            "stone1": "Order stone!",
+            "burial1": "Meet Burial Club"
         },
         hideChoices={
             "smith1": "sack.sharp==True",
@@ -251,7 +254,9 @@ with story:
 
     ThroughPage(
         uid="workshop5",
-        missTemplate="Time to get carving at the workshop! {{node.goalBox.label}}",
+        missTemplate="""Time to get carving at
+                        the workshop! Go to
+                        {{node.goalBox.label}}""",
         page="""
         Next morning, the stone
         block arrives.
@@ -271,7 +276,8 @@ with story:
 
     ThroughPage(
         uid="goodCarve",
-        missTemplate="Stop slacking! Back to {{node.goalBox.label}}",
+        missTemplate="""Stop slacking!
+                    Back to {{node.goalBox.label}}""",
         page="""
         You start carving the
         tombstone. Your tools are
@@ -286,15 +292,14 @@ with story:
 
     ThroughPage(
         uid="badCarve",
-        missTemplate="Stop slacking! Back to {{node.goalBox.label}}",
+        missTemplate="""Stop slacking!
+                    Back to {{node.goalBox.label}}""",
         # 2345678901234567890123456| 26 char limit
-        page="""
-        You start carving the
-        tombstone. Your tools are
-        blunt and it looks wonky..
-        Still, better get it
-        painted.
-        """,
+        page="""You start carving the
+                tombstone. Your tools are
+                blunt and it looks wonky.
+                Still, better get it
+                painted.""",
         goalBoxUid=workshopBox.uid,
         nextNodeUid="painter1",
     )
@@ -309,8 +314,11 @@ with story:
         change=SackChange(
             assign={"inspire": True}
         ),
-        missTemplate="This isn't the tomb site! {{node.goalBox.label}}",
-        page="This is where the finished tombstone will be displayed.",
+        missTemplate="""This isn't the tomb site!
+                        Go to {{node.goalBox.label}}""",
+        page="""This is where the
+                finished tombstone
+                will be displayed.""",
         goalBoxUid=tombBox.uid,
         nextNodeUid="inspire2",
     )
@@ -340,14 +348,16 @@ with story:
 
     ThroughPage(
         uid="burial1",
-        missTemplate="This isn't the tomb site! {{node.goalBox.label}}",
+        missTemplate="""This isn't the tomb site!
+                        Go to {{node.goalBox.label}}""",
         # 2345678901234567890123456| 26 char limit
         page="""
-        The Burial Club are making
-        preparations for the
-        tombstone to be displayed.
-        You ask them for some help
-        with research.
+        The Burial Club are
+        making preparations
+        for the tombstone to be
+        displayed. You ask them
+        for some help with
+        research.
         """,
         goalBoxUid=tombBox.uid,
         nextNodeUid="burial2",
@@ -357,8 +367,11 @@ with story:
     NodeFork(
         uid="burial2",
         choices={
-            "drink": "Come with us for a drink and we can tell you stories!!",
-            "inspire3": "You should look at Flavinus' helmet plate",
+            "drink": """Come with us for a
+                        drink. We can tell you
+                        stories!!""",
+            "inspire3": """Look at Flavinus'
+                        helmet plate""",
         },
     )
     agnostic.collect()
@@ -377,9 +390,10 @@ with story:
                 helmet plate. Find the
                 HELMET near box II, make
                 a sketch then come back.""",
-            """ INVESTIGATE the spearheads
-                and weapons in the case
-                near Box I then come back.""",
+            """ INVESTIGATE the spear
+                heads and weapons in
+                the case near Box I then
+                come back.""",
             """ That's plenty of research
                 for now! Go back to
                 your workshop to rest up!
@@ -393,14 +407,15 @@ with story:
         goalBoxUid=smithBox.uid,
         nextNodeUid="buydrinks",
         sequence=[
-            """ They tell you that Flavinus
-                was 25 years old and he died
-                after 7 years of service with
-                the Ala Petriana as a standard
-                bearer.""",
-            """ They tell you lots more about
-                Flavinus but you are starting
-                to get a bit drunk and tired...""",
+            """ They tell you Flavinus
+                was 25 years old and he
+                died after 7 years of
+                service with Ala Petriana
+                as a standard bearer.""",
+            """ They tell you lots more
+                about Flavinus but you
+                are starting to get a bit
+                drunk and tired...""",
             # seperated this from logic with a thru page
         ],
     )
@@ -414,12 +429,15 @@ with story:
         ),
         # Maybe have something that refers to beign in the pub?
         # missTemplate =  "Get back to the pub! goto {{node.goalBox.label}}",
-        missTemplate="Stop slacking! Back to {{node.goalBox.label}}",
+        missTemplate="""Stop slacking!
+                        Back to {{node.goalBox.label}}""",
         page="""
-            You buy drinks for {{node.change.minus['money']}} Denarii.
-            You have {{sack.money}} Denarii left.
-            That's plenty of research for now!
-            Go back to your workshop to rest up!""",
+            You buy drinks for {{node.change.minus['money']}}
+            Denarii. You have {{sack.money}}
+            Denarii left. That's
+            plenty of research for
+            now! Go back to your
+            workshop to rest up!""",
         goalBoxUid=tombBox.uid,
         nextNodeUid="workshop5",
     )
@@ -430,8 +448,12 @@ with story:
 
     ThroughPage(
         uid="painter1",
-        missTemplate="Stop slacking! Back to {{node.goalBox.label}}",
-        page="You meet the painter at the site later to put the finishing touches to the tombstone...  ",
+        missTemplate="""Stop slacking!
+                        Back to {{node.goalBox.label}}""",
+        page="""You meet the painter at
+             the site later to put the
+             finishing touches to the
+             tombstone...  """,
         goalBoxUid=tombBox.uid,
         nextNodeUid="painter2",
     )
@@ -451,12 +473,12 @@ with story:
         change=SackChange(
             minus={"money": 15},
         ),
-        missTemplate="Stop slacking! Back to {{node.goalBox.label}}",
-        page="""
-        The finished stone looks
-        stunning! The painter
-        charges {{node.change.minus['money']}} Denarii,
-        leaving you with {{sack.money}}.
+        missTemplate="""Stop slacking!
+                     Back to {{node.goalBox.label}}""",
+        page="""The finished stone looks
+                stunning! The painter
+                charges {{node.change.minus['money']}} Denarii,
+                leaving you with {{sack.money}}.
         """,
         goalBoxUid=tombBox.uid,
         nextNodeUid="endingGood",
@@ -468,13 +490,14 @@ with story:
         change=SackChange(
             minus={"money": 15},
         ),
-        missTemplate="""
-        Stop slacking! Back to {{node.goalBox.label}}
-        to find the painter""",
-        page="""The painter does their best,
-        but it doesn't look great.
-        The painter charges {{node.change.minus['money']}} Denarii, leaving you
-        with {{sack.money}}.""",
+        missTemplate="""Stop slacking!
+                        Back to {{node.goalBox.label}}
+                        to find the painter""",
+        page="""The painter does their
+                best, but it looks bad.
+                The painter charges
+                {{node.change.minus['money']}} Denarii,
+                leaving you with {{sack.money}}.""",
         goalBoxUid=tombBox.uid,
         nextNodeUid="endingBad",
     )
@@ -487,16 +510,17 @@ with story:
         goalBoxUid=tombBox.uid,
         nextNodeUid="reward",
         sequence=[
-            """You're now ready for the
-            unveiling this evening.""",
-            """That evening, the Cavalrymen
-            and members of the Burial
-            Club arrive to unveil the
-            tombstone...""",
-            """'Flavinus is well-represented,
-            the gods and all that pass
-            will see what a soldier
-            he was.' they say.""",
+            """ You're now ready for the
+                unveiling this evening.""",
+            """ That evening, the
+                Cavalrymen and members of
+                the Burial Club arrive to
+                unveil the tombstone...""",
+            """ 'Flavinus is well-
+                represented, the gods and
+                all that pass will see
+                what a soldier he was.'
+                they say.""",
         ]
     )
     agnostic.collect()
@@ -524,14 +548,14 @@ with story:
         sequence=[
             """ You're now ready for the
                 unveiling this evening.""",
-            """ That evening, the Cavalrymen
-                and members of the Burial
-                Club arrive to unveil the
-                tombstone...""",
-            """ The soldiers tell you that
+            """ That evening, the
+                Cavalrymen and members of
+                the Burial Club arrive to
+                unveil the tombstone...""",
+            """ The soldiers tell you
                 Flavinus is wearing the
                 wrong helmet and that his
-                horse is wonky looking.
+                horse is wonky-looking.
                 They refuse to pay you.""",
         ],
     )
@@ -543,9 +567,10 @@ with story:
             minus={"money": 50},
         ),
         page="""
-            The soldiers demand a refund
-            of {{node.change.minus['money']}} denarii. You now
-            have {{sack.money}} Denarii.
+            The soldiers demand a
+            refund of {{node.change.minus['money']}} denarii,
+            You have {{sack.money}}
+            Denarii left.
             """,
         goalBoxUid=tombBox.uid,
         nextNodeUid="ending",
@@ -558,8 +583,12 @@ with story:
 
     ThroughPage(
         uid="stone1",
-        missTemplate="This isn't the quarry! {{node.goalBox.label}}",
-        page="You are on an East-West road used for supplying the fort. There are a number of shopfronts here.",
+        missTemplate="""This isn't the quarry!
+                        Go to {{node.goalBox.label}}""",
+        page="""You are on an East-West
+                road used for supplying
+                the fort. There are a
+                number of shopfronts here""",
         goalBoxUid=quarryBox.uid,
         nextNodeUid="stone2",
     )
@@ -571,7 +600,13 @@ with story:
             assign={"stone": True},
             minus={"money": 50}
         ),
-        page="You meet the quarry manager and place an order for stone to arrive tomorrow. It costs {{node.change.minus['money']}} Denarii, leaving you with {{sack.money}} Denarii.",
+        page="""You meet the quarry
+                manager and place an
+                order for stone to
+                arrive tomorrow. It
+                costs {{node.change.minus['money']}} Denarii,
+                leaving you with
+                {{sack.money}} Denarii.""",
         goalBoxUid=quarryBox.uid,
         nextNodeUid="stoneFork",
     )
@@ -584,8 +619,12 @@ with story:
         # to do something without it being associated with the description
         # so you dont think youre hiring a donkey from the grumpy blacksmith
         choices={
-            "stoneAlone": "PRETEND to carry the stone yourself back to {{story.nodes.stoneAlone.getGoalBox(story).description}}",
-            "stoneDonkey": "Go to {{story.nodes.stoneDonkey.getGoalBox(story).label}}, to hire a donkey and PRETEND to ride it back to the workshop.",
+            "stoneAlone": """PRETEND to carry the
+                            stone yourself to""",
+            "stoneDonkey": """Go to {{story.nodes.stoneDonkey.getGoalBox(story).label}},
+                            to hire a donkey and
+                            PRETEND to ride it back
+                            to the workshop.""",
         }
     )
     agnostic.collect()
@@ -594,7 +633,8 @@ with story:
         uid="stoneAlone",
         goalBoxUid=workshopBox.uid,
         page="""What strength!
-        You carried the stone yourself
+                You carried the stone
+                yourself.
         """,
         nextNodeUid="workshop1"
     )
@@ -606,7 +646,13 @@ with story:
         change=SackChange(
             minus={"money": 5}
         ),
-        page="You hired a donkey to carry the stone, now ride the donkey back to the workshop. It costs {{node.change.minus['money']}} Denarii, leaving you with {{sack.money}} Denarii.",
+        page="""You hired a donkey to
+                carry the stone, now ride
+                the donkey back to the
+                workshop. It costs
+                {{node.change.minus['money']}} Denarii,
+                leaving you with
+                {{sack.money}} Denarii.""",
         nextNodeUid="stoneTime"
     )
     agnostic.collect()
@@ -621,15 +667,14 @@ with story:
 
     ThroughPage(
         uid="ending",
-        page="""
-        You completed your game
-        with a total of {{sack.money}} Denarii
+        page="""You completed your game
+        with a total of
+        {{sack.money}} Denarii
         Can you do better?
         Return to {{node.goalBox.label}} to try
         again or visit another
         museum to play more
-        MileCastles!
-        """,
+        MileCastles!""",
         nextNodeUid="landing",
         goalBoxUid=entranceBox.uid,
         # goalBoxUid = tombBox.uid,
