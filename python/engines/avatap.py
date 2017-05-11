@@ -1,33 +1,37 @@
-import sys
 import milecastles
 from engines import Engine
+from engines.console import ConsoleSiteEmulator
 
-# Ensure minimal 'binding' closure
-
-def blackPlotterFactory(screen):
-    def blackPlotter(x,y):
-        screen.plot(x,y,True)
-    return blackPlotter
-
-def whitePlotterFactory(screen):
-    def whitePlotter(x,y):
-        screen.plot(x,y,False)
-    return whitePlotter
-
-# Could be parameterised by reader, writer, plotter, font?
-class AvatapEngine(Engine):
+class AvatapSiteEmulator(ConsoleSiteEmulator):
+    smallFont = milecastles.required
+    bigFont = milecastles.required
     screen = milecastles.required
-    font = milecastles.required
-    reader = milecastles.required
+    blackPlotter = milecastles.required
+    whitePlotter = milecastles.required
 
     def __init__(self, *a, **k):
         super().__init__(*a, **k)
-        self.blackPlotter = blackPlotterFactory(self.screen)
-        self.whitePlotter = whitePlotterFactory(self.screen)
+
+    def createEngine(self, box):
+        return AvatapEngine(
+            box=box,
+            smallFont=self.smallFont,
+            bigFont=self.bigFont,
+            screen=self.screen,
+            blackPlotter=self.blackPlotter,
+            whitePlotter=self.whitePlotter
+        )
+
+class AvatapEngine(Engine):
+    screen = milecastles.required
+    smallFont = milecastles.required
+    bigFont = milecastles.required
+    blackPlotter = milecastles.required
+    whitePlotter = milecastles.required
 
     def displayGeneratedText(self, generator):
         self.screen.clear()
-        self.font.draw_generator(generator, self.blackPlotter)
+        self.smallFont.draw_generator(generator, self.blackPlotter)
         self.screen.redraw()
 
     """

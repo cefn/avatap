@@ -19,4 +19,4 @@ except OSError:
 gc.collect()
 
 # run the integration test
-#from regimes.avatap import runBox; runBox("4")
+from regimes.avatap import runBox; runBox("1")

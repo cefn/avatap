@@ -8,8 +8,19 @@ report_import("vault")
 report_import("st7920")
 from st7920 import Screen
 report_import("machine")
-from machine import Pin
-screen = Screen(slaveSelectPin=Pin(15))
+from machine import Pin, SPI
+
+report_import("mfrc522")
+from mfrc522 import MFRC522
+
+spi = SPI(1, baudrate=1800000, polarity=0, phase=0)
+spi.init()
+collect()
+
+rdr = MFRC522(spi=spi, gpioRst=0, gpioCs=2)
+collect()
+
+screen = Screen(spi=spi, slaveSelectPin=Pin(15))
 collect()
 
 def plotter(x, y):
@@ -20,11 +31,6 @@ def show(msg):
     font.draw_para(msg, plotter)
     screen.redraw()
     collect()
-
-report_import("mfrc522")
-from mfrc522 import MFRC522
-rdr = MFRC522(0, 2, 4, 5, 14)
-collect()
 
 startSack = {
     "epona": False,

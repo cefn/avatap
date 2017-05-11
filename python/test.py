@@ -1,8 +1,8 @@
 import unittest
-from milecastles import *
-from engine import Engine
 
-from stories import exampleShort
+from engines import Engine
+from milecastles import *
+from templates import exampleShort
 
 
 class MockEngine(Engine):

@@ -24,3 +24,5 @@ Modify bitfont library to allow inclusion of only a subset of characters - e.g. 
 Remove examples from reader library export
 
 Remove unused modules from frozen modules list (e.g. webrepl ds18x20)
+
+Remove rotation logic from st7920 library

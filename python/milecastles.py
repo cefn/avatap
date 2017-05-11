@@ -93,6 +93,9 @@ story = None
 required = object()
 optional = object()
 
+def raiser(*a, **k):
+    raise NotImplementedError()
+
 # The signature of objects passed to templates and routing/trigger conditions
 signature = "engine, story, box, node, card, sack"
 
@@ -404,7 +407,7 @@ class ConditionFork(Node):
 
 class Page(Node):
     page = required
-    template = "{{% include 'page' {} %}}".format(signature)
+    template = "{{% include 'page' {} %}}".format(signature) # TODO CH how does this relate to signature logic in boilerplate#cacheTemplates
     templateNames = ["template"]
 
     def getRenderedTemplateName(self, engine):
@@ -412,7 +415,7 @@ class Page(Node):
 
 class GoalPage(Page):
     goalBoxUid = required
-    missTemplate = """Please go to {{node.goalBox.label}}\nto continue your adventure"""
+    missTemplate = """Please go to {{node.goalBox.label}}\nto continue the adventure"""
     templateNames = Page.templateNames + ["missTemplate"]
 
     def getGoalBoxUid(self, story):
@@ -473,7 +476,7 @@ class NodeFork(Page):
         self.choiceList = ""
         # TODO CH any way around this concatenation in RAM?
         for key,label in self.choices.items():
-            self.choiceList += "{{% if not(node.isHidden(engine, '{key}')) %}}{label} : {{{{story.lookupNode('{key}').getGoalBox(story).label}}}}\n{{% endif %}}".format(key=key, label=label)
+            self.choiceList += "{{% if not(node.isHidden(engine, '{key}')) %}}{label}: {{{{story.lookupNode('{key}').getGoalBox(story).label}}}}\n{{% endif %}}".format(key=key, label=label)
 
 
     def validate(self, story):

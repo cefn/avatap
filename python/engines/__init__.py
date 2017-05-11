@@ -1,6 +1,6 @@
 import sys
 import agnostic
-from milecastles import AnonymousContainer, Holder, Story, signature, required, optional, debug
+from milecastles import AnonymousContainer, Holder, Story, Card, signature, required, optional, debug
 import boilerplate
 
 templatePrefix = "{{% args {} %}}".format(signature)
@@ -12,9 +12,25 @@ def cacheTemplate(story, node, templateName):
     templateId = getTemplateId(story, node, templateName) # calculate the id
     templateResolver = boilerplate.Resolver(node)  # use node as resolver (referenced templates also attributes of node)
     templateJinja = getattr(node, templateName)  # get jinja source from attribute of node
+    templateJinja = boilerplate.normaliseTemplate(templateJinja) # remove newlines, preceding or following whitespace, double spaces
     templateJinja = templatePrefix + templateJinja  # prefix the templateString with the standard argument signature
     templatePython = boilerplate.jinjaToPython(templateResolver, templateJinja) # create the python for the generatorFactory
     boilerplate.saveTemplatePython(templateId, templatePython) # place it as expected
+
+def cardToDict(card):
+    return dict(
+        storyUid=card.storyUid,
+        nodeUid=card.nodeUid,
+        sack=card.sack
+    )
+
+def dictToCard(cardUid, cardDict):
+    return Card(
+        uid=cardUid,
+        storyUid=cardDict["storyUid"],
+        nodeUid=cardDict["nodeUid"],
+        sack=cardDict["sack"]
+    )
 
 class Engine(AnonymousContainer):
     box = required
@@ -94,6 +110,32 @@ class Engine(AnonymousContainer):
 
         self.displayGeneratedText(generator)
         agnostic.collect()
+
+        # TODO CH remove this block, which is not intended for final deployment
+        if sys.implementation.name is not "micropython":
+            maxLineLen = 25
+            maxLineCount = 8
+
+            def generator_to_string(generator):
+                s = ""
+                for chunk in generator:
+                    s += chunk
+                return s
+
+            def check_layout(nodeUid, generator):
+                s = generator_to_string(generator)
+                lines = s.split("\n")
+                if len(lines) > maxLineCount:
+                    print()
+                    print(s)
+                    raise AssertionError("> {} lines in {}".format(maxLineCount, nodeUid))
+                for line in lines:
+                    if len(line) > maxLineLen:
+                        print()
+                        print(line)
+                        raise AssertionError("> {} chars in {}".format(maxLineLen, nodeUid))
+
+            check_layout(node.uid, generatorFactory(**self.getEngineContext()))
 
     '''Should render some text, in whatever form required by the Engine'''
     def displayGeneratedText(self, text):

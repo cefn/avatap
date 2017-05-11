@@ -12,13 +12,14 @@ from st7920 import Screen
 from mfrc522 import MFRC522
 from machine import Pin,SPI
 import milecastles
+from engines import dictToCard, cardToDict
 from engines.avatap import AvatapEngine
 from vault import BankVault
 #TODO CH normalise this story module info into one place (e.g. loader, or via milecastles.loadStory)
 from stories.corbridge import story
 agnostic.collect()
 
-spi = SPI(1, baudrate=1800000, polarity=0, phase=0)
+spi = SPI(1, baudrate=1000000, polarity=0, phase=0)
 spi.init()
 agnostic.collect()
 
@@ -37,25 +38,7 @@ def plotter(x,y):
 
 # TODO CH remove this test function
 def generatorFactory():
-    yield "Welcome to Milecastles!\n"
-    yield "Look for numbered boxes\n"
-    yield "and tap your card to\n"
-    yield "progress the story!\n"
-
-def cardToDict(cardObj):
-    return dict(
-        storyUid=story.uid,
-        nodeUid=cardObj.nodeUid,
-        sack=cardObj.sack
-    )
-
-def dictToCard(tagUid, cardDict):
-    return milecastles.Card(
-        uid=tagUid,
-        storyUid=cardDict["storyUid"],
-        nodeUid=cardDict["nodeUid"],
-        sack=cardDict["sack"]
-    )
+    yield "Starting!\n"
 
 def runBox(boxUid):
 
@@ -73,7 +56,6 @@ def runBox(boxUid):
         box=story.lookupBox(boxUid),
         screen=screen,
         font=font,
-        reader=reader,
     )
     boxEngine.registerStory(story)
     agnostic.collect()
