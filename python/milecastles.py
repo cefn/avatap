@@ -407,7 +407,7 @@ class ConditionFork(Node):
 
 class Page(Node):
     page = required
-    template = "{{% include 'page' {} %}}".format(signature)
+    template = "{{% include 'page' {} %}}".format(signature) # TODO CH how does this relate to signature logic in boilerplate#cacheTemplates
     templateNames = ["template"]
 
     def getRenderedTemplateName(self, engine):

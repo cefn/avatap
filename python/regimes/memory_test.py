@@ -1,7 +1,4 @@
-from time import sleep
 from agnostic import collect, report_collect, report_import
-from math import floor
-from os import urandom
 
 report_import("faces.font_5x7")
 from faces.font_5x7 import font
@@ -47,34 +44,3 @@ if stat == rdr.OK:
         screen.clear()
         font.draw_para(para, plotter)
         screen.redraw()
-
-def log2approx(val):
-    val = floor(val)
-    approx = 0
-    while val != 0:
-        val &= ~ (1 << approx)
-        approx = approx + 1
-    return approx
-
-
-def randint(minVal, maxVal=None):
-    if (maxVal != None):
-        return minVal + randint(maxVal - minVal)
-    else:
-        maxVal = minVal
-    byteCount = (log2approx(maxVal) // 8) + 1  # each byte is 8 powers of two
-    val = 0
-    randBytes = urandom(byteCount)
-    idx = 0
-    while idx < len(randBytes):
-        val |= randBytes[idx] << (idx * 8)
-        idx += 1
-    del randBytes
-    return val % maxVal
-
-def fuzz():
-    emulator.handleInput("a")
-    while True:
-        emulator.handleInput(command=str(randint(1,4)))
-        report_collect()
-        sleep(1)
