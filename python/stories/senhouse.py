@@ -40,26 +40,28 @@ with story:
             ),
             goalBoxUid =    paddockBox.uid,
             nextNodeUid =   "yardArrive",
+                #234567890123456789012345
+                   #234567890123456789012345
             sequence = [
                 """Welcome to Milecastles
                 at Senhouse! Look out for
-                the numbered boxes and use
-                your card on them to play!""",
-                """You are an officer at the
-                coastal fort at Senhouse.
-                You must watch the coast
-                for attack from the sea!""",
+                the numbered boxes and
+                use your tag to play!""",
+                """You are stationed at the
+                coastal fort of Senhouse
+                You watch for attack
+                from the sea!""",
                 """You must also care for
                 and breed horses for the
-                cavalry and pay tribute to
-                the gods with libations.
+                cavalry and pay tribute
+                the gods with libations
                 """,
             ],
             missTemplate = """Your adventure is over.
             Epona will favour {{sack.eponapoints}}
             of your garrison's horses.
-            Mars gives you {{sack.marspoints}} gold pieces
-            in the afterlife.
+            Mars awards {{sack.marspoints}} gold pieces
+            for the afterlife.
             Return to {{node.goalBox.label}} to respawn.""",
     )
     agnostic.collect()
@@ -76,13 +78,13 @@ with story:
         uid=            "yardIntro",
         time = incrementTime,
         page =
-        """You are in the courtyard by
-        the wall.
+        """You are in the courtyard
+        by the wall.
         {% if sack.hours <= 4 %}It's early in the morning
         and you can smell
         the sea air.
         {% endif %}
-        {% if sack.hours > 4 and sack.hours < 12 %}It's lunchtime and people
+        {% if sack.hours > 4 and sack.hours < 12 %}It's midday and people
         hurry by.{% endif %}
         {% if sack.hours == 12 %}It's raining {% endif %}
         {% if sack.hours > 12 %}The night is closing in{% endif %}
@@ -94,10 +96,13 @@ with story:
 
     NodeFork(
         uid = "work",
+        #234567890123456789012345
         page = "What do you want to do?",
         choices = {
-            "altars":   "Make a spiritual visit to the altars",
-            "seaview":  "Look out for attack from the Northern Sea!",
+            "altars":   """Make a spiritual visit
+            to the altars""",
+            "seaview":  """Look out for attack
+            the Northern Sea!""",
         },
     )
     agnostic.collect()
@@ -124,7 +129,7 @@ with story:
     NodeFork(
         uid = "chooseGod",
         choices  = {
-            "epona" : "Epona, protector of horses",
+            "epona" : "Epona, god of horses",
             "mars"  : "Mars, god of war & peace",
         },
     )
@@ -138,11 +143,10 @@ with story:
             assign = { "epona":True },
             plus = { "eponapoints":1 },
             ),
-        page =
-        """{% if node.change.triggered %}Epona protector of horses!
-                May our mounts stay strong
-                steady and fertile!
-                we must make an offering!
+        page ="""{% if node.change.triggered %}Epona protector of horses!
+        May our mounts stay strong
+        steady and fertile!
+        we must make an offering!
         {% else %}Epona is with us already!
         {% endif %}
         """,
@@ -194,7 +198,7 @@ with story:
         """{% if node.change.triggered %}
                 {% if node.change.completed %}
                     You leave a cup of wine
-                    for her. Should she really
+                    for her. Should she
                     drink and ride?
                 {% else %}
                     You are out of favour!
@@ -242,8 +246,8 @@ with story:
             plus = { "marspoints":2 }
         ),
         sequence = [
-        """LEAVE a cup of wine
-        for him. He also helps with
+        """LEAVE a cup of wine.
+        He also helps with
         the harvest you know!""",
         """Which helps us
         make more wine!"""
@@ -310,8 +314,10 @@ with story:
     NodeFork(
         uid =   "bravery",
         choices = {
-            "altars": "Make another visit to the altars",
-            "battle": "Defend the outpost! Get a sword!",
+            "altars": """Make another visit to
+            the altars""",
+            "battle": """Defend the outpost!
+            Get a sword!""",
         },
     )
     agnostic.collect()
@@ -340,11 +346,10 @@ with story:
                 the coastal path!
                 You kill the fleeing
                 celts taking a horse
-            {% else %}You HOLD back the invaders
+            {% else %}You HOLD back the hordes
                 best you can but are
                 driven back! the coastal
                 path may be over run!
-                A desperate battle took place here
             {% endif %}
         """,
         nextNodeUid = "yardArrive"
@@ -368,29 +373,23 @@ with story:
     agnostic.collect()
 
     finalReport = (
-        """You completed your adventure with {{sack.eponapoints}} points.
+        """You completed your
+        adventure with {{sack.eponapoints}} points.
         Return to {{node.goalBox.label}} to respawn."""
     )
 
     ThroughPage(
         uid = "retirement",
         goalBoxUid = entranceBox.uid,
-<<<<<<< HEAD
-        #12345678901234567890123456
         page = """Bad luck. Respawned.
-        Begin your adventure again",
-        You completed your adventure
-        with {{sack.eponapoints}} points.
+        Begin the adventure again",
+        You completed your
+        adventure with {{sack.eponapoints}} points.
         """,
-        missTemplate =
-        """You completed your adventure with {{sack.eponapoints}} points.
-        Return to {{node.goalBox.label}} to respawn.""",
-=======
-        page = "Bad luck. Respawned. Tap to begin your adventure again",
         missTemplate = finalReport,
->>>>>>> c6a9c6a8a57671eb70ccde3add59009d246705ff
         nextNodeUid = "landing",
     )
+
     agnostic.collect()
 
     ThroughSequence(
@@ -398,7 +397,7 @@ with story:
         goalBoxUid = paddockBox.uid,
         sequence = [
             """WELL DONE! VICTORY!
-            The gods must be with you!""",
+            The gods are with you!""",
             """{% if sack.eponapoints < 10 %}You've driven back
             the hordes but will
             you manage next time?
@@ -410,18 +409,14 @@ with story:
             of Hadrian's cavalry!
             {% endif %}
             """,
-<<<<<<< HEAD
             """Your adventure is over.
             Epona will favour {{sack.eponapoints}}
-            Mars gives you {{sack.marspoints}} gold pieces
+            horse
+            Mars awards {{sack.marspoints}} gold pieces
             in the afterlife.
             Return to {{node.goalBox.label}} to respawn.""",
         ],
-
-=======
-        ],
         missTemplate = finalReport,
->>>>>>> c6a9c6a8a57671eb70ccde3add59009d246705ff
         nextNodeUid = "landing",
     )
     agnostic.collect()
