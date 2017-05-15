@@ -47,7 +47,7 @@ with story:
         goalBoxUid=smithBox.uid,
         nextNodeUid="workshop1",
         sequence=[
-            # 2345678901234567890123456
+            # 23456789012345678901234
             """ Welcome to Milecastles!
                 Look for numbered boxes
                 and tap your card to
@@ -103,20 +103,25 @@ with story:
             minus={"money": 15},
         ),
         goalBoxUid=smithBox.uid,
-        page="""
+            #23456789012345678901234
+	page="""
         {% if node.change.triggered %}
-            {% if node.change.completed %}
-                It's now the afternoon
-                and the blacksmith is
-                ready for you.Sharpening
-                costs {{node.change.minus['money']}} denarii.
-                You now have {{sack.money}} denarii.
-            {% else %}
-                You don't have enough money to sharpen your tools
-            {% endif %}
-        {% else %}
-            You already sharpened your tools
-        {% endif %}
+		{% if node.change.completed %}
+                	It's now the afternoon
+                	and the blacksmith is
+                	ready for you.
+			Sharpening costs {{node.change.minus['money']}} 
+			denarii. You now have 
+			{{sack.money}} denarii.
+		{% else %}
+                	You don't have enough
+			money to sharpen your
+			tools
+	{% endif %}
+        	{% else %}
+			You already sharpened
+			your tools
+	{% endif %}
         """,
         nextNodeUid="sharpened",
     )
@@ -127,7 +132,7 @@ with story:
         missTemplate="""This isn't the
                         blacksmith's workshop!
                         Go to {{node.goalBox.label}}""",
-        # 2345678901234567890123456| 26 char limit
+        # 23456789012345678901234| 24 char limit
         page="""Look at the tools in the
                 display and PRETEND to
                 sharpen a spearhead.
@@ -149,7 +154,7 @@ with story:
         change=SackChange(
             assign={"smithAnger": True},
         ),
-        # 2345678901234567890123456| 26 char limit
+        # 23456789012345678901234| 24 char limit
         page="""The Blacksmith is furious
                 'You're banned...no sharp
                 tools for you!'""",
@@ -177,10 +182,11 @@ with story:
     NodeFork(
         uid="workshop2",
         choices={
-            "smith1": """Sharpen your tools at the
+		        #23456789012345678901234
+            "smith1": """Sharpen tools at the
                         blacksmith's""",
-            "stone1": """Go outside to order stone
-                        from the quarry""",
+            "stone1": """Go outside to order
+			stone""",
             "inspire1": """Seek inspiration""",
         },
         hideChoices={
@@ -294,7 +300,7 @@ with story:
         uid="badCarve",
         missTemplate="""Stop slacking!
                     Back to {{node.goalBox.label}}""",
-        # 2345678901234567890123456| 26 char limit
+        # 23456789012345678901234| 24 char limit
         page="""You start carving the
                 tombstone. Your tools are
                 blunt and it looks wonky.
@@ -350,7 +356,7 @@ with story:
         uid="burial1",
         missTemplate="""This isn't the tomb site!
                         Go to {{node.goalBox.label}}""",
-        # 2345678901234567890123456| 26 char limit
+        # 23456789012345678901234| 24 char limit
         page="""
         The Burial Club are
         making preparations
