@@ -15,13 +15,20 @@ from milecastles import Box
 
 from stories.corbridge import story
 
-from host import Host, required
+from host import Host, hostDelay
 
 def randomCardUid():
     return urandom(6)
 
 defaultNumCards = 4
-pollDelay = 0.1
+defaultDelay = 1.0
+
+pollDelay = 0.01
+
+presenceDelay = defaultDelay
+readDelay = defaultDelay
+writeDelay = defaultDelay
+absenceDelay = defaultDelay
 
 # TODO CH make queued, not polling
 class LaptopRfid:
@@ -32,18 +39,22 @@ class LaptopRfid:
     def awaitPresence(self, cardUid=None):
         while self.adaptor.boxUid != self.boxUid or self.adaptor.cardUid is None:
             sleep(pollDelay)
+        hostDelay(presenceDelay)
         if cardUid is not None and self.adaptor.cardUid != cardUid:
             raise AssertionError("Wrong Tag")
         return self.adaptor.cardUid
 
     def readCard(self, cardUid=None):
+        hostDelay(readDelay)
         if self.adaptor.boxUid != self.boxUid or self.adaptor.cardUid is None:
             raise AssertionError("No Tag")
         if cardUid is not None and self.adaptor.cardUid != cardUid:
             raise AssertionError("Wrong Tag")
         card = dictToCard(self.adaptor.cardUid, self.adaptor.cardDictMap[self.adaptor.cardUid])
+        return card
 
     def writeCard(self, card):
+        hostDelay(writeDelay)
         if self.adaptor.boxUid != self.boxUid or self.adaptor.cardUid is None:
             raise AssertionError("No Tag")
         if self.adaptor.cardUid != card.uid:
@@ -53,7 +64,7 @@ class LaptopRfid:
     def awaitAbsence(self):
         while self.adaptor.boxUid == self.boxUid and self.adaptor.cardUid is not None:
             sleep(pollDelay)
-        pass
+        hostDelay(absenceDelay)
 
 class KeyboardState:
     def __init__(self, story, cardDictMap=None):
