@@ -4,10 +4,14 @@ from time import sleep
 from engines import cardToDict, dictToCard
 from milecastles import AnonymousContainer, required
 
-delays = False
+delayActive = True
+
+def hostDelay(delay):
+    if delayActive:
+        sleep(delay)
+
 def randomDelay(maxDelay=1):
-    if delays:
-        sleep(random.uniform(0, maxDelay))
+    hostDelay(random.uniform(0, maxDelay))
 
 """
 class StubRfid:
