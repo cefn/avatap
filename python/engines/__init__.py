@@ -75,6 +75,7 @@ class Engine(AnonymousContainer):
         return self.node
             
     def getEngineContext(self):
+        # TODO CH avoid creating new dict? (cache and serve if card is card?)
         return dict(
             engine =    self, 
             story =     self.story,
@@ -111,7 +112,7 @@ class Engine(AnonymousContainer):
         self.displayGeneratedText(generator)
         agnostic.collect()
 
-        # TODO CH remove this block, which is not intended for final deployment
+        # TODO CH Note remove this block, which is not intended for final deployment
         if sys.implementation.name is not "micropython":
             maxLineLen = 25
             maxLineCount = 8
