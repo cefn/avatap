@@ -3,8 +3,6 @@ import agnostic
 from milecastles import AnonymousContainer, Holder, Story, Card, signature, required, optional, debug
 import boilerplate
 
-# TODO CH move all display logic into Host, pass host as callback to engine handleCard to pass string generator
-
 templatePrefix = "{{% args {} %}}".format(signature)
 
 def getTemplateId(story, node, templateName):
@@ -49,7 +47,7 @@ class Engine(AnonymousContainer):
     def lookupStory(self, storyUid):
         return self._lookup(Story, storyUid)
                 
-    def handleCard(self, card):
+    def handleCard(self, card, host):
         self.card = card
         self.story = self.lookupStory(card.storyUid)
         currentUid = card.nodeUid
@@ -61,7 +59,7 @@ class Engine(AnonymousContainer):
                 currentUid = redirectedUid
             else:
                 self.setNode(currentNode)
-        self.displayNode(self.node)
+        self.displayNode(self.node, host)
         self.node.deactivate(self)
         self.node = None
         self.story = None
@@ -92,22 +90,22 @@ class Engine(AnonymousContainer):
         agnostic.collect()
         return result
 
-    def displayNode(self, node):
+    def displayNode(self, node, host):
         templateName = node.getRenderedTemplateName(self)
         templateId = getTemplateId(self.story, node, templateName)
         # TODO CH consider use of string hash of the template for lazy recompilation
 
-        useCache = sys.implementation.name is not "micropython"
+        useCache = sys.implementation.name == "micropython"
 
         generatorFactory = None
-        # load from cache if forced
         if useCache:
+            # try to load from cache
             try:
                 generatorFactory = boilerplate.loadTemplateGeneratorFactory(templateId)
             except ImportError as e:
                 pass # generatorFactory is still None
 
-        # lazy - create module if forced or needed
+        # lazy - create cache if forced or cache not found
         if not(useCache) or generatorFactory is None:
             cacheTemplate(self.story, node, templateName)
             generatorFactory = boilerplate.loadTemplateGeneratorFactory(templateId)
@@ -115,7 +113,7 @@ class Engine(AnonymousContainer):
         generator = generatorFactory(**self.getEngineContext())
         agnostic.collect()
 
-        self.displayGeneratedText(generator)
+        host.displayGeneratedText(generator)
         agnostic.collect()
 
         # TODO CH Note remove this block, which is not intended for final deployment
