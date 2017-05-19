@@ -3,6 +3,8 @@ import agnostic
 from milecastles import AnonymousContainer, Holder, Story, Card, signature, required, optional, debug
 import boilerplate
 
+# TODO CH move all display logic into Host, pass host as callback to engine handleCard to pass string generator
+
 templatePrefix = "{{% args {} %}}".format(signature)
 
 def getTemplateId(story, node, templateName):
@@ -75,6 +77,7 @@ class Engine(AnonymousContainer):
         return self.node
             
     def getEngineContext(self):
+        # TODO CH avoid creating new dict? (cache and serve if card is card?)
         return dict(
             engine =    self, 
             story =     self.story,
@@ -94,14 +97,18 @@ class Engine(AnonymousContainer):
         templateId = getTemplateId(self.story, node, templateName)
         # TODO CH consider use of string hash of the template for lazy recompilation
 
-        # CH suppress behaviour of dynamically compiling, runtime evaluating
-        # generator = self.constructGenerator(node, templateString)
+        useCache = sys.implementation.name is not "micropython"
 
-        # TODO CH add flag to suppress caching in development
-        # CH instead load from module, (optionally lazy-create module)
-        try:
-            generatorFactory = boilerplate.loadTemplateGeneratorFactory(templateId)
-        except ImportError as e:
+        generatorFactory = None
+        # load from cache if forced
+        if useCache:
+            try:
+                generatorFactory = boilerplate.loadTemplateGeneratorFactory(templateId)
+            except ImportError as e:
+                pass # generatorFactory is still None
+
+        # lazy - create module if forced or needed
+        if not(useCache) or generatorFactory is None:
             cacheTemplate(self.story, node, templateName)
             generatorFactory = boilerplate.loadTemplateGeneratorFactory(templateId)
 
@@ -111,7 +118,7 @@ class Engine(AnonymousContainer):
         self.displayGeneratedText(generator)
         agnostic.collect()
 
-        # TODO CH remove this block, which is not intended for final deployment
+        # TODO CH Note remove this block, which is not intended for final deployment
         if sys.implementation.name is not "micropython":
             maxLineLen = 25
             maxLineCount = 8

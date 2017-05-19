@@ -329,6 +329,7 @@ class SackChange(NodeOperator):
     stayPositive = True
 
     def validate(self, story):
+        # TODO CH suppress unnecessary validation logic on load within deployed images
         validAtts = any([hasattr(self, changeName) for changeName in ["assign", "plus", "minus", "reset"]])
         if not validAtts: self.raise_property("[required]", "needs one of; assign, plus, minus, reset")
         del validAtts

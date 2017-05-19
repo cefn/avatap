@@ -16,18 +16,14 @@ class AvatapSiteEmulator(ConsoleSiteEmulator):
         return AvatapEngine(
             box=box,
             smallFont=self.smallFont,
-            bigFont=self.bigFont,
             screen=self.screen,
             blackPlotter=self.blackPlotter,
-            whitePlotter=self.whitePlotter
         )
 
 class AvatapEngine(Engine):
     screen = milecastles.required
     smallFont = milecastles.required
-    bigFont = milecastles.required
     blackPlotter = milecastles.required
-    whitePlotter = milecastles.required
 
     def displayGeneratedText(self, generator):
         self.screen.clear()
