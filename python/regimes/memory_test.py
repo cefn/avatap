@@ -1,4 +1,4 @@
-from agnostic import collect, report_collect, report_import
+from agnostic import report_collect, report_import
 
 report_import("faces.font_5x7")
 from faces.font_5x7 import font
@@ -26,7 +26,7 @@ report_import("engines.console")
 report_import("stories.senhouse")
 from stories.senhouse import story
 
-from engines.console import ConsoleSiteEmulator
+from regimes.console import ConsoleSiteEmulator
 
 emulator = ConsoleSiteEmulator(story=story)
 report_collect()
