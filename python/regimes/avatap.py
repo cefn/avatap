@@ -11,9 +11,9 @@ from faces.font_5x7 import font
 from st7920 import Screen
 from mfrc522 import MFRC522
 from machine import Pin,SPI
-import milecastles
 from engines import dictToCard, cardToDict
-from engines.avatap import AvatapEngine
+from engines import Engine
+from regimes.console import ConsoleHost
 from vault import BankVault
 #TODO CH normalise this story module info into one place (e.g. loader, or via milecastles.loadStory)
 from stories.corbridge import story
@@ -42,6 +42,8 @@ def generatorFactory():
 
 def runBox(boxUid):
 
+    host = ConsoleHost()
+
     agnostic.collect()
     #TODO CH remove these test lines
     screen.clear()
@@ -52,11 +54,7 @@ def runBox(boxUid):
 
     boxUid = str(boxUid) # handle case of passing a number
 
-    boxEngine = AvatapEngine(
-        box=story.lookupBox(boxUid),
-        screen=screen,
-        font=font,
-    )
+    boxEngine = Engine(box=story.lookupBox(boxUid))
     boxEngine.registerStory(story)
     agnostic.collect()
 
@@ -84,7 +82,7 @@ def runBox(boxUid):
 
             agnostic.collect()
 
-            boxEngine.handleCard(card)
+            boxEngine.handleCard(card, host)
             print("Handled Card")
             vault.writeJson(cardToDict(card), tagUid=tagUid, unselect=True)
             print("Written JSON")
