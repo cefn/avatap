@@ -8,7 +8,7 @@ from agnostic import ticks_ms
 from faces.font_5x7 import font as smallFont
 from faces.font_ncenB18 import font as bigFont
 from engines import cardToDict, dictToCard
-from engines.avatap import AvatapEngine
+from engines import Engine
 import st7920Emulator
 
 from milecastles import Box
@@ -125,17 +125,6 @@ if __name__ == "__main__":
     hosts = dict()
     screens = list()
 
-    def createRun(host):
-        def run():
-            while host.box.uid in hosts:
-                try:
-                    host.gameLoop()
-                except Exception as e:
-                    print(type(e).__name__ + str(e))
-                    if type(e) is not AssertionError:
-                        raise e
-        return run
-
     boxUids = list(boxTable.keys())
     boxUids.sort()
     for boxUid in boxUids:
@@ -144,12 +133,7 @@ if __name__ == "__main__":
         screen = st7920Emulator.PillowScreen()
         blackPlotter = screen.create_plotter(False)
         whitePlotter = screen.create_plotter(True)
-        engine = AvatapEngine(
-            box=box,
-            screen=screen,
-            smallFont=smallFont,
-            blackPlotter=blackPlotter
-        )
+        engine = Engine(box=box)
         engine.registerStory(story)
         host = Host(
             story = story,
@@ -164,7 +148,7 @@ if __name__ == "__main__":
         )
         hosts[boxUid] = host
         screens.append(screen)
-        hostRun = createRun(host)
+        hostRun = host.createRunnable()
         hostThread = Thread(target=hostRun, daemon=True)
         hostThread.start()
 
@@ -175,7 +159,7 @@ if __name__ == "__main__":
     def on_close(*a):
         # remove all hosts
         for boxUid in list(hosts.keys()):
-            del hosts[boxUid]
+            hosts[boxUid].running = False
 
     # blocking run
     pyglet.app.run()
