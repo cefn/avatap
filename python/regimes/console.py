@@ -40,8 +40,6 @@ class SiteEmulator(AnonymousContainer):
 
     story = required
 
-    createEngine = raiser
-
     def __init__(self, *a, **k):
         super().__init__(*a, **k)
 
@@ -49,7 +47,7 @@ class SiteEmulator(AnonymousContainer):
         boxTable = self.story._get_table(Box)
         self.engines = dict()
         for boxUid, box in boxTable.items():
-            engine = self.createEngine(box=box)
+            engine = Engine(box=box)
             engine.registerStory(self.story)
             self.engines[boxUid] = engine
 
@@ -67,6 +65,11 @@ class SiteEmulator(AnonymousContainer):
     def lookupCard(self, cardUid):
         self._lookup(Card, cardUid)
 
+class ConsoleHost:
+    def displayGeneratedText(self, generator):
+        for chunk in generator:
+            sys.stdout.write(chunk)
+
 class ConsoleSiteEmulator(SiteEmulator):
 
     def createEngine(self, box):
@@ -77,6 +80,7 @@ class ConsoleSiteEmulator(SiteEmulator):
             command = input()
 
         # handle commands indentifying a card in the emulator
+        host = ConsoleHost()
         cardTable = self._get_table(Card)  # use box lookup from story
         if command in cardTable:
             self.currentCard = cardTable[command]
@@ -94,7 +98,7 @@ class ConsoleSiteEmulator(SiteEmulator):
                 boxUid = matchingBoxUids[0]
                 if self.currentCard != None:
                     print("Tap '{}' with '{}'".format(command, self.currentCard.uid))
-                    self.engines[boxUid].handleCard(self.currentCard)
+                    self.engines[boxUid].handleCard(self.currentCard, host)
                 else:
                     print("No card. Choose from {}".format(str(list(cardTable.keys()))))
 
@@ -103,12 +107,6 @@ class ConsoleSiteEmulator(SiteEmulator):
             agnostic.collect()
             self.handleInput()
             agnostic.collect()
-
-
-class ConsoleEngine(Engine):
-    def displayGeneratedText(self, generator):
-        for chunk in generator:
-            sys.stdout.write(chunk)
 
 
 if __name__ == "__main__":
