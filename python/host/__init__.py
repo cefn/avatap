@@ -57,6 +57,12 @@ class Host(AnonymousContainer):
     bigFont = required
     blackPlotter = required
     whitePlotter = required
+    running = True
+
+    def displayGeneratedText(self, generator):
+        self.screen.clear()
+        self.smallFont.draw_generator(generator, self.blackPlotter)
+        self.screen.redraw()
 
     def toast(self, para):
         x = 0
@@ -84,6 +90,7 @@ class Host(AnonymousContainer):
         self.screen.fill_rect(*dirtyBox, set=set)
         self.screen.redraw(*dirtyBox)
 
+    # TODO CH add 'Replace for next page' behaviour
     def gameLoop(self):
         toastRect = self.toast(b"Place Tag\nBelow")
         cardUid = self.rfid.awaitPresence()
@@ -93,13 +100,24 @@ class Host(AnonymousContainer):
         if card is None:
             card = self.story.createBlankCard(cardUid)
         self.wipeRect(labelRect)
-        self.engine.handleCard(card)
+        self.engine.handleCard(card, self)
         labelRect = self.label(b"Writing tag")
         self.rfid.writeCard(card)
         self.wipeRect(labelRect)
-        labelRect = self.label(b"Ready to Remove")
+        labelRect = self.label(b"Remove For Next Page")
         self.rfid.awaitAbsence()
         self.wipeRect(labelRect)
         labelRect = self.label(b"Tag Removed")
         self.screen.clear()
         self.screen.redraw()
+
+    def createRunnable(self):
+        def run():
+            while self.running:
+                try:
+                    self.gameLoop()
+                except Exception as e:
+                    print(type(e).__name__ + str(e))
+                    if type(e) is not AssertionError:
+                        raise e
+        return run
