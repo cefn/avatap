@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-=======
-from engines.console import ConsoleSiteEmulator
->>>>>>> c6a9c6a8a57671eb70ccde3add59009d246705ff
 from milecastles import Story, Box, ThroughPage, ThroughSequence, ConditionFork, NodeFork, SackChange
 from engines.console import ConsoleSiteEmulator
 # inspects the module to figure out the story name (e.g. corbridge)
@@ -24,6 +20,8 @@ story = Story(
     }
 )
 
+#reset cache: rm templates/t_housesteads*.py
+
 with story:
     
     # populate with boxes
@@ -36,7 +34,7 @@ with story:
     entranceBox = barracksBox
 
 # INTRO
-	
+				#23456789012345678901234
     ThroughSequence(
         uid =           "landing",
         change =        SackChange( 
@@ -47,48 +45,50 @@ with story:
         sequence = [
             """ Welcome to Milecastles! 
 				Look for numbered boxes 
-				and tap your card to  
-				progress the story!""",
-            """ You are a Cavalry member 
-				stationed at Housesteads 
-				Fort. News has reached you 
-				of barbarians approaching
-				from the West.""",	
-            """ Your quest is to help the 
-				fort repel the attack 
-				using all of your 
-				training...""",
+				and use your tag to  
+				progress the story...""",
+            """ You are a member of 
+				the Cavalry stationed 
+				at Housesteads Fort. 
+				News has reached 
+				you of barbarians 
+				approaching
+				from the West...""",	
+            """ Your quest is to help 
+				the fort repel the 
+				attack using all of 
+				your training...""",
             """ You wake up in your 
-				barracks. MARCH up to 
-				the fort and find 
-				the stables at Box IV.""",
+				barracks. 
+				MARCH up to the fort 
+				and find the stables 
+				at BOX IV.""",
         ],
     )
     	       
     #1. MORNING / BATTLE PREP
-    
+			#23456789012345678901234
     ThroughSequence(
 		uid =           "stables1",
 		goalBoxUid =    stablesBox.uid,
 		nextNodeUid =   "stableFork",
 		sequence = [
-		""" You arrive at the stables.
-			The latrine is nearby and
-			It smells! HOLD YOUR NOSE
-			for 60 seconds. Your 
-			commander is here. He 
-			orders you to prepare 
-			for battle.""",
+		""" You arrive at the 
+			stables. The smelly 
+			latrine is nearby. 
+			HOLD YOUR NOSE for 
+			20 seconds. Your  
+			commander orders you 
+			to prepare for battle...""",
 		""" You find your horse, 
 			who seems a bit hungry.
-			At the same time, you
-			have a feeling that 
-			you should do some
-			scouting at the 
+			You also have a 
+			feeling that you should 
+			do some scouting at the 
 			West gate.""",
         ],
     )
-      
+							#23456789012345678901234
     NodeFork(
         uid =   "stableFork",
         choices = {
@@ -101,92 +101,95 @@ with story:
     
     ThroughPage(
 		uid = 			"food1",
-		page = 			""" You collect a bale of hay 
-						    from the supply hut. 
-						    CARRY it back to the 
-						    stable to feed your horse.""",
+		page = 			""" You collect a bale of 
+							hay from the supply hut. 
+						    CARRY THE HAY back to 
+						    the stable to feed 
+						    your horse.""",
 		goalBoxUid = 	battleBox.uid,
 		nextNodeUid =	"food2",
 		)				
-    
+							#23456789012345678901234
     ThroughPage(
 		uid = 			"food2",
 		change = 		SackChange(
 								plus = {"horseFat":40},
 								),
 		page = 			""" Back at the stable,
-							Your horse munches the 
-							hay eagerly. Your horse's
+							Your horse munches 
+							greedily. The horse's
 							stomach is now {{node.change.plus['horseFat']}}% 
 							full.""",
 		goalBoxUid = 	stablesBox.uid,
 		nextNodeUid =	"stables2",
 		)				
-    
+							#23456789012345678901234
     ThroughPage(
 		uid =           "recon1",
 		change = 		SackChange(
 								assign = {"recon":True},
 								),		
-		missTemplate =  """ This isn't the West Gate! 
+		missTemplate =  """ This isn't the 
+							West Gate! 
 							Go to {{node.goalBox.label}}""",
-		page =  		""" You find the WEST GATE 
-							where you can see shapes 
-							in the mist coming across 
-							the hills. MAKE A NOTE of 
-							their position on your 
-							slate and return to the 
-							stables.""",
+		page =  		""" At the WEST GATE, you 
+							can see distant shapes 
+							coming across the hills. 
+							You MAKE A NOTE 
+							of their position on 
+							your slate and return 
+							to the stables.""",
 		goalBoxUid =    westgateBox.uid,
 		nextNodeUid =   "stables2",
     )
-     
+							#23456789012345678901234
     ThroughPage(
 		uid="stables2",
 		missTemplate =  """ This isn't the stables! 
 							Go to {{node.goalBox.label}}""",
 		page=			""" You and your horse are 
-							eager to enter the battle. 
-							But are you ready?""",	
+							eager to enter the 
+							battle. But are you 
+							ready?
+							
+							...""",	
 		goalBoxUid = stablesBox.uid,
 		nextNodeUid="stablesCheck1",
     )
     
     ConditionFork(
         uid=           "stablesCheck1",
-        condition =    "sack.sword==False and sack.helmet==False",
+        condition =    "sack.sword==False and sack.horseFat==0",
         trueNodeUid=   "stablesCheck2",
         falseNodeUid=  "battlePrep1",
     )
-        
+							#23456789012345678901234
     ThroughPage(
 		uid="stablesCheck2",
 		missTemplate =  """ This isn't the stables! 
 						    Go to {{node.goalBox.label}}""",
 		page=			""" You don't quite feel
-							ready yet... What did
-							you forget to do?""",	
+							ready yet... 
+							What did you 
+							forget to do?""",	
 		goalBoxUid = stablesBox.uid,
 		nextNodeUid="stableFork1",
     )
-    
+							#23456789012345678901234
     NodeFork(
         uid =   "stableFork1",
         choices = {
-			 "sword":  	""" Search for your sword
-							back at the Barracks.""",
-            "feed":   	""" Collect more horse feed 
-							at the South Gate""",
-            "groom":  	""" Collect your helmet
-							from your groom
-							at the West Gate""",
+			 "sword":  	""" Find your sword""",
+            "feed":   	""" Feed the horse""",
+            "groom":  	""" Find a helmet""",
         },
     hideChoices = {
 			"sword":	"sack.sword==True",
 			"groom":	"sack.helmet==True",
 		},
 	)
-              
+					#23456789012345678901234
+					
     ThroughPage(
 		uid="feed",
 		change =        SackChange(
@@ -196,42 +199,39 @@ with story:
 		page= 	""" You lead your horse to
 					the supply hut. Pretend
 					to FEED THE HORSE.
-					The horse's stomach is now
-					{{node.change.plus['horseFat']}}% more full.
-					Let's get back to 
-					the stables!""",
+					The horse's stomach is 
+					now {{node.change.plus['horseFat']}}% more full.""",
 		nextNodeUid="stablesCheck1",
     )
- 
+					
+					#23456789012345678901234
+					
     ThroughPage(
 		uid="groom",
 		change =   SackChange( 
                     assign={"helmet":True},
                             ),
 		page= 	""" Your groom is lazy! 
-					He wants to hang around
-					with his mates at the 
-					West Gate. You have to
-					SHOUT AT HIM before he
-					will fetch your helmet.
-					Ouch. It's too small.""",
+					You have to SHOUT AT HIM 
+					before he will fetch 
+					your helmet. Ouch... 
+					It's too small!""",
 		goalBoxUid = westgateBox.uid,
 		nextNodeUid="stablesCheck1",
 			)
-
+						#23456789012345678901234
     ThroughPage(
 		uid="sword",
 		missTemplate =  "Head back to {{node.goalBox.label}}",
 		change=SackChange(
             assign={"sword":True},
 				),		
-        page= 		""" Your sword is buried under 
-						some old wolf skins and 
-						barrels. You check the 
-						blade. OW!! It's still 
-						sharp. This will come in 
-						handy later...
-						Back to the stables (again)""",
+        page= 		""" Your sword is buried 
+						under some old wolf 
+						skins and barrels. 
+						You check the blade. OW!! 
+						It's still sharp!
+						Now back to the stables.""",
 		goalBoxUid = barracksBox.uid,
 		nextNodeUid="stablesCheck1",
     )
@@ -239,33 +239,39 @@ with story:
 	   
 	#2. MORNING INSPECTION / BATTLE
  	
+							#23456789012345678901234
     ThroughSequence(
 		uid="battlePrep1",
 		goalBoxUid = stablesBox.uid,
 		nextNodeUid="southGate1",
 		missTemplate =  """ Quickly! Back to the 
-							Stable{{node.goalBox.label}}""",
+							stables{{node.goalBox.label}}""",
 		sequence= [ 
-		""" The commander is getting
-			impatient. You need to get 
-			into battle. 
-			'HRMPH! Let's check your 
-			things.'""",
-		""" 'How full is your horse's
-			stomach?' You answer:
-			{{sack.horseFat}}%, sir!""",
-		"""	'Do you have a nice sharp 
-			sword?' 
-			You answer:
-			That's {{sack.sword}}, sir!""",
-		""" 'And are you even wearing 
-			a helmet?' 
-			You answer: 
-			That's {{sack.helmet}}, sir!""",
-		""" 'Well, I've seen better, but 
-			we've no more time, so...
-			MARCH to the South Gate to 
-			start the battle'. """,
+						""" The commander is getting
+							impatient. You need to 
+							get to the battle. 
+							
+							'HRMPH! Let's check your 
+							things.'""",
+						""" 'How full is your horse's
+							stomach?' 
+							
+							You answer:
+							{{sack.horseFat}}%, sir!""",
+						"""	'Do you have a sword
+							that's nice and sharp?'
+							
+							You answer:
+							That's {{sack.sword}}, sir!""",
+						""" 'Are you even wearing 
+							the right helmet?' 
+							
+							You answer: 
+							That's {{sack.helmet}}, sir!""",
+						""" 'Well, I've seen better, 
+							but we've no more time'.
+							MARCH to the South Gate 
+							to start the battle'. """,
 			]
 		 )
 
@@ -275,32 +281,32 @@ with story:
         trueNodeUid=   "reconYes",
         falseNodeUid=  "reconNo",
     )
-   
+							#23456789012345678901234
+							
     ThroughSequence(
 		uid="reconYes",
-		missTemplate =  """ Quick! Head back to the 
-							BATTLE at {{node.goalBox.label}}""",
 		goalBoxUid = battleBox.uid,
 		nextNodeUid="battling1",
 		sequence= [
-		""" You meet with the cavalry
+		""" You meet the cavalry
 			to tell them about what
-			you saw earlier and talk
-			about the best way to 
-			attack.""",
-		""" You decide to flank the 
-			enemy from either side 
-			to surprise them and 
-			catch them in a pincer.
-			Pretend to RIDE out to 
-			fight...""",
+			you saw earlier and 
+			discuss the best way 
+			to attack...""",
+		""" You decide to flank 
+			the enemy and catch 
+			them in a pincer 
+			movement. RIDE YOUR 
+			HORSE out to fight 
+			then come back...""",
 		]
-    )
+    )						#23456789012345678901234
+			#23456789012345678901234
 
     ThroughSequence(
 		uid="battling1",
 		missTemplate =  """ Quick! Head back to the 
-							BATTLE at {{node.goalBox.label}}""",
+							Battle at {{node.goalBox.label}}""",
 		goalBoxUid = battleBox.uid,
 		nextNodeUid="stables3",
 		sequence= [
@@ -311,55 +317,57 @@ with story:
 		""" You DISCOMBOBULATE 
 			a barbarian.""",
 		""" You BIFF a barbarian.""",
-		""" You POP a barbarian.""",
+		""" You PWN a barbarian.""",
 		""" You PLOK a barbarian.""",
 		""" You CRUNK a barbarian.""",
 		""" This is getting rather 
-			tiring! Better take a 
-			rest and re-supply at 
-			the stables.""",
+			tiring! You'd better 
+			take a rest and re-supply 
+			at the stables.""",
 				]
     )
- 
+			#23456789012345678901234
+			
     ThroughSequence(
 		uid="reconNo",
 		goalBoxUid = battleBox.uid,
 		nextNodeUid="stables3",
 		missTemplate =  "Quick! Head back to the BATTLE at {{node.goalBox.label}}",
 		sequence= [
-		""" Well... I'm afraid
+		""" Well...
 			You didn't take the 
-			chance to check out
-			the area earlier and
+			chance to scout the
+			area earlier and
 			the cavalry take a
-			beating from the enemy.""",
+			beating...""",
 		""" You get BOPPED by a 
-			barbarian.""",
+			barbarian...""",
 		""" Your horse gets 
 			PAFFED by a 
-			barbarian.""",
+			barbarian...""",
 		""" You get WHACKED by a 
-			barbarian.""",
-		""" Your horse gets 
-			CLOMPED by a barbarian.""",
+			barbarian...""",
+		""" Your horse gets CLOMPED 
+			by a barbarian...""",
 		""" You get DISCOMBOBULATED 
-			by a barbarian.""",
+			by a barbarian...""",
 		""" Your horse gets 
-			PLOKKED by a 
-			barbarian.""",
+			WHALLOPED by a 
+			barbarian...""",
 		""" You get CRUNKED by a 
-			barbarian.""",
+			barbarian...""",
 		""" Are you getting the
 			idea? It's not going
 			well is it? Better 
 			take a rest, re-supply
 			and chill with your
-			horse at the stables.""",
+			horse at the stables...""",
 		]
     )
     
 #3. PM BATTLE PREP
-
+			#23456789012345678901234
+			
     ThroughSequence(
 		uid="stables3",
 		change = SackChange(
@@ -375,30 +383,30 @@ with story:
 			the hay for an hour.
 			When you wake up,
 			your horse is making
-			snorting noises.""",
+			snorting noises...""",
 		""" The commander is
 			imapatient, but 
 			there's still a bit 
 			of time to prepare 
 			before going back 
-			to the battle.""",
+			to the battle...""",
 			]
     )
-    
+							#23456789012345678901234
     NodeFork(
         uid =   "stablesFork3",
         choices = {
-			"hide1":    """ This might be a good time 
+			"hide1":    """ This might be the time 
 							to chicken out and HIDE 
-							under your bed in the 
-							BARRACKS.""",
-			"groom2": 	""" Get your armour from 
-							the SOUTH GATE.""",				
-            "feed3":   	""" Get more horse feed 
-							at the WEST Gate""",
+							in the BARRACKS.""",
+			"groom2": 	""" Get armour from the 
+							SOUTH GATE.""",				
+            "feed3":   	""" Get more horse feed at 
+							the WEST Gate""",
     	},
 	)
-
+					#23456789012345678901234
+					
     ThroughPage(
 		uid="groom2",
 		change=SackChange(
@@ -406,16 +414,16 @@ with story:
 				),		
         page=	""" Your groom is asleep.
 					You wake him up with
-					a KICK. He digs
-					around in a large sack 
-					and finds your armour.
-					Except... it's too big.
-					Oh well, go back to the 
-					stable for inspection.""",
+					a KICK. He presents 
+					your armour. Except... 
+					it's too big! Now 
+					back to the inspection!""",
 		goalBoxUid = battleBox.uid,
 		nextNodeUid="stablesCheck3",
     )
 
+			#23456789012345678901234
+			
     ThroughPage(
 		uid="feed3",
 		missTemplate =  "MARCH over to {{node.goalBox.label}}",
@@ -424,16 +432,17 @@ with story:
 				),		
         page=
         """ You lead your horse
-			to the hay bale and 
-			he eats half,
-			meaning that he's 
-			roughly {{node.change.plus['horseFat']}}%
+			to the hay bale. 
+			He eats half, meaning 
+			that he's {{node.change.plus['horseFat']}}% 
 			more full. Now go back 
 			to the stables.""",
 		goalBoxUid = westgateBox.uid,
 		nextNodeUid="stablesCheck3",
     )
 
+			#23456789012345678901234
+			
     ThroughSequence(
 		uid="hide1",
 		goalBoxUid = barracksBox.uid,
@@ -443,59 +452,58 @@ with story:
         """ You played it safe 
 			and decided to hide
 			out for the rest of
-			the battle.""",
+			the battle...""",
 		""" Curled up in a wolf
 			skin, you dream of
-			being the hero/heroine
-			of the wall...""",
-		"""	you THWACK a barbarian.""",
-		""" You THWAP a barbarian.""",
-		""" You WALLOP a barbarian.""",
-		""" You KERPOW a barbarian.""",
-		""" You DISMANTLE a barbarian.""",
-		""" You PUNCTURE a barbarian.""",
-		""" You CRUSH a barbarian.""",
+			being the hero or 
+			heroine of the wall...""",
+		"""	you THWACK a barbarian...""",
+		""" You THWAP a barbarian...""",
+		""" You WALLOP a barbarian...""",
+		""" You KERPOW a barbarian...""",
+		""" You DISMANTLE a barbarian...""",
+		""" You PUNCTURE a barbarian...""",
+		""" You CRUSH a barbarian...""",
 		""" Wow, this is a repetitive 
-			dream!""",
+			dream...""",
 		"""	The cavalry won the
 			battle but you were
 			lazy and your commander
-			will be FURIOUS!! 
-			TAP to try again or
+			will be FURIOUS!!""",
+		"""	Hold your tag here 
+			to try again or 
 			visit another museum
-			to play as another
+			to play as a different
 			character. """,
 		]
 	)
 
 #4. PM INSPECTION / BATTLE
-
+			#23456789012345678901234
+			
     ThroughPage(
 		uid="stablesCheck3",
 		missTemplate =  "Head over to {{node.goalBox.label}}",
 		page=
-        """ Your (forgetful)
+        """ The forgetful
 			commander is here.
 			He wants to make an
-			inspection.	
+			inspection (again).
 			'First, let's look at
 			what you're wearing...'""",
 		goalBoxUid = stablesBox.uid,
 		nextNodeUid="gearCheck1",
     )
-  
+			#23456789012345678901234
     ThroughPage(
 		uid="gearCheck1",
 		missTemplate =  "Head over to {{node.goalBox.label}}",
 		page=
-        """ 'Are you wearing a proper 
-			HELMET?'
-			Answer: That's {{sack.helmet}} 
-			sir!
-			'Are you wearing decent 
+        """ 'Did you find a HELMET?'
+			That's {{sack.helmet}} sir!
+			'Are you wearing sturdy 
 			ARMOUR?'
-			Answer: That's {{sack.armour}} 
-			sir!""",
+			That's {{sack.armour}} sir!""",
 		goalBoxUid = stablesBox.uid,
 		nextNodeUid="gearCheck2",
     )
@@ -506,18 +514,17 @@ with story:
         trueNodeUid=   "goodGear",
         falseNodeUid=  "badGear",
     )
-    
+			#23456789012345678901234
+			
     ThroughPage(
 		uid="goodGear",
 		page=
         """ 'YOU WILL MAKE THE 
 			CAVALRY PROUD!
-            (Even if your helmet is
-            a bit small and your
-            armour is baggy) 
-            GOOD WORK! NOW, 
-            ONWARDS TO BATTLE!
-            HRMMMRRPPH""",
+            (Even though you look 
+            a bit funny) 
+            GOOD WORK! NOW, ONWARDS 
+            TO BATTLE! HRMMM""",
 		goalBoxUid = stablesBox.uid,
 		nextNodeUid="horseCheck",
     )
@@ -528,15 +535,15 @@ with story:
         """ 'YOU'RE A DISGRACE! 
 			I'VE SEEN BETTER 
 			DRESSED PONIES THAN
-			YOU!!
-			Oh well, we're short
-			of soldiers so I'll
-			have to pass you if
-			I must...'""",
+			YOU!!! Oh well, I'll
+			have to let you pass 
+			just this once...'""",
 		goalBoxUid = stablesBox.uid,
 		nextNodeUid="horseCheck",
     )
-
+				
+				#23456789012345678901234
+					
     ThroughPage(
         uid =           "horseCheck",
         goalBoxUid =    stablesBox.uid,
@@ -548,30 +555,26 @@ with story:
             {% if node.change.triggered %}
                 {% if node.change.completed %}
                     'LET ME LOOK AT YOUR
-                    HORSE NOW!! OH DEAR 
+                    HORSE... OH DEAR 
                     HE'S EATEN TOO MUCH!!' 
-                    How embarrassing...
                     Your horse's stomach is 
                     {{sack.horseFat}}% full.
                     He's too fat to ride!
            {% else %}
-				'LET'S LOOK AT YOUR
-				HORSE NOW! HMM, HE'S
-				IN GOOD SHAPE!
-				Your horse's stomach 
-				is a perfect {{node.change.plus['horseFat']}}% full.
+				'LET ME SEE YOUR HORSE!
+				HMM, HE'S IN GOOD SHAPE!
+				Your horse's stomach is 
+				a perfect {{node.change.plus['horseFat']}}% full.
 				He's Healthy and ready to 
 				go to battle!                
 			{% endif %}
             {% else %}
-				'LET'S LOOK AT YOUR
-				HORSE NOW! HMM, HE'S
-				IN GOOD SHAPE!
-				Your horse's stomach 
-				is a perfect {{node.change.plus['horseFat']}}% full.
+				'LET ME SEE YOUR HORSE!
+				HMM, HE'S IN GOOD SHAPE!
+				Your horse's stomach is 
+				a perfect {{node.change.plus['horseFat']}}% full.
 				He's Healthy and ready to 
-				go to battle!                      
-			{% endif %}
+				go to battle!			{% endif %}
         """,
         nextNodeUid = "endingCheck",
     )
@@ -584,46 +587,50 @@ with story:
         trueNodeUid=   "badEnding",
         falseNodeUid=  "battling2",
     )
-          
+			#23456789012345678901234
+							
     ThroughSequence(
 		uid="battling2",
-		missTemplate =  """ Quick! Head back to 
-							the BATTLE at {{node.goalBox.label}}""",
+		missTemplate =  """ Quick! Head back to the 
+							BATTLE at {{node.goalBox.label}}""",
 		goalBoxUid = battleBox.uid,
 		nextNodeUid="goodEnding",
 		sequence= [
-		""" You passed the inspection!
+		""" You passed the 
+			inspection!
 			RIDE out with your
-			fellow cavalry to save 
-			the day!""",
-		"""	you THWACK a barbarian.""",
-		""" You POKE a barbarian.""",
-		""" You WALLOP a barbarian.""",
-		""" You KERPOW a barbarian.""",
+			fellow cavalry to 
+			save the day!""",
+		"""	You THWACK a barbarian..""",
+		""" You PINCH a barbarian...""",
+		""" You WHACK a barbarian...""",
+		""" You KERPOW a barbarian...""",
 		""" You DISCOMBOBULATE 
-			a barbarian.""",
-		""" You PUNCTURE a barbarian.""",
-		""" You CRUSH a barbarian.""",
-		""" Are you getting the idea yet?""",
+			a barbarian...""",
+		""" You PUNCTURE a barbarian
+			...""",
+		""" You CRUSH a barbarian...""",
+		""" Are you getting the 
+			idea yet?""",
 		""" The cavalry won!!
-			Your tired now, but you
-			still manage to go 
+			You're tired now, but 
+			you still manage to go 
 			and celebrate at the
 			barracks.""",
 				]
     )
   
 #5. ENDINGS  
-     
+				#23456789012345678901234
+				
     ThroughPage(
 		uid="goodEnding",
 		page="""You are a legend! You
-				helped defend the fort, 
-				kept your horse from 
-				eating too much!
-				TAP to play again or 
+				helped defend the fort! 
+				HOLD YOUR TAG 
+				to play again or 
 				visit another museum 
-				to play as another
+				to play as a different
 				character!""",
 		goalBoxUid = barracksBox.uid,
 		nextNodeUid="landing",
@@ -635,8 +642,8 @@ with story:
 				You survived the battle
 				but your horse is fat
 				and you will be demoted.
-				TAP at the BARRACKS to 
-				try again!""",
+				USE YOUR TAG at BOX I 
+				to try again!""",
 		goalBoxUid = stablesBox.uid,
 		nextNodeUid="landing",
     )
