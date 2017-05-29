@@ -40,8 +40,6 @@ with story:
             ),
             goalBoxUid =    paddockBox.uid,
             nextNodeUid =   "yardArrive",
-                #234567890123456789012345
-                   #234567890123456789012345
             sequence = [
                 """Welcome to Milecastles
                 at Senhouse! Look out for
@@ -54,7 +52,8 @@ with story:
                 """You must also care for
                 and breed horses for the
                 cavalry and pay tribute
-                the gods with libations
+                to the gods with
+                offerings & libations
                 """,
             ],
             missTemplate = """Your adventure is over.
@@ -62,7 +61,8 @@ with story:
             of your garrison's horses.
             Mars awards {{sack.marspoints}} gold pieces
             for the afterlife.
-            Return to {{node.goalBox.label}} to respawn.""",
+            Return to {{node.goalBox.label}}
+            to respawn.""",
     )
     agnostic.collect()
 
@@ -80,9 +80,9 @@ with story:
         page =
         """You are in the courtyard
         by the wall.
-        {% if sack.hours <= 4 %}It's early in the morning
-        and you can smell
-        the sea air.
+        {% if sack.hours <= 4 %}It's early in the
+        morning and you can
+        smell the sea air.
         {% endif %}
         {% if sack.hours > 4 and sack.hours < 12 %}It's midday and people
         hurry by.{% endif %}
@@ -96,13 +96,14 @@ with story:
 
     NodeFork(
         uid = "work",
-        #234567890123456789012345
+                #23456789012345678901234
         page = "What do you want to do?",
         choices = {
             "altars":   """Make a spiritual visit
             to the altars""",
             "seaview":  """Look out for attack
-            the Northern Sea!""",
+            from the Northern
+            Sea!""",
         },
     )
     agnostic.collect()
@@ -118,8 +119,8 @@ with story:
         """,
         """We must pay tribute to
         the gods!
-        But who in your heart do
-        you seek guidance from?""",
+        But who in your heart
+        do you seek favour?""",
         ],
         goalBoxUid = altarBox.uid,
         nextNodeUid = "chooseGod",
@@ -129,8 +130,11 @@ with story:
     NodeFork(
         uid = "chooseGod",
         choices  = {
-            "epona" : "Epona, god of horses",
-            "mars"  : "Mars, god of war & peace",
+            #23456789012345678901234
+            "epona" : """Epona, god of horses
+            and fertility""",
+            "mars"  : """Mars, god of war &
+            also peace""",
         },
     )
     agnostic.collect()
@@ -143,10 +147,11 @@ with story:
             assign = { "epona":True },
             plus = { "eponapoints":1 },
             ),
-        page ="""{% if node.change.triggered %}Epona protector of horses!
-        May our mounts stay strong
-        steady and fertile!
-        we must make an offering!
+        page ="""{% if node.change.triggered %}Epona protector of
+        horses!
+        May our mounts stay
+        strong steady & fertile.
+        Make an offering!
         {% else %}Epona is with us already!
         {% endif %}
         """,
@@ -181,7 +186,8 @@ with story:
         uid =   "eponaoffers",
         choices = {
             "eponawine": "Offer some wine",
-            "eponagrain": "Seek some ears of grain"
+            "eponagrain": """Seek some ears
+            of grain"""
         },
     )
     agnostic.collect()
@@ -194,18 +200,17 @@ with story:
             assign = { "epona":False },
             minus = { "eponapoints":1 },
         ),
-        page =
-        """{% if node.change.triggered %}
-                {% if node.change.completed %}
-                    You leave a cup of wine
-                    for her. Should she
-                    drink and ride?
-                {% else %}
+        page ="""{% if node.change.triggered %}
+                    {% if node.change.completed %}
+                        You leave a cup of wine
+                        for her. Should she
+                        drink and ride?
+                    {% else %}
                     You are out of favour!
+                    {% endif %}
+                {% else %}
+                Epona is satisfied.
                 {% endif %}
-        {% else %}
-            Epona is satisfied.
-        {% endif %}
         """,
         nextNodeUid = "yardArrive",
     )
@@ -233,7 +238,8 @@ with story:
         uid =   "marsoffers",
         choices = {
             "marswine": "Offer some wine",
-            "marsgrain": "Seek some ears of grain",
+            "marsgrain": """Seek some ears
+            of grain""",
         },
     )
     agnostic.collect()
@@ -248,8 +254,8 @@ with story:
         sequence = [
         """LEAVE a cup of wine.
         He also helps with
-        the harvest you know!""",
-        """Which helps us
+        the harvest you know...""",
+        """...which helps us
         make more wine!"""
         ],
         nextNodeUid = "yardArrive",
@@ -264,10 +270,10 @@ with story:
             assign = {"mars":False},
         ),
         page = """{% if node.change.triggered %}You offer grain from the
-            store. What is he
-            supposed to do with this?
-            He's not a horse!
-            GALLOP away mortal!
+        store. What is he
+        to do with this?
+        He's not a horse!
+        GALLOP away mortal!
         {% else %}Mars is bored of grain
         {% endif %}
         """,
@@ -341,15 +347,15 @@ with story:
             assign =    { "superhorse":True},
             plus  =     { "marspoints":4 },
         ),
-        page = """{% if node.change.triggered %}You bravely hold back the
-                invaders! CHARGE down
-                the coastal path!
-                You kill the fleeing
-                celts taking a horse
+        page = """{% if node.change.triggered %}You bravely hold back
+        the invaders! CHARGE
+        down the coastal path!
+        You kill the fleeing
+        celts & take a horse
             {% else %}You HOLD back the hordes
-                best you can but are
-                driven back! the coastal
-                path may be over run!
+            best you can but are
+            driven back! the coastal
+            path may be over run!
             {% endif %}
         """,
         nextNodeUid = "yardArrive"
@@ -374,17 +380,21 @@ with story:
 
     finalReport = (
         """You completed your
-        adventure with {{sack.eponapoints}} points.
-        Return to {{node.goalBox.label}} to respawn."""
+        adventure! Epona will
+        favour {{sack.eponapoints}} horses for
+        you when you die!
+        Return to {{node.goalBox.label}}
+        to respawn."""
     )
 
     ThroughPage(
         uid = "retirement",
         goalBoxUid = entranceBox.uid,
         page = """Bad luck. Respawned.
-        Begin the adventure again",
-        You completed your
-        adventure with {{sack.eponapoints}} points.
+        Begin your adventure
+        again! Epona will
+        favour {{sack.eponapoints}} horses for
+        you when you die!
         """,
         missTemplate = finalReport,
         nextNodeUid = "landing",
@@ -396,6 +406,7 @@ with story:
         uid = "retirementsuccess",
         goalBoxUid = paddockBox.uid,
         sequence = [
+            #234567889012345678901234
             """WELL DONE! VICTORY!
             The gods are with you!""",
             """{% if sack.eponapoints < 10 %}You've driven back
@@ -409,12 +420,14 @@ with story:
             of Hadrian's cavalry!
             {% endif %}
             """,
+            #234567890BoxIII                78901234
             """Your adventure is over.
-            Epona will favour {{sack.eponapoints}}
-            horse
-            Mars awards {{sack.marspoints}} gold pieces
-            in the afterlife.
-            Return to {{node.goalBox.label}} to respawn.""",
+            Epona favours {{sack.eponapoints}} horses
+            and Mars will make {{sack.marspoints}}
+            great cavalryman for
+            the wall
+            Return to {{node.goalBox.label}}
+            to respawn.""",
         ],
         missTemplate = finalReport,
         nextNodeUid = "landing",
