@@ -658,8 +658,7 @@ with story:
         page="""
         You completed the game
         with {{sack.money}} Denarii!
-        Return to {{node.goalBox.label}}
-        to try again or visit
+        Try again or visit
         another museum to play
         more MileCastles!
         """,
