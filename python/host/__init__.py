@@ -85,19 +85,19 @@ class Host(AnonymousContainer):
         self.screen.redraw(*dirtyBox)
 
     def gameLoop(self):
-        toastRect = self.toast(b"Place Tag\nBelow")
+        toastRect = self.toast(b" PLACE TAG\n TO READ")
         cardUid = self.rfid.awaitPresence()
         self.wipeRect(toastRect)
-        labelRect = self.label(b"Reading tag...")
+        labelRect = self.label(b"Loading Game...")
         card = self.rfid.readCard(cardUid=cardUid)
         if card is None:
             card = self.story.createBlankCard(cardUid)
         self.wipeRect(labelRect)
         self.engine.handleCard(card)
-        labelRect = self.label(b"Writing tag")
+        labelRect = self.label(b"Saving Game...")
         self.rfid.writeCard(card)
         self.wipeRect(labelRect)
-        labelRect = self.label(b"Ready to Remove")
+        labelRect = self.label(b"Lift & Replace for more")
         self.rfid.awaitAbsence()
         self.wipeRect(labelRect)
         labelRect = self.label(b"Tag Removed")

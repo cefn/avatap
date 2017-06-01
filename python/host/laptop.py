@@ -6,14 +6,17 @@ from threading import Thread
 import pyglet
 from agnostic import ticks_ms
 from faces.font_5x7 import font as smallFont
-from faces.font_ncenB18 import font as bigFont
+from faces.font_timB14 import font as bigFont
+#from faces.font_ncenB18 import font as bigFont
 from engines import cardToDict, dictToCard
 from engines.avatap import AvatapEngine
 import st7920Emulator
 
 from milecastles import Box
 
+#from stories.housesteads import story
 from stories.corbridge import story
+#from stories.senhouse import story
 
 from host import Host, hostDelay
 
@@ -21,14 +24,14 @@ def randomCardUid():
     return urandom(6)
 
 defaultNumCards = 4
-defaultDelay = 1.0
-
+#defaultDelay = 0.1
+defaultDelay = 2.5
 pollDelay = 0.01
 
 presenceDelay = defaultDelay
 readDelay = defaultDelay
 writeDelay = defaultDelay
-absenceDelay = defaultDelay
+absenceDelay = 0.5
 
 # TODO CH make queued, not polling
 class LaptopRfid:
