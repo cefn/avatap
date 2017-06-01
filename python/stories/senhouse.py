@@ -42,9 +42,12 @@ with story:
             nextNodeUid =   "yardArrive",
             sequence = [
                 """Welcome to Milecastles
-                at Senhouse! Look out for
-                the numbered boxes and
-                use your tag to play!""",
+                Look for numbered boxes!
+                Hold your tag on the
+                tag symbol below & wait,
+                then lift & remove
+                to progress the story...
+                """,
                 """You are stationed at the
                 coastal fort of Senhouse
                 You watch for attack

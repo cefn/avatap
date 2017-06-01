@@ -41,9 +41,11 @@ with story:
         nextNodeUid="workshop1",
         sequence=[
             """ Welcome to Milecastles!
-                Look for numbered boxes
-                and hold your tag to
-                progress the story...""",
+                Look for numbered boxes!
+                Hold your tag on the
+                tag symbol below & wait,
+                then lift & remove
+                to progress the story...""",
             """ You are a stonemason
                 working at the military
                 base at Corbridge...""",
