@@ -85,7 +85,7 @@ class Host(AnonymousContainer):
         self.screen.redraw(*dirtyBox)
 
     def gameLoop(self):
-        toastRect = self.toast(b" PLACE TAG\n TO READ")
+        toastRect = self.toast(b"PLACE TAG\n  TO READ")
         cardUid = self.rfid.awaitPresence()
         self.wipeRect(toastRect)
         labelRect = self.label(b"Loading Game...")

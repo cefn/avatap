@@ -25,7 +25,7 @@ def randomCardUid():
 
 defaultNumCards = 4
 #defaultDelay = 0.1
-defaultDelay = 2.5
+defaultDelay = 1
 pollDelay = 0.01
 
 presenceDelay = defaultDelay
