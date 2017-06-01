@@ -38,9 +38,8 @@ def launch(story, boxUid):
         whitePlotter=whitePlotter,
     )
 
-    # Use 'running' flag in while loop or
-    # consider converging on Runnable factory instead
-    while True:
+    # Consider converging on Runnable factory instead
+    while host.running:
         host.gameLoop()
 
 
