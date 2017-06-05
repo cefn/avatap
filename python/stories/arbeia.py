@@ -50,10 +50,6 @@ with story:
 		goalBoxUid =    quartersBox.uid,
 		nextNodeUid =   "stores0",
 		sequence = [
-            """ Welcome to Milecastles!
-				Look for numbered boxes
-				and hold your tag to
-				progress the story...""",
             """ You are a groom to the
 				cavalry unit stationed
 				at Arbeia fort...""",
