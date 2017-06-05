@@ -1,5 +1,6 @@
 from engines.console import ConsoleSiteEmulator
 from milecastles import Story, Box, ThroughPage, ThroughSequence, ConditionFork, NodeFork, SackChange
+from stories import introText
 
 storyName = "corbridge"
 
@@ -8,7 +9,7 @@ story = Story(
     uid=storyName,
     # choose an alternative startNodeUid and startSack for debugging
     # startNodeUid = "stoneFork",
-    startNodeUid="landing",
+    startNodeUid="firstLanding",
     startSack={
         "money": 100,
         "smithAnger": False,
@@ -31,6 +32,12 @@ with story:
 
     # BOX I
     # 1a - intro / landing
+    ThroughPage(
+        uid="firstLanding",
+        goalBoxUid=entranceBox.uid,
+        page=introText,
+        nextNodeUid="landing",
+        )
 
     ThroughSequence(
         uid="landing",
@@ -40,12 +47,6 @@ with story:
         goalBoxUid=smithBox.uid,
         nextNodeUid="workshop1",
         sequence=[
-            """ Welcome to Milecastles!
-                Look for numbered boxes!
-                Hold your tag on the
-                tag symbol below & wait,
-                then lift & remove
-                to progress the story...""",
             """ You are a stonemason
                 working at the military
                 base at Corbridge...""",

@@ -1,6 +1,7 @@
 import agnostic
 from engines.console import ConsoleSiteEmulator
 from milecastles import Story, Box, ThroughPage, ThroughSequence, ConditionFork, NodeFork, SackChange
+from stories import introText
 
 # inspects the module to figure out the story name (e.g. corbridge)
 storyName = __name__.split(".")[-1]
@@ -8,7 +9,8 @@ storyName = __name__.split(".")[-1]
 # create story
 story = Story(
     uid=storyName,
-    startNodeUid = "landing",
+    #startNodeUid = "landing",
+    startNodeUid="firstLanding",
     startSack={
         "epona":False,
         "mars":False,
@@ -33,6 +35,14 @@ with story:
     )
 
     # populate with passages
+
+    ThroughPage(
+        uid="firstLanding",
+        goalBoxUid=entranceBox.uid,
+        page=introText,
+        nextNodeUid="landing",
+        )
+
     ThroughSequence(
             uid =           "landing",
             change =        SackChange(
@@ -41,13 +51,6 @@ with story:
             goalBoxUid =    paddockBox.uid,
             nextNodeUid =   "yardArrive",
             sequence = [
-                """Welcome to Milecastles
-                Look for numbered boxes!
-                Hold your tag on the
-                tag symbol below & wait,
-                then lift & remove
-                to progress the story...
-                """,
                 """You are stationed at the
                 coastal fort of Senhouse
                 You watch for attack
