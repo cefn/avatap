@@ -50,6 +50,7 @@ with story:
             ),
             goalBoxUid =    paddockBox.uid,
             nextNodeUid =   "yardArrive",
+            #23456789012345678901234
             sequence = [
                 """You are stationed at the
                 coastal fort of Senhouse
@@ -64,7 +65,7 @@ with story:
             ],
             missTemplate = """Your adventure is over.
             Epona will favour {{sack.eponapoints}}
-            of your garrison's horses.
+            of your horses.
             Mars awards {{sack.marspoints}} gold pieces
             for the afterlife.
             Return to {{node.goalBox.label}}
@@ -151,7 +152,7 @@ with story:
         change = SackChange(
             trigger = "sack.epona == False",
             assign = { "epona":True },
-            plus = { "eponapoints":1 },
+            plus = { "eponapoints":2 },
             ),
         page ="""{% if node.change.triggered %}Epona protector of
         horses!
@@ -202,7 +203,7 @@ with story:
         uid =   "eponawine",
         goalBoxUid = seaBox.uid,
         change = SackChange(
-            trigger = "sack.epona == True",
+            trigger = "sack.eponapoints > 1",
             assign = { "epona":False },
             minus = { "eponapoints":1 },
         ),
@@ -215,7 +216,7 @@ with story:
                     You are out of favour!
                     {% endif %}
                 {% else %}
-                Epona is satisfied.
+                Epona is not satisfied.
                 {% endif %}
         """,
         nextNodeUid = "yardArrive",
@@ -390,7 +391,7 @@ with story:
         favour {{sack.eponapoints}} horses for
         you when you die!
         Return to {{node.goalBox.label}}
-        to respawn."""
+        to respawn & try again!"""
     )
 
     ThroughPage(
@@ -426,7 +427,6 @@ with story:
             of Hadrian's cavalry!
             {% endif %}
             """,
-            #234567890BoxIII                78901234
             """Your adventure is over.
             Epona favours {{sack.eponapoints}} horses
             and Mars will make {{sack.marspoints}}

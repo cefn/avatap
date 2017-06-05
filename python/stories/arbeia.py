@@ -49,7 +49,11 @@ with story:
 							),
 		goalBoxUid =    quartersBox.uid,
 		nextNodeUid =   "stores0",
-		sequence = [
+		missTemplate = """
+        Get started at {{node.goalBox.description}}
+        Get over to {{node.goalBox.label}}!""",
+        sequence = [
+                #23456789012345678901234
             """ You are a groom to the
 				cavalry unit stationed
 				at Arbeia fort...""",
@@ -62,13 +66,12 @@ with story:
 				task until you've
 				completed enough tasks
 				to take a rest! ...""",
-			""" You are in your quarters
+			""" You're in your quarters
 				across the courtyard
 				from the Barracks.
-				Walk over to the
-				STOREROOM on the other
-				side of the museum to
-				START.""",
+				Walk to the STOREROOM
+                on the other side of
+                the museum to START.""",
         ],
     )
 
@@ -82,7 +85,7 @@ with story:
 
     ThroughPage(
 		uid="stores1",
-		missTemplate =  """ This isn't the storeroom!
+		missTemplate =  """ This isn't {{node.goalBox.description}}!
 							Go to {{node.goalBox.label}}""",
         page=			""" You let yourself into the
 							storeroom. It's dark and
@@ -114,20 +117,22 @@ with story:
 		uid =           "water1",
 		goalBoxUid =    barracksBox.uid,
 		nextNodeUid =   "water2",
-		sequence = [
-            """ You walk across the
-				courtyard in the rain.
-				You go into the white
-				building where the
-				water pump is found...""",
-            """ Pretend to PUMP the
-				water into a BUCKET...""",
-			""" Keep going, you'll
-				need a lot more
-				than one bucket!""",
-				],
-			)
-							#123456789012345678901234
+		missTemplate =  """ This isn't {{node.goalBox.description}}!
+							Go to {{node.goalBox.label}}""",
+        sequence = ["""
+        You walk across the
+		courtyard in the rain.
+		You go into the white
+		building where the
+		water pump is found...""",
+        """Pretend to PUMP the
+        water into a BUCKET...""",
+        """Keep going, you'll
+        need a lot more
+        than one bucket!""",
+        ],
+        )
+	    #123456789012345678901234
 
     ThroughPage(
 		uid="water2",
@@ -186,7 +191,7 @@ with story:
 							The horses must have
 							been eating a lot...""",
 						],
-					)
+        )
 							#123456789012345678901234
 
     ThroughPage(
@@ -227,13 +232,13 @@ with story:
 
     ThroughPage(
 		uid="stores5",
-		missTemplate =  """ This isn't the storeroom!
+		missTemplate =  """ This isn't {{node.goalBox.description}}!
 							Go to {{node.goalBox.label}}.""",
         page= 			""" What's next?
 							...""",
 		goalBoxUid = storesBox.uid,
 		nextNodeUid="stores3",
-		)
+        )
 
     ConditionFork(
         uid=           "stores3",
@@ -251,10 +256,11 @@ with story:
 					in here (and there are
 					spiders). You find a new
 					list of jobs to complete.""",
-		goalBoxUid = storesBox.uid,
+		missTemplate =  """ Stop slacking!!
+							Go to {{node.goalBox.label}}""",
+        goalBoxUid = storesBox.uid,
 		nextNodeUid="storesFork2",
     )
-							#123456789012345678901234
 
 
     NodeFork(
@@ -271,13 +277,12 @@ with story:
         },
     )
 
-				#123456789012345678901234
-
 
     ThroughSequence(
 		uid =           "fire1",
 		goalBoxUid =    barracksBox.uid,
-		missTemplate =  "Stop slacking!! Go to {{node.goalBox.label}}",
+		missTemplate =  """Stop slacking!!
+        Go to {{node.goalBox.label}}""",
 		nextNodeUid =   "fire2",
 		sequence = [
             """ You walk across the
@@ -338,8 +343,7 @@ with story:
 		sequence = [
             """ You walk across the
 				courtyard again.
-				(Aren't your feet
-				getting sore?)
+				(Are your feet sore?)
 				You go into the
 				stables behind the
 				Barracks.""",
@@ -360,9 +364,11 @@ with story:
 							assign={"feed":True},
 							plus={"money":10},
 							),
-		page=""" Those horses should be
+		missTemplate =  """ Stop slacking!!
+							Go to {{node.goalBox.label}}""",
+        page=""" Those horses should be
 				 nice and full now.
-				 Put your sack down down
+				 Put your sack down
 				 and walk back to the
 				 storeroom. You earned
 				 {{node.change.plus['money']}} Denarii""",
@@ -398,12 +404,10 @@ with story:
 				earned?'
 				I've earned a whopping
 				{{sack.money}} Denarii! """,
-			]
-	)
-
-					#123456789012345678901234
-
-
+			],
+        missTemplate =  """ Stop slacking!!
+							Go to {{node.goalBox.label}}""",
+        )
 	#3. PM TASKS / HORSE RELATED
 
     ThroughPage(
@@ -445,7 +449,7 @@ with story:
     ThroughSequence(
 		uid =           "sleep1",
 		goalBoxUid =    quartersBox.uid,
-		missTemplate =  """ This isn't your quarters
+		missTemplate =  """ This isn't {{node.goalBox.description}}!
 							Go to {{node.goalBox.label}}""",
 		nextNodeUid =   "badEnd1",
 		sequence = [
@@ -505,11 +509,11 @@ with story:
 
     ThroughPage(
 		uid="horse1",
-		missTemplate =  """ This isn't the Barracks!
+        missTemplate =  """	This isn't {{node.goalBox.description}}!
 							Go to {{node.goalBox.label}}""",
         page=			""" You cross the courtyard.
 							Your master is waiting
-							at the barracks...""",
+							at {{node.goalBox.description}}...""",
 		goalBoxUid = barracksBox.uid,
 		nextNodeUid="horse2",
     )
@@ -520,8 +524,8 @@ with story:
 		change=		SackChange(
 							plus={"money":10},
 							),
-		missTemplate =  """	This isn't the Barracks!
-							Go to{{node.goalBox.label}}""",
+		missTemplate =  """	This isn't {{node.goalBox.description}}!
+							Go to {{node.goalBox.label}}""",
         page=""" Your master is happy!!
 				 'What a great job you've
 				 done! Here's a bonus of
@@ -538,8 +542,8 @@ with story:
 		change=		SackChange(
 							plus={"money":5},
 							),
-		missTemplate =  """	This isn't the Barracks!
-							Go to{{node.goalBox.label}}""",
+		missTemplate =  """	This isn't {{node.goalBox.description}}
+							Go to {{node.goalBox.label}}""",
         page=	""" 'Help to get me and my
 					horse Regalis looking
 					smart for the Troy Games
@@ -589,15 +593,14 @@ with story:
 							assign={"harness":True},
 							plus={"money":10},
 							),
-		missTemplate =  """ This isn't the Barracks!
+		missTemplate =  """ This isn't {{node.goalBox.description}}!
 							Go to {{node.goalBox.label}}""",
         page=			""" The harness looks good,
 							you've earned {{node.change.plus['money']}} Denarii.
 							Looking closer, you
 							notice a big split...
-							I wonder if I can find
-							something to fix it in
-							my quarters?""",
+							I wonder if I can fix it
+                            in my quarters?""",
 		goalBoxUid = storesBox.uid,
 		nextNodeUid="wander1",
     )
@@ -611,7 +614,9 @@ with story:
 							),
 		goalBoxUid =    quartersBox.uid,
 		nextNodeUid =   "uniform2",
-		sequence = [
+		missTemplate =  """ This isn't {{node.goalBox.description}}!
+							Go to {{node.goalBox.label}}""",
+        sequence = [
             """ EXPLORE the BARRACKS to
 				LOOK for your tools and
 				polish. Hmm, where did
@@ -639,7 +644,9 @@ with story:
 							),
 		goalBoxUid =    quartersBox.uid,
 		nextNodeUid =   "uniform2",
-		sequence = [
+		missTemplate =  """ This isn't {{node.goalBox.description}}!
+							Go to {{node.goalBox.label}}""",
+        sequence = [
             """ You walk around your
 				quarters for a while,
 				thinking about how to
@@ -673,12 +680,13 @@ with story:
 
     ThroughPage(
 		uid="goodEnd1",
-		page=""" 	Your master is waiting
+		missTemplate =  """ This isn't {{node.goalBox.description}}!
+							Go to {{node.goalBox.label}}""",
+        page=""" 	Your master is waiting
 					outside of the storeroom.""",
 		goalBoxUid = storesBox.uid,
 		nextNodeUid="goodEnd2",
     )
-				#123456789012345678901234
 
     ThroughSequence(
 		uid =           "goodEnd2",
@@ -687,16 +695,29 @@ with story:
 		sequence = [
             """ 'Are you done yet?
 				I have to get riding!
-				Let me take a look...
-				Did you clean my Harness?
-				Answer: {{sack.harness}}
+				Let me look... Did you
+                clean my Harness?'
+                {% if sack.harness == True %}
+                    'Yes! you did!'
+                {% else %}
+                    'Oh. No. Ah well.'
+                {% endif %}
 				...""",
             """ 'Did you put these fancy
 				beads on there?'
-				Answer: {{sack.beads}}
+                {% if sack.beads == True %}
+                    'Yes! excellent!'
+                {% else %}
+                    'Oh. No. Hmm shame.'
+                {% endif %}
 				'Did you repair my
 				dented old armour?'
-				Answer {{sack.polish}}""",
+                {% if sack.polish == True %}
+				    'Yes! commendable!'
+                {% else %}
+                    'Oh. Dents. Embarassing.'
+                {% endif %}
+                """,
 			""" 'Well, I'm certainly
 				going to be the toast
 				of the Troy games!
@@ -709,7 +730,6 @@ with story:
 			]
 		)
 
-					#123456789012345678901234
 
     ThroughPage(
         uid =           "goodEnd3",
@@ -726,8 +746,7 @@ with story:
                     have {{sack.money}} Denarii.
                     Enough to buy my own
                     pony and harness!
-                    That was the best
-                    day's work ever!
+                    Best day's work ever!
            {% else %}
 				    OK, I've now got
 				    {{sack.money}} Denarii!
@@ -747,7 +766,6 @@ with story:
         """,
         nextNodeUid = "goodEnd4",
     )
-					#123456789012345678901234
 
     ThroughPage(
 		uid="goodEnd4",

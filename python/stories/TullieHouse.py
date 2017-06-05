@@ -33,7 +33,6 @@ with story:
 
     entranceBox = fortBox
 
-				#23456789012345678901234
 	#Intro
     ThroughPage(
         uid="firstLanding",
@@ -50,10 +49,6 @@ with story:
 		goalBoxUid =    fortBox.uid,
 		nextNodeUid =   "mask1",
 		sequence = [
-            """ Welcome to Milecastles!
-				Look for numbered boxes
-				and hold your tag to
-				progress the story...""",
             """ You are Grecus
 				Turmaerious, a member
 				of the Super Turma
@@ -64,11 +59,11 @@ with story:
             """ Your quest is to show
 				off your riding and
 				weapon skills in front
-				of the assmebled crowd
-				at the Hippika Gymnasia
-				games at Uxelodunum...""",
+				of the crowd at the
+                Hippika Gymnasia games
+                at Fort Uxelodunum...""",
 			""" Go over to the fort
-				entrance at BOX 2
+				entrance at BOX II
 				to start your quest!""",
         ],
     )
@@ -675,10 +670,14 @@ with story:
 				your peformance for
 				years to come...""",
 			"""	You won the games with:
-				Ars Technica: {{sack.arstech}}.
-				Horse skill: {{sack.horse}}.
+                {% if sack.arstech == True %}
+                    A genuine Ars Technica!
+                {% else %}
+                    No Ars Technica. Shame.
+                {% endif %}
+				Horse Skill: {{sack.horse}}.
 				Sword Skill: {{sack.sword}}.
-				Archery skill: {{sack.archery}}""",
+				Archery Skill: {{sack.archery}}""",
             """ Go back to BOX 1
 				to play again or
 				visit another museum
@@ -699,15 +698,19 @@ with story:
 				led to a very average
 				display...""",
             """ It's a sad day for your
-				but there's always
+                Turma but there's always
 				next year!
 				...""",
 			"""	You ended the games with:
-				Ars Technica: {{sack.arstech}}.
-				Horse skill: {{sack.horse}}.
+                {% if sack.arstech == True %}
+                    A genuine Ars Technica!
+                {% else %}
+                    No Ars Technica. Shame.
+                {% endif %}
+                Horse Skill: {{sack.horse}}.
 				Sword Skill: {{sack.sword}}.
 				Archery skill: {{sack.archery}}""",
-            """ Go back to BOX 1
+            """ Go back to BOX I
 				to try again or
 				visit another museum
 				to play more
