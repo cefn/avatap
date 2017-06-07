@@ -1,4 +1,3 @@
-from engines.console import ConsoleSiteEmulator
 from milecastles import Story, Box, ThroughPage
 
 # inspects the module to figure out the story name (e.g. corbridge)
@@ -28,9 +27,8 @@ with story:
     )
     
 def run():
-    print("Loading emulator")
+    from regimes.console import ConsoleSiteEmulator
     emulator = ConsoleSiteEmulator(story=story)
-    print("Running Emulator")
     emulator.run()
 
 if __name__ == "__main__":

@@ -1,6 +1,5 @@
-from engines.console import ConsoleSiteEmulator
-from milecastles import Story, Box, ThroughPage, ThroughSequence, ConditionFork, NodeFork, SackChange
 import agnostic
+from milecastles import Story, Box, ThroughPage, ThroughSequence, ConditionFork, NodeFork, SackChange
 
 storyName = "corbridge"
 
@@ -682,9 +681,9 @@ with story:
     agnostic.collect()
 
 def run():
+    from regimes.console import ConsoleSiteEmulator
     emulator = ConsoleSiteEmulator(story=story)
     emulator.run()
-
 
 if __name__ == "__main__":
     run()

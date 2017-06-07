@@ -1,5 +1,4 @@
 from milecastles import Story, Box, ThroughPage, ThroughSequence, ConditionFork, NodeFork, SackChange
-from engines.console import ConsoleSiteEmulator
 # inspects the module to figure out the story name (e.g. corbridge)
 storyName = __name__.split(".")[-1]
 
@@ -337,9 +336,10 @@ with story:
             nextNodeUid ="gate1",
             )
 
-if __name__ == "__main__":
-    print("Loading emulator")
+def run():
+    from regimes.console import ConsoleSiteEmulator
     emulator = ConsoleSiteEmulator(story=story)
-    print("Running Emulator")
     emulator.run()
 
+if __name__ == "__main__":
+    run()

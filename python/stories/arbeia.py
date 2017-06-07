@@ -1,5 +1,4 @@
 from milecastles import Story, Box, ThroughPage, ThroughSequence, ConditionFork, NodeFork, SackChange
-from engines.console import ConsoleSiteEmulator
 # inspects the module to figure out the story name (e.g. corbridge)
 storyName = __name__.split(".")[-1]
 
@@ -721,9 +720,8 @@ with story:
     )
 
 def run():
-    print("Loading emulator")
+    from regimes.console import ConsoleSiteEmulator
     emulator = ConsoleSiteEmulator(story=story)
-    print("Running Emulator")
     emulator.run()
 
 if __name__ == "__main__":
