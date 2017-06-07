@@ -61,9 +61,11 @@ class Engine(AnonymousContainer):
                 self.setNode(currentNode)
         self.displayNode(self.node, host)
         self.node.deactivate(self)
+        nextNode = self.node # deactivate() should have overwritten node with next node
         self.node = None
         self.story = None
         self.card = None
+        return nextNode
             
     def setNodeUid(self, nodeUid):
         node = self.story.lookupNode(nodeUid)
