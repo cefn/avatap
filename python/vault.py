@@ -35,6 +35,7 @@ class BankVault:
         # currently selected tag (avoid reauth)
         self.selectedTagUid = None
 
+    # TODO CH add timeout here and in LaptopRfid
     def awaitPresence(self, expectTagUid=None):
         while True:
             try:
