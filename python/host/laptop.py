@@ -6,13 +6,16 @@ from threading import Thread
 import pyglet
 from agnostic import ticks_ms
 from faces.font_5x7 import font as smallFont
-from faces.font_ncenB18 import font as bigFont
+#from faces.font_timB14 import font as bigFont
+bigFont=smallFont
 from engines import Engine, cardToDict, dictToCard
 import st7920Emulator
 
 from milecastles import Box
 
+#from stories.housesteads import story
 from stories.corbridge import story
+#from stories.senhouse import story
 
 from host import Host, hostDelay
 
