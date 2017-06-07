@@ -1,7 +1,6 @@
 import os
 import random
 from time import sleep
-from engines import cardToDict, dictToCard
 from milecastles import AnonymousContainer, required
 
 delayActive = True
@@ -12,40 +11,6 @@ def hostDelay(delay):
 
 def randomDelay(maxDelay=1):
     hostDelay(random.uniform(0, maxDelay))
-
-"""
-class StubRfid:
-    def __init__(self, cardUid = None, cardDict=None):
-        if cardUid == None:
-            self.cardUid = os.urandom(6)
-        else:
-            self.cardUid = cardUid
-
-        self.cardDict = cardDict
-
-    def awaitPresence(self):
-        randomDelay()
-        return self.cardUid
-
-    def readCard(self):
-        randomDelay()
-        if self.cardDict:
-            # return the tag and card
-            return dictToCard(self.cardUid, self.cardDict)
-        else:
-            return None
-
-    def writeCard(self, card):
-        randomDelay()
-        if card.uid == self.cardUid:
-            self.cardDict = cardToDict(card)
-        else:
-            raise AssertionError("Wrong tag")
-
-    def awaitAbsence(self):
-        randomDelay()
-
-"""
 
 class Host(AnonymousContainer):
     box = required
@@ -91,6 +56,7 @@ class Host(AnonymousContainer):
         self.screen.redraw(*dirtyBox)
 
     # TODO CH add 'Replace for next page' behaviour
+    # TODO CH add 'special control tag' handling behaviour
     def gameLoop(self):
         toastRect = self.toast(b"Place Tag\nBelow")
         cardUid = self.rfid.awaitPresence()
