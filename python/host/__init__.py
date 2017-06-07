@@ -1,9 +1,13 @@
 import os
 import random
 from time import sleep
-from milecastles import AnonymousContainer, required
+from milecastles import GoalPage, AnonymousContainer, required
 
-delayActive = True
+delayActive = False
+
+awaitLift =     b"LIFT & REPLACE for more."
+awaitReplace =  b"Now REPLACE for more...."
+awaitLeave =    b""
 
 def hostDelay(delay):
     if delayActive:
@@ -23,6 +27,7 @@ class Host(AnonymousContainer):
     blackPlotter = required
     whitePlotter = required
     running = True
+    expectStay = False
 
     def displayGeneratedText(self, generator):
         self.screen.clear()
@@ -32,13 +37,12 @@ class Host(AnonymousContainer):
     def toast(self, para):
         x = 0
         y = 0
-        y -= 6 # vertical offset for bigFont
-        dX, dY = self.bigFont.draw_para(para, self.blackPlotter, x=x, y=y, lineHeight=32)
+        dX, dY = self.bigFont.draw_para(para, self.blackPlotter, x=x, y=y)
         rect = (x,y,x + dX, y+ dY) # weird offset logic (redraw uses last coord, not upper bound)
         self.screen.redraw(*rect)
         return rect
 
-    def label(self, line):
+    def label(self, line, redraw=True):
         labelWidth = self.smallFont.line_cols(line)
         labelHeight = self.smallFont.height
         left = self.screen.width - labelWidth - 1
@@ -47,35 +51,52 @@ class Host(AnonymousContainer):
         bottom = top + labelHeight + 2
         self.screen.fill_rect(left - 2, top - 2, right, bottom, False) # color box in black
         self.smallFont.draw_line(line, x=left + 1, y=top + 1, plotter=self.whitePlotter)
-        box = (left, top, right, bottom)
-        self.screen.redraw(*box)
-        return box
+        rect = (left, top, right, bottom)
+        if redraw:
+            self.screen.redraw(*rect)
+        return rect
 
-    def wipeRect(self, dirtyBox, set=True):
-        self.screen.fill_rect(*dirtyBox, set=set)
-        self.screen.redraw(*dirtyBox)
+    def wipeRect(self, dirtyRect, set=True):
+        self.screen.fill_rect(*dirtyRect, set=set)
+        self.screen.redraw(*dirtyRect)
 
-    # TODO CH add 'Replace for next page' behaviour
     # TODO CH add 'special control tag' handling behaviour
     def gameLoop(self):
-        toastRect = self.toast(b"PLACE TAG\n  TO READ")
+        toastRect = None
+        labelRect = None
+        if self.expectStay:
+            labelRect = self.label(awaitReplace) # draw rapidly before full screen refresh
+            self.screen.clear()
+            labelRect = self.label(awaitReplace, redraw=False)
+        else:
+            self.screen.clear()
+            toastRect = self.toast(b"PLACE TAG\nto read")
+        self.screen.redraw()
         cardUid = self.rfid.awaitPresence()
-        self.wipeRect(toastRect)
-        labelRect = self.label(b"Loading Game...")
+        if toastRect:
+            self.wipeRect(toastRect)
+        if labelRect:
+            self.wipeRect(labelRect)
+        labelRect = self.label(b"KEEP IN PLACE, loading..")
         card = self.rfid.readCard(cardUid=cardUid)
         if card is None:
             card = self.story.createBlankCard(cardUid)
         self.wipeRect(labelRect)
-        self.engine.handleCard(card)
-        labelRect = self.label(b"Saving Game...")
+        origNodeUid = card.nodeUid
+        nextNode = self.engine.handleCard(card, self)
+        # will next page also be at this box?
+        if issubclass(type(nextNode), GoalPage) and nextNode.goalBoxUid == self.box.uid:
+            self.expectStay = True # goalpage at same box
+        elif nextNode.uid != origNodeUid:
+            self.expectStay = True # remote GoalPage or NodeFork unvisited
+        else:
+            self.expectStay = False # remote GoalPage or NodeFork now visited
+        labelRect = self.label(b"KEEP IN PLACE, saving...")
         self.rfid.writeCard(card)
         self.wipeRect(labelRect)
-        labelRect = self.label(b"Lift & Replace for more")
+        labelRect = self.label(awaitLift if self.expectStay else awaitLeave)
         self.rfid.awaitAbsence()
         self.wipeRect(labelRect)
-        labelRect = self.label(b"Tag Removed")
-        self.screen.clear()
-        self.screen.redraw()
 
     def createRunnable(self):
         def run():
