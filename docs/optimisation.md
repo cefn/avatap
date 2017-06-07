@@ -1,6 +1,6 @@
 # Optimisation
 
-Make debug validation logic depend on Milecastles debug flag, to accelerate story loading
+Make debug validation logic depend on Milecastles debug flag, to accelerate story loading (speed powerup for solar boxes)
 
 TODO replace non-debug asserts with if and AssertionError? This will permit future optimisation by toggling a flag
 
