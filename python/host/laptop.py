@@ -7,8 +7,7 @@ import pyglet
 from agnostic import ticks_ms
 from faces.font_5x7 import font as smallFont
 from faces.font_ncenB18 import font as bigFont
-from engines import cardToDict, dictToCard
-from engines import Engine
+from engines import Engine, cardToDict, dictToCard
 import st7920Emulator
 
 from milecastles import Box
