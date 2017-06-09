@@ -57,6 +57,7 @@ class BankVault:
                 else:
                     print(eType.__name__, end="")
                     print(e)
+                    return None
 
     def awaitAbsence(self):
         errThreshold = 2
