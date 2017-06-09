@@ -133,8 +133,8 @@ if __name__ == "__main__":
         box = story.lookupBox(boxUid)
         rfid = keyState.create_rfid(boxUid) # TODO can simplify by creating window last, or does RFID need window beforehand?
         screen = st7920Emulator.PillowScreen()
-        blackPlotter = screen.create_plotter(False)
-        whitePlotter = screen.create_plotter(True)
+        blackPlotter = screen.create_plotter(True)
+        whitePlotter = screen.create_plotter(False)
         engine = Engine(box=box)
         engine.registerStory(story)
         host = Host(
