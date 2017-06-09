@@ -1,8 +1,7 @@
 import gc
 gc.threshold((gc.mem_free() + gc.mem_alloc()) // 4)
+
 import uos
-
-
 """ # TODO CH Disable Filesystem again to max memory
 from flashbdev import bdev
 
@@ -19,4 +18,4 @@ except OSError:
 gc.collect()
 
 # run the integration test
-from regimes.avatap import runBox; runBox("1")
+#from host.cockle import runBox; runBox("1")
