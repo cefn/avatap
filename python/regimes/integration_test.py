@@ -18,7 +18,7 @@ agnostic.collect()
 
 def plotter(x,y):
     if x < 128 and y < 64:
-        screen.plot(x,y)
+        screen.plot(x,y, set=True)
     else:
         print("Out of bounds {},{}".format(x,y))
 
@@ -28,12 +28,12 @@ def show(para):
     screen.redraw()
 
 def run():
-    show("Hello world")
+    show(b"Hello world")
     while True:
         agnostic.collect()
         (stat, tag_type) = rdr.request(rdr.REQIDL)
         if stat == rdr.OK:
             (stat, raw_uid) = rdr.anticoll()
             if stat == rdr.OK:
-                para = "ID is\n0x%02x%02x%02x%02x" % (raw_uid[0], raw_uid[1], raw_uid[2], raw_uid[3])
+                para = b"ID is\n0x%02x%02x%02x%02x" % (raw_uid[0], raw_uid[1], raw_uid[2], raw_uid[3])
                 show(para)
