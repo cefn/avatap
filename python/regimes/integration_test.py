@@ -1,9 +1,11 @@
-from faces.font_5x7 import font
-from st7920 import Screen
-from mfrc522 import MFRC522
-from machine import Pin,SPI
 import agnostic
-
+from mfrc522 import MFRC522
+agnostic.collect()
+from st7920 import Screen
+agnostic.collect()
+from faces.font_5x7 import font
+agnostic.collect()
+from machine import Pin,SPI
 agnostic.collect()
 
 readerSpi = SPI(1, baudrate=1800000, polarity=0, phase=0)
@@ -11,12 +13,20 @@ readerSpi.init()
 agnostic.collect()
 
 """
-screenSck = Pin(14, Pin.OUT)
-screenMosi = Pin(13, Pin.OUT)
 screenMiso = Pin(12, Pin.IN)
-screenSpi = SPI(-1, baudrate=1800000, polarity=0, phase=0, sck=screenSck, mosi=screenMosi, miso=screenMiso)
+screenMosi = Pin(13, Pin.OUT)
+screenSck = Pin(14, Pin.OUT)
 """
+
+"""
+screenMiso = Pin(12)
+screenMosi = Pin(13)
+screenSck = Pin(14)
+screenSpi = SPI(-1, baudrate=1800000, polarity=0, phase=0, miso=screenMiso, mosi=screenMosi, sck=screenSck)
+"""
+
 screenSpi = readerSpi
+agnostic.collect()
 
 rdr = MFRC522(spi=readerSpi, gpioRst=0, gpioCs=2) # equivalent to reset D3 and CableSelect D4
 agnostic.collect()
