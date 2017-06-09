@@ -19,13 +19,16 @@ screenSck = Pin(14, Pin.OUT)
 """
 
 """
-screenMiso = Pin(12)
-screenMosi = Pin(13)
-screenSck = Pin(14)
-screenSpi = SPI(-1, baudrate=1800000, polarity=0, phase=0, miso=screenMiso, mosi=screenMosi, sck=screenSck)
+Screen SoftwareSPI( miso D0/GPIO16 mosi D1/GPIO5 sck D2/GPIO4 ), Reader HardwareSPI: Both functional
 """
 
-screenSpi = readerSpi
+#screenSpi = readerSpi
+
+screenMiso = Pin(16)
+screenMosi = Pin(5)
+screenSck = Pin(4)
+screenSpi = SPI(-1, baudrate=1800000, polarity=0, phase=0, miso=screenMiso, mosi=screenMosi, sck=screenSck)
+
 agnostic.collect()
 
 rdr = MFRC522(spi=readerSpi, gpioRst=0, gpioCs=2) # equivalent to reset D3 and CableSelect D4
