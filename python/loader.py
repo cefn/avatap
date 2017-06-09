@@ -11,16 +11,17 @@ storyUid = "corbridge"
 
 def loadDisplay():
     report_import("machine")
-    report_import("faces.font_5x7")
     report_import("st7920")
+    report_import("faces.font_5x7")
 
 def loadOther():
+    #report_import("faces.font_timB14")
     report_import("mfrc522")
     report_import("milecastles")
     report_import("boilerplate")
     report_import("engines")
+    report_import("host")
     report_import("vault")
-    report_import("engines.console")
 
 def loadStory(name):
     report_import("stories." + name)
