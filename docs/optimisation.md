@@ -26,3 +26,9 @@ Remove examples from reader library export
 Remove unused modules from frozen modules list (e.g. webrepl ds18x20)
 
 Remove rotation logic from st7920 library
+
+Avoid full screen redraw (fix memory map logic)
+
+Avoid nested function calls and checks from plotter which calls screen plot inside. Instead plotter factory should have embedded plot operation, with plotter= value replacing set= value in screen draw operations.
+
+Somehow force templates to be constructed with bytes not unicode strings. Maybe make no difference, since unicode encodes ascii efficiently enough, and micropython frozen strings are effectively bytes anyway?
