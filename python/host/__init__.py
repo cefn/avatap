@@ -1,9 +1,7 @@
-import os
-import random
 from time import sleep
 from milecastles import GoalPage, AnonymousContainer, required
 
-delayActive = False
+delayActive = True
 
 awaitLift =     b"LIFT & REPLACE for more."
 awaitReplace =  b"Now REPLACE for more...."
@@ -14,6 +12,7 @@ def hostDelay(delay):
         sleep(delay)
 
 def randomDelay(maxDelay=1):
+    import random
     hostDelay(random.uniform(0, maxDelay))
 
 class Host(AnonymousContainer):
@@ -34,12 +33,13 @@ class Host(AnonymousContainer):
         self.smallFont.draw_generator(generator, self.blackPlotter)
         self.screen.redraw()
 
-    def toast(self, para):
+    def toast(self, para, redraw=True):
         x = 0
         y = 0
         dX, dY = self.bigFont.draw_para(para, self.blackPlotter, x=x, y=y)
-        rect = (x,y,x + dX, y+ dY) # weird offset logic (redraw uses last coord, not upper bound)
-        self.screen.redraw(*rect)
+        rect = (x,y,x + dX, y + dY) # compensate for weird offset logic? (redraw uses last coord, not upper bound)
+        if redraw:
+            self.screen.redraw(*rect)
         return rect
 
     def label(self, line, redraw=True):
@@ -49,14 +49,14 @@ class Host(AnonymousContainer):
         top = self.screen.height - labelHeight - 1
         right = left + labelWidth + 2
         bottom = top + labelHeight + 2
-        self.screen.fill_rect(left - 2, top - 2, right, bottom, False) # color box in black
+        self.screen.fill_rect(left - 2, top - 2, right, bottom, set=True) # color box in black
         self.smallFont.draw_line(line, x=left + 1, y=top + 1, plotter=self.whitePlotter)
         rect = (left, top, right, bottom)
         if redraw:
             self.screen.redraw(*rect)
         return rect
 
-    def wipeRect(self, dirtyRect, set=True):
+    def wipeRect(self, dirtyRect, set=False):
         self.screen.fill_rect(*dirtyRect, set=set)
         self.screen.redraw(*dirtyRect)
 
@@ -72,7 +72,9 @@ class Host(AnonymousContainer):
             self.screen.clear()
             toastRect = self.toast(b"PLACE TAG\nto read")
         self.screen.redraw()
-        cardUid = self.rfid.awaitPresence()
+        cardUid = None
+        while cardUid is None: # hang here until a cardUid is seen
+            cardUid = self.rfid.awaitPresence()
         if toastRect:
             self.wipeRect(toastRect)
         if labelRect:
