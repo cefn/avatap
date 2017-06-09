@@ -6,14 +6,22 @@ import agnostic
 
 agnostic.collect()
 
-spi = SPI(1, baudrate=1800000, polarity=0, phase=0)
-spi.init()
+readerSpi = SPI(1, baudrate=1800000, polarity=0, phase=0)
+readerSpi.init()
 agnostic.collect()
 
-rdr = MFRC522(spi=spi, gpioRst=0, gpioCs=2)
+"""
+screenSck = Pin(14, Pin.OUT)
+screenMosi = Pin(13, Pin.OUT)
+screenMiso = Pin(12, Pin.IN)
+screenSpi = SPI(-1, baudrate=1800000, polarity=0, phase=0, sck=screenSck, mosi=screenMosi, miso=screenMiso)
+"""
+screenSpi = readerSpi
+
+rdr = MFRC522(spi=readerSpi, gpioRst=0, gpioCs=2) # equivalent to reset D3 and CableSelect D4
 agnostic.collect()
 
-screen = Screen(spi=spi, slaveSelectPin=Pin(15))
+screen = Screen(spi=screenSpi, slaveSelectPin=Pin(15), resetDisplayPin=Pin(5))
 agnostic.collect()
 
 def plotter(x,y):
@@ -23,6 +31,8 @@ def plotter(x,y):
         print("Out of bounds {},{}".format(x,y))
 
 def show(para):
+    print("Showing...")
+    print(para)
     screen.clear()
     font.draw_para(para, plotter)
     screen.redraw()
