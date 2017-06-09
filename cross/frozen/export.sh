@@ -26,13 +26,14 @@ python3 -m templates > ../../micropython/esp8266/qstrdefsport.h
 cd ../../
 
 # SCREEN LIBRARY
+$COPYPATHCMD micropython-st7920/canvas.py $MODULEDIR
 $COPYPATHCMD micropython-st7920/st7920.py $MODULEDIR
 
 # READER LIBRARY
-$COPYPATHCMD micropython-mfrc522-cefn/mfrc522.py $MODULEDIR
+$COPYPATHCMD micropython-mfrc522/mfrc522.py $MODULEDIR
 # CH TODO REMOVE READER EXAMPLES
-$COPYPATHCMD micropython-mfrc522-cefn/examples/read.py $MODULEDIR
-$COPYPATHCMD micropython-mfrc522-cefn/examples/write.py $MODULEDIR
+$COPYPATHCMD micropython-mfrc522/examples/read.py $MODULEDIR
+$COPYPATHCMD micropython-mfrc522/examples/write.py $MODULEDIR
 
 # FONT LIBRARY
 $COPYPATHCMD bitfont/python/bitfont.py $MODULEDIR
@@ -41,7 +42,7 @@ $RMPATHCMD -R $MODULEDIR/faces || true
 $CREATEPATHCMD $MODULEDIR/faces
 $COPYPATHCMD bitfont/python/faces/__init__.py $MODULEDIR/faces/
 $COPYPATHCMD bitfont/python/faces/font_5x7.py $MODULEDIR/faces/
-$COPYPATHCMD bitfont/python/faces/font_ArtosSerif_8.py $MODULEDIR/faces/
+$COPYPATHCMD bitfont/python/faces/font_timB14.py $MODULEDIR/faces/
 
 # MUSEUM STORIES
 $RMPATHCMD -rf $MODULEDIR/stories
@@ -58,23 +59,20 @@ $RMPATHCMD -rf $MODULEDIR/regimes
 $CREATEPATHCMD $MODULEDIR/regimes
 find avatap/python/regimes -maxdepth 1 -type f -name '*.py' -exec $COPYPATHCMD -R {} $MODULEDIR/regimes \;
 
-# ENGINES
-$RMPATHCMD -R $MODULEDIR/engines || true
-$CREATEPATHCMD $MODULEDIR/engines
-$COPYPATHCMD avatap/python/engines/__init__.py $MODULEDIR/engines/
-$COPYPATHCMD avatap/python/engines/console.py $MODULEDIR/engines/
-
 # AVATAP LIBRARIES
 find avatap/python -maxdepth 1 -type f -name '*.py' -exec $COPYPATHCMD {} $MODULEDIR \;
+
+# AVATAP HOST LIB (COCKLE-SPECIFIC AVATAP PLATFORM)
+$RMPATHCMD -R $MODULEDIR/host || true
+$CREATEPATHCMD $MODULEDIR/host
+$COPYPATHCMD avatap/python/host/__init__.py $MODULEDIR/host/
+$COPYPATHCMD avatap/python/host/cockle.py $MODULEDIR/host/
 
 # AVATAP REGIMES (e.g. INTEGRATION TEST)
 $RMPATHCMD -R $MODULEDIR/regimes || true
 $CREATEPATHCMD $MODULEDIR/regimes
 $COPYPATHCMD avatap/python/regimes/integration_test.py $MODULEDIR/regimes/
 
-# TODO CH - for Avatap dev, reactivate VFS and use dynamically loaded versions
-$COPYPATHCMD avatap/python/engines/avatap.py $MODULEDIR/engines/
-$COPYPATHCMD avatap/python/regimes/avatap.py $MODULEDIR/regimes/
 
 # TRIGGER FREEZING OF MODULES INTO FIRMWARE IMAGE AND UPLOAD IT
 cd micropython/esp8266/
