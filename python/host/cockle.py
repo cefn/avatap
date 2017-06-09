@@ -35,8 +35,6 @@ def prepareHost(story, boxUid):
     whitePlotter = screen.create_plotter(False)
     reader = MFRC522(spi=spi, gpioRst=0, gpioCs=2)
     rfid = CockleRfid(reader)
-    reader = None
-    rfid = None
     box = story._get_table(Box)[boxUid]
     engine = Engine(box=box)
     engine.registerStory(story)
