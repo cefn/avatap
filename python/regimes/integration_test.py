@@ -24,17 +24,30 @@ Screen SoftwareSPI( miso D0/GPIO16 mosi D1/GPIO5 sck D2/GPIO4 ), Reader Hardware
 
 #screenSpi = readerSpi
 
+# miso unused but has to be allocated
+#screenMiso = Pin(1) # main UART TX pin - works - kills Serial
+#screenMiso = Pin(3) # main UART RX pin - works - kills Serial
+#screenMiso = Pin(12) # same as hardware SPI - doesn't work
+
+"""
+screenMiso = Pin(16) # D0 works, but it's the only spare pin
+screenMosi = Pin(5)
+screenSck = Pin(4)
+screenSpi = SPI(-1, baudrate=1800000, polarity=0, phase=0, miso=screenMiso, mosi=screenMosi, sck=screenSck)
+agnostic.collect()
+"""
+
 screenMiso = Pin(16)
 screenMosi = Pin(5)
 screenSck = Pin(4)
 screenSpi = SPI(-1, baudrate=1800000, polarity=0, phase=0, miso=screenMiso, mosi=screenMosi, sck=screenSck)
-
 agnostic.collect()
 
-rdr = MFRC522(spi=readerSpi, gpioRst=0, gpioCs=2) # equivalent to reset D3 and CableSelect D4
+#rdr = MFRC522(spi=readerSpi, gpioRst=0, gpioCs=2) # equivalent to reset D3 (was CableSelect D4)
+rdr = MFRC522(spi=readerSpi, gpioRst=None, gpioCs=2) # equivalent to reset D3 (was CableSelect D4)
 agnostic.collect()
 
-screen = Screen(spi=screenSpi, slaveSelectPin=Pin(15), resetDisplayPin=Pin(5))
+screen = Screen(spi=screenSpi, slaveSelectPin=None, resetDisplayPin=None) # GPIO15 alleged SS in hardware driver! ( https://tttapa.github.io/ESP8266/Chap04%20-%20Microcontroller.html )
 agnostic.collect()
 
 def plotter(x,y):
