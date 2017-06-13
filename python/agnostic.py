@@ -31,14 +31,14 @@ if sys.implementation.name == "micropython":
         sys.stdout.write("\n")
 
     def do_import(moduleName):
-        __import__(moduleName)
+        return __import__(moduleName)
 
     def report_import(moduleName):
         sys.stdout.write(moduleName)
         sys.stdout.write("\n")
-        do_import(moduleName)
-        sleep(1)
+        result = do_import(moduleName)
         report_collect()
+        return result
 
 else:
     def noop():
