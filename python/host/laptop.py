@@ -17,7 +17,17 @@ from milecastles import Box
 from stories.corbridge import story
 #from stories.senhouse import story
 
-from host import Host, hostDelay
+from host import Host
+
+delayActive = True
+
+def hostDelay(delay):
+    if delayActive:
+        sleep(delay)
+
+def randomDelay(maxDelay=1):
+    import random
+    hostDelay(random.uniform(0, maxDelay))
 
 def randomCardUid():
     return urandom(6)
