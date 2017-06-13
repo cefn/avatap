@@ -7,7 +7,8 @@ from agnostic import report_import
 # time boot routine with
 # from utime import ticks_ms; ms = ticks_ms(); import loader; loader.loadAll(); print("Loading took:" + str(ticks_ms() - ms))
 
-storyUid = "corbridge"
+storyUid = "TullieHouse"
+boxUid = "1"
 
 def loadDisplay():
     report_import("machine")
@@ -24,9 +25,6 @@ def loadOther():
     report_import("vault")
 
 def loadStory(name):
-    report_import("stories." + name)
-
-def loadAll():
-    loadDisplay()
-    loadOther()
-    loadStory(storyUid)
+    imp = report_import("stories." + name)
+    mod = getattr(imp, name)
+    return getattr(mod, 'story')
