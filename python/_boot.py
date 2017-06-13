@@ -17,5 +17,16 @@ except OSError:
 
 gc.collect()
 
-# run the integration test
-#from host.cockle import runBox; runBox("1")
+import agnostic
+from host.cockle import prepareHost
+import loader
+agnostic.collect()
+
+story = loader.loadStory('TullieHouse')
+agnostic.collect()
+
+boxHost = prepareHost(story, "1")
+while boxHost.running:
+    agnostic.report_collect()
+    boxHost.gameLoop()
+boxHost.powerDown()
