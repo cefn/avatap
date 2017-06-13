@@ -66,7 +66,8 @@ class BankVault:
             (stat, tag_type) = self.rdr.request(MFRC522.REQIDL)  # check if antenna idle
             if stat is MFRC522.OK:
                 errCount = 0
-            errCount += 1
+            else:
+                errCount += 1
         return
 
     # reimplemented as blocking via await presence
