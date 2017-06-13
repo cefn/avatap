@@ -22,10 +22,10 @@ from host.cockle import prepareHost
 import loader
 agnostic.collect()
 
-story = loader.loadStory('TullieHouse')
+story = loader.loadStory(loader.storyUid)
 agnostic.collect()
 
-boxHost = prepareHost(story, "1")
+boxHost = prepareHost(story, loader.boxUid)
 while boxHost.running:
     agnostic.report_collect()
     boxHost.gameLoop()
