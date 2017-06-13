@@ -1,17 +1,29 @@
 import loader
-loader.loadAll()
+loader.loadDisplay()
+
 from machine import SPI, Pin
-from mfrc522 import MFRC522
 from st7920 import Screen
 from faces.font_5x7 import font as smallFont
 bigFont = smallFont
+
+#TODO CH sanitise screen++ creation into loader.loadDisplay(), possibly also CockleRFID creation
+# prepare screen
+screen = Screen(spi=SPI(-1, baudrate=1800000, polarity=0, phase=0, miso=Pin(16), mosi=Pin(5), sck=Pin(4)),
+                slaveSelectPin=None, resetDisplayPin=None)
+blackPlotter = screen.create_plotter(True)
+whitePlotter = screen.create_plotter(False)
+smallFont.draw_line(b"Powering Up!", x=32, y=24, plotter=blackPlotter)
+screen.redraw()
+
+loader.loadOther()
+loader.loadStory(loader.storyUid)
+
+from mfrc522 import MFRC522
 #from faces.font_timB14 import font as bigFont
 from vault import BankVault
 from engines import Engine, dictToCard, cardToDict
 from host import Host
 from milecastles import Box
-
-from stories.corbridge import story
 
 class CockleRfid(BankVault):
 
@@ -27,18 +39,16 @@ class CockleRfid(BankVault):
         return self.writeJson( cardToDict(card), card.uid, unselect)
 
 def prepareHost(story, boxUid):
-    # prepare elements
-    spi = SPI(1, baudrate=1800000, polarity=0, phase=0)
-    spi.init()
-    screen = Screen(spi=spi, slaveSelectPin=Pin(15))
-    blackPlotter = screen.create_plotter(True)
-    whitePlotter = screen.create_plotter(False)
-    reader = MFRC522(spi=spi, gpioRst=0, gpioCs=2)
+    # prepare reader
+    readerSpi = SPI(1, baudrate=1800000, polarity=0, phase=0)
+    readerSpi.init()
+    reader = MFRC522(spi=readerSpi, gpioRst=None, gpioCs=2)
+    # wrap hardware in platform-specific API and attach story
     rfid = CockleRfid(reader)
     box = story._get_table(Box)[boxUid]
     engine = Engine(box=box)
     engine.registerStory(story)
-
+    # launch box host
     return Host(
         story=story,
         box=box,
@@ -50,14 +60,3 @@ def prepareHost(story, boxUid):
         blackPlotter=blackPlotter,
         whitePlotter=whitePlotter,
     )
-
-def runBox(boxUid):
-    # configure host
-    boxHost = prepareHost(story, boxUid)
-    # perform UI cycle
-    while boxHost.running:
-        boxHost.gameLoop()
-
-if __name__ == "__main__":
-    print("Running Main")
-    runBox("1")
