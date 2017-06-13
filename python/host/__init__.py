@@ -1,19 +1,10 @@
 from time import sleep
 from milecastles import GoalPage, AnonymousContainer, required
+import agnostic
 
-delayActive = True
-
-awaitLift =     b"LIFT & REPLACE for more."
-awaitReplace =  b"Now REPLACE for more...."
-awaitLeave =    b""
-
-def hostDelay(delay):
-    if delayActive:
-        sleep(delay)
-
-def randomDelay(maxDelay=1):
-    import random
-    hostDelay(random.uniform(0, maxDelay))
+awaitLift =     b"LIFT & REPLACE for more"
+awaitReplace =  b"Now REPLACE for more..."
+awaitLeave =    b"REMOVE when ready"
 
 class Host(AnonymousContainer):
     box = required
@@ -31,7 +22,7 @@ class Host(AnonymousContainer):
     def displayGeneratedText(self, generator):
         self.screen.clear()
         self.smallFont.draw_generator(generator, self.blackPlotter)
-        self.screen.redraw()
+        self.redraw()
 
     def toast(self, para, redraw=True):
         x = 0
@@ -39,7 +30,7 @@ class Host(AnonymousContainer):
         dX, dY = self.bigFont.draw_para(para, self.blackPlotter, x=x, y=y)
         rect = (x,y,x + dX, y + dY) # compensate for weird offset logic? (redraw uses last coord, not upper bound)
         if redraw:
-            self.screen.redraw(*rect)
+            self.redraw(rect)
         return rect
 
     def label(self, line, redraw=True):
@@ -53,15 +44,24 @@ class Host(AnonymousContainer):
         self.smallFont.draw_line(line, x=left + 1, y=top + 1, plotter=self.whitePlotter)
         rect = (left, top, right, bottom)
         if redraw:
-            self.screen.redraw(*rect)
+            self.redraw(rect)
         return rect
 
     def wipeRect(self, dirtyRect, set=False):
         self.screen.fill_rect(*dirtyRect, set=set)
-        self.screen.redraw(*dirtyRect)
+        self.redraw(dirtyRect)
 
-    # TODO CH add 'special control tag' handling behaviour
+    # allows overriding of redraw
+    def redraw(self, dirtyRect=None):
+        if dirtyRect is not None:
+            self.screen.redraw(*dirtyRect)
+        else:
+            self.screen.redraw()
+
+    # TODO CH add 'special control tag' handling behaviour, based around host 'expectWipeNext'
     def gameLoop(self):
+        loopStart = agnostic.ticks_ms()
+        print("START {}".format(loopStart))
         toastRect = None
         labelRect = None
         if self.expectStay:
@@ -70,22 +70,33 @@ class Host(AnonymousContainer):
             labelRect = self.label(awaitReplace, redraw=False)
         else:
             self.screen.clear()
-            toastRect = self.toast(b"PLACE TAG\nto read")
-        self.screen.redraw()
-        cardUid = None
-        while cardUid is None: # hang here until a cardUid is seen
-            cardUid = self.rfid.awaitPresence()
-        if toastRect:
-            self.wipeRect(toastRect)
-        if labelRect:
-            self.wipeRect(labelRect)
+            toastRect = self.toast(b"PLACE TAG\nto read", redraw=False)
+        self.redraw()
+        try:
+            cardUid = None
+            while cardUid is None: # hang here until a cardUid is seen
+                print("presencing ({})".format(agnostic.ticks_ms() - loopStart)); taskStart = agnostic.ticks_ms()
+                cardUid = self.rfid.awaitPresence()
+                print("present! +{}".format(agnostic.ticks_ms() - taskStart))
+        finally:
+            if toastRect:
+                self.wipeRect(toastRect)
+            if labelRect:
+                self.wipeRect(labelRect)
         labelRect = self.label(b"KEEP IN PLACE, loading..")
-        card = self.rfid.readCard(cardUid=cardUid)
-        if card is None:
-            card = self.story.createBlankCard(cardUid)
-        self.wipeRect(labelRect)
+        try:
+            print("loading ({})".format(agnostic.ticks_ms() - loopStart)); taskStart = agnostic.ticks_ms()
+            card = self.rfid.readCard(cardUid=cardUid)
+            print("loaded! +{}".format(agnostic.ticks_ms() - taskStart))
+            if card is None or not(card.storyUid == self.story.uid):
+                card = self.story.createBlankCard(cardUid)
+        finally:
+            self.wipeRect(labelRect)
         origNodeUid = card.nodeUid
+        print("handling ({})".format(agnostic.ticks_ms() - loopStart));taskStart = agnostic.ticks_ms()
         nextNode = self.engine.handleCard(card, self)
+        print("handled! +{}".format(agnostic.ticks_ms() - taskStart))
+        # TODO CH accelerate case where card has not been changed (e.g. wrong box)
         # will next page also be at this box?
         if issubclass(type(nextNode), GoalPage) and nextNode.goalBoxUid == self.box.uid:
             self.expectStay = True # goalpage at same box
@@ -94,11 +105,22 @@ class Host(AnonymousContainer):
         else:
             self.expectStay = False # remote GoalPage or NodeFork now visited
         labelRect = self.label(b"KEEP IN PLACE, saving...")
-        self.rfid.writeCard(card)
-        self.wipeRect(labelRect)
+        try:
+            print("saving ({})".format(agnostic.ticks_ms() - loopStart));taskStart = agnostic.ticks_ms()
+            self.rfid.writeCard(card)
+            print("saved! +{}".format(agnostic.ticks_ms() - taskStart))
+        finally:
+            self.wipeRect(labelRect)
         labelRect = self.label(awaitLift if self.expectStay else awaitLeave)
-        self.rfid.awaitAbsence()
-        self.wipeRect(labelRect)
+        try:
+            print("removing ({})".format(agnostic.ticks_ms() - loopStart));taskStart = agnostic.ticks_ms()
+            self.rfid.awaitAbsence()
+            print("removed! {}".format(agnostic.ticks_ms() - taskStart))
+        finally:
+            self.wipeRect(labelRect)
+
+    def powerDown(self):
+        pass # needs implementing
 
     def createRunnable(self):
         def run():
