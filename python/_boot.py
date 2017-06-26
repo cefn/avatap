@@ -30,3 +30,7 @@ while boxHost.running:
     agnostic.report_collect()
     boxHost.gameLoop()
 boxHost.powerDown()
+"""
+from regimes.integration_test import run
+run()
+"""
