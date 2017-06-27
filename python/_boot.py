@@ -1,8 +1,9 @@
+import sys
 import gc
 gc.threshold((gc.mem_free() + gc.mem_alloc()) // 4)
-
 import uos
-""" # TODO CH Disable Filesystem again to max memory
+
+""" # TODO CH Filesystem disabled to maximise memory
 from flashbdev import bdev
 
 try:
@@ -14,7 +15,6 @@ except OSError:
     import inisetup
     vfs = inisetup.setup()
 """
-
 gc.collect()
 
 import agnostic
@@ -26,10 +26,15 @@ story = loader.loadStory(loader.storyUid)
 agnostic.collect()
 
 boxHost = prepareHost(story, loader.boxUid)
-while boxHost.running:
-    agnostic.report_collect()
-    boxHost.gameLoop()
-boxHost.powerDown()
+while True: # useful for testing powerDown, although loop runs only once if Polulu latching
+    while boxHost.running:
+        agnostic.report_collect()
+        try:
+            card = boxHost.gameLoop() # card value allows gameLoop to indicate idleness for future self-depower
+        except Exception as e:
+            sys.print_exception(e)
+    print("Powering down")
+    boxHost.powerDown()
 """
 from regimes.integration_test import run
 run()
