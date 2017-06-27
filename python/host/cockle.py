@@ -48,6 +48,9 @@ def prepareHost(story, boxUid):
     box = story._get_table(Box)[boxUid]
     engine = Engine(box=box)
     engine.registerStory(story)
+    powerPin = Pin(15, Pin.OUT)
+    powerPin.value(0)
+
     # launch box host
     return Host(
         story=story,
@@ -59,4 +62,5 @@ def prepareHost(story, boxUid):
         bigFont=bigFont,
         blackPlotter=blackPlotter,
         whitePlotter=whitePlotter,
+        powerPin=powerPin
     )
