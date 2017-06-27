@@ -17,6 +17,7 @@ def cacheTemplate(story, node, templateName):
     templatePython = boilerplate.jinjaToPython(templateResolver, templateJinja) # create the python for the generatorFactory
     boilerplate.saveTemplatePython(templateId, templatePython) # place it as expected
 
+# enables marshalling to JSON
 def cardToDict(card):
     return dict(
         storyUid=card.storyUid,
@@ -24,6 +25,7 @@ def cardToDict(card):
         sack=card.sack
     )
 
+# enables marshalling from JSON
 def dictToCard(cardUid, cardDict):
     return Card(
         uid=cardUid,
@@ -37,9 +39,6 @@ class Engine(AnonymousContainer):
     card = None
     story = None
     node = None
-
-    def __init__(self, *a, **k):
-        super().__init__(*a, **k)
 
     def registerStory(self, story):
         return self._register(Story, story)
