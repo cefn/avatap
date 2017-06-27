@@ -2,12 +2,7 @@
 # garbage collecting between and reporting remaining memory
 from agnostic import report_import
 
-#TODO CH explore the ordering of these imports, and interleave with garbage collection, as per memory test
-
-# time boot routine with
-# from utime import ticks_ms; ms = ticks_ms(); import loader; loader.loadAll(); print("Loading took:" + str(ticks_ms() - ms))
-
-storyUid = "TullieHouse"
+storyUid = "corbridge"
 boxUid = "1"
 
 def loadDisplay():
