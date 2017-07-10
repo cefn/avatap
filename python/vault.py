@@ -36,28 +36,21 @@ class BankVault:
         self.selectedTagUid = None
 
     # TODO CH add timeout here and in LaptopRfid
-    def awaitPresence(self, expectTagUid=None):
+    # TODO CH change this to return None ASAP if there is no cardUid there
+    def awaitPresence(self):
         while True:
-            try:
-                print("Seeking...")
-                (stat, tag_type) = self.rdr.request(MFRC522.REQIDL)  # check if antenna idle
-                if stat is not MFRC522.OK: raise AssertionError("No tag")
+            print("Seeking...")
+            (stat, tag_type) = self.rdr.request(MFRC522.REQIDL)  # check if antenna idle
+            if stat is not MFRC522.OK:
+                print("No tag")
+                continue
+            else:
                 print("Separating...")
                 (stat, tagUid) = self.rdr.anticoll()
-                if stat is not MFRC522.OK: raise AssertionError("Collision")
-                if expectTagUid is not None:
-                    if not(tagUid == expectTagUid): raise AssertionError("Wrong Tag")
+                if stat is not MFRC522.OK:
+                    print("Collision")
+                    continue
                 return tagUid
-            except Exception as e:
-                eType = type(e)
-                if eType == AssertionError:
-                    pass
-                elif eType == KeyboardInterrupt:
-                    raise e
-                else:
-                    print(eType.__name__, end="")
-                    print(e)
-                    return None
 
     def awaitAbsence(self):
         errThreshold = 2
@@ -71,12 +64,12 @@ class BankVault:
         return
 
     # reimplemented as blocking via await presence
-    def selectTag(self, tagUid=None):
-        if tagUid is None or not(self.selectedTagUid==tagUid):
+    def selectTag(self, expectTagUid=None):
+        if expectTagUid is None or not(self.selectedTagUid==expectTagUid):
             if self.selectedTagUid is not None:
-                print("Previous tag still selected")
                 self.unselectTag()
-            tagUid = self.awaitPresence(tagUid)
+            tagUid = self.awaitPresence()
+            if expectTagUid is not None and not(tagUid == expectTagUid): raise AssertionError("Wrong Tag")
             if self.rdr.select_tag(tagUid) is not MFRC522.OK: raise AssertionError("Selection")
             self.selectedTagUid = tagUid
         else:
@@ -85,6 +78,8 @@ class BankVault:
 
     def unselectTag(self):
         self.selectedTagUid = None
+        # TODO need to add 'HaltA' here? see https://github.com/cefn/micropython-mfrc522/issues/1
+        self.rdr.halt_a()
         self.rdr.stop_crypto1()
 
     def readBlock(self, realBlockIndex):
