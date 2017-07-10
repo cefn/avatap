@@ -2,7 +2,7 @@ from milecastles import Story, Box, ThroughPage, ThroughSequence, ConditionFork,
 from stories import introText
 
 # inspects the module to figure out the story name (e.g. corbridge)
-storyName = __name__.split(".")[-1]
+storyName = "TullieHouse1"
 
 # create story
 story = Story(
