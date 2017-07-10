@@ -1,7 +1,7 @@
 import loader
 loader.loadDisplay()
 
-from machine import SPI, Pin
+from machine import SPI, Pin, freq
 from st7920 import Screen
 from faces.font_5x7 import font as smallFont
 bigFont = smallFont
@@ -17,6 +17,10 @@ screen.redraw()
 
 loader.loadOther()
 loader.loadStory(loader.storyUid)
+
+# TODO CH make conditional on being an interior box
+# overclock for speed - sacrificing current (and stability?)
+freq(160000000)
 
 from mfrc522 import MFRC522
 #from faces.font_timB14 import font as bigFont
