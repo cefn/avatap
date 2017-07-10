@@ -37,6 +37,7 @@ class BankVault:
 
     # TODO CH add timeout here and in LaptopRfid
     # TODO CH change this to return None ASAP if there is no cardUid there
+    # TODO CH should awaitPresence/Absence always force an unselect of any previous cards first?
     def awaitPresence(self):
         while True:
             print("Seeking...")
@@ -84,16 +85,19 @@ class BankVault:
 
     def readBlock(self, realBlockIndex):
         if self.selectedTagUid is None: raise AssertionError("Not selected")
+        # TODO CH is this repeated auth always necessary, or only once?
         if self.rdr.auth(MFRC522.AUTHENT1A, realBlockIndex, key, self.selectedTagUid) is not MFRC522.OK: raise AssertionError("Auth")
         # TODO CH, optimise MFRC522 to prevent allocation here (implement 'readinto' function)
         block = self.rdr.read(realBlockIndex)
-        # TODO CH, optimise to prevent re-allocation again to bytearray
+        # TODO CH, optimise to prevent re-allocation again to bytearray (duplicated in reader too?)
         block = bytearray(block)
+        # TODO CH, if several allocations above are minimised, can this be dropped?
         gc.collect()
         return block
 
     def writeBlock(self, realBlockIndex, data):
         if self.selectedTagUid is None: raise AssertionError("Not selected")
+        # TODO CH is this repeated auth always necessary, or only once?
         if self.rdr.auth(MFRC522.AUTHENT1A, realBlockIndex, key, self.selectedTagUid) is not MFRC522.OK: raise AssertionError("Auth")
         return self.rdr.write(realBlockIndex, data)
 
@@ -129,12 +133,14 @@ class BankVault:
                 while nextBytePos < bankLength:
                     nextRealIndex = getRealIndex(safeIndex)
                     copyLength = min(bytesPerBlock, bankLength - nextBytePos)
+                    # TODO CH pass an 'into' array, avoiding allocation
                     blockData = self.readBlock(nextRealIndex)
+                    # TODO avoid implicit allocation blockData[:copyLength] when blockData length (bytesPerBlock) is copyLength (most of the time)
                     bankBytes[nextBytePos:nextBytePos + copyLength] = blockData[:copyLength]
                     nextBytePos += copyLength
                     safeIndex += 1
                 # testing: import json; o = dict(hello="world"); b = bytes(json.dumps(o).encode("ascii")); print(json.loads(b.decode('ascii')))
-                # TODO CH avoid allocation of bytes object here
+                # TODO CH is there a way to avoid allocation of bytes object here to wrap bytearray
                 bankBytes = bytes(bankBytes)
                 return json.loads(bankBytes.decode('ascii'))
             else:
@@ -148,6 +154,7 @@ class BankVault:
 
     def writeJson(self, obj, tagUid=None, unselect=True):
         try:
+            # TODO does this implicitly unselect in the case that writeJson is called 'agnostic' to tag
             tagUid = self.selectTag(tagUid)
             lengthsBlock = self.readLengthsBlock()
             activeBank = self.getActiveBank(lengthsBlock)
