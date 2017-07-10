@@ -2,7 +2,9 @@ import agnostic
 from milecastles import Story, Box, ThroughPage, ThroughSequence, ConditionFork, NodeFork, SackChange
 from stories import introText
 
-storyName = "corbridge"
+# TODO CH, change use of True and 0 to 0 and 1 throughout, use bool() instead of x==True ?
+
+storyName = "corbridge1"
 
 # create story
 story = Story(
@@ -11,13 +13,12 @@ story = Story(
     # startNodeUid = "stoneFork",
     startNodeUid="firstLanding",
     startSack={
-        "money": 100,
-        "smithAnger": False,
-        "stone": False,
-        "sharp": False,
-        "inspire": False,
-        #removed points as money left is your score
-        "afternoon": False,
+        "my": 100,          # money
+        "sa": 0,            # smithAnger
+        "st": 0,            # stone
+        "sh": 0,            # sharp
+        "ip": 0,            # inspire
+        "pm": 0,            # afternoon
     }
 )
 
@@ -55,7 +56,7 @@ with story:
                 inspiration to complete
                 the tombstone....""",
             """ You have an advance of
-                {{sack.money}} Denarii
+                {{sack.my}} Denarii
                 for materials.
                 Spend it wisely...""",
         ],
@@ -77,7 +78,7 @@ with story:
 
     ConditionFork(
         uid="sharpening",
-        condition="sack.afternoon == True",
+        condition="sack.pm == True",
         trueNodeUid="sharpeningSuccess",
         falseNodeUid="sharpeningFailure",
     )
@@ -85,9 +86,9 @@ with story:
     ThroughPage(
         uid="sharpeningSuccess",
         change=SackChange(
-            trigger="sack.sharp == False",
-            assign={"sharp": True},
-            minus={"money": 15},
+            trigger="not(sack.sh)",
+            assign={"sh": 1},
+            minus={"my": 15},
         ),
         goalBoxUid=smithBox.uid,
         page="""
@@ -97,8 +98,8 @@ with story:
                 and the blacksmith is
                 ready for you.
                 Sharpening costs
-                {{node.change.minus['money']}} Denarii.
-                You have {{sack.money}} Denarii.
+                {{node.change.minus['my']}} Denarii.
+                You have {{sack.my}} Denarii.
             {% else %}
                 You don't have enough
                 money to sharpen your
@@ -134,7 +135,7 @@ with story:
         {{node.goalBox.description}}!
         Go to {{node.goalBox.label}}""",
         change=SackChange(
-            assign={"smithAnger": True},
+            assign={"sa": 1},
         ),
         page="""
         The Blacksmith is
@@ -174,9 +175,9 @@ with story:
             inspiration""",
         },
         hideChoices={
-            "smith1": "sack.sharp==True",
-            "stone1": "sack.stone==True",
-            "smith1": "sack.smithAnger==True",
+            "smith1": "sack.sh==True",
+            "stone1": "sack.st==True",
+            "smith1": "sack.sa==True",
         },
     )
 
@@ -200,15 +201,15 @@ with story:
     ThroughPage(
         uid="firstSnack",
         change=SackChange(
-            minus={"money": 5},
-            assign={"afternoon": True}
+            minus={"my": 5},
+            assign={"pm": 1}
         ),
         page="""You stop for some food
         at a local inn.
 		It costs
-		{{node.change.minus['money']}} Denarii.
+		{{node.change.minus['my']}} Denarii.
         You now have
-        {{sack.money}} Denarii...""",
+        {{sack.my}} Denarii...""",
         nextNodeUid="workshop4",
         goalBoxUid=workshopBox.uid,
     )
@@ -234,9 +235,8 @@ with story:
             the Quarry""",
         },
         hideChoices={
-            "smith1": "sack.sharp==True",
-            "stone1": "sack.stone==True",
-            "smith1": "sack.smithAnger==True",
+            "smith1": "sack.sh==True or sack.sa==True",
+            "stone1": "sack.st==True",
         },
     )
     # 2c - Carving Fork
@@ -252,7 +252,7 @@ with story:
 
     ConditionFork(
         uid="carve",
-        condition="sack.sharp == True",
+        condition="sack.sh == True",
         trueNodeUid="goodCarve",
         falseNodeUid="badCarve",
     )
@@ -303,7 +303,7 @@ with story:
     ThroughPage(
         uid="inspire1",
         change=SackChange(
-            assign={"inspire": True}
+            assign={"ip": 1}
         ),
         missTemplate="""This isn't
         {{node.goalBox.description}}!
@@ -410,14 +410,14 @@ with story:
     ThroughPage(
         uid="buydrinks",
         change=SackChange(
-            #assign={"afternoon": True}
-            minus={"money": 10},
+            #assign={"pm": 1}
+            minus={"my": 10},
         ),
         missTemplate="""Go back to the pub
         at {{node.goalBox.label}}""",
         page="""You buy drinks for
-        {{node.change.minus['money']}} Denarii.
-        You have {{sack.money}} Denarii.
+        {{node.change.minus['my']}} Denarii.
+        You have {{sack.my}} Denarii.
 		That's plenty of
 		research for now!
 		Back to the workshop.""",
@@ -427,7 +427,7 @@ with story:
 
     ConditionFork(
         uid="stoneCheck",
-        condition="sack.stone == True",
+        condition="sack.st == True",
         trueNodeUid="workshop5",
         falseNodeUid="badStone",
     )
@@ -462,7 +462,7 @@ with story:
 
     ConditionFork(
         uid="painter2",
-        condition="sack.sharp == True and sack.inspire == True and sack.stone == True",
+        condition="sack.sh == True and sack.ip == True and sack.st == True",
         trueNodeUid="goodPaint",
         falseNodeUid="badPaint",
     )
@@ -470,16 +470,16 @@ with story:
     ThroughPage(
         uid="goodPaint",
         change=SackChange(
-            minus={"money": 15},
+            minus={"my": 15},
         ),
         missTemplate="""Stop slacking!
         Get back to {{node.goalBox.label}}""",
         page="""The finished stone
         looks stunning!
         The painter charges
-        {{node.change.minus['money']}} Denarii,
+        {{node.change.minus['my']}} Denarii,
         leaving you with
-        {{sack.money}} Denarii...
+        {{sack.my}} Denarii...
         """,
         goalBoxUid=tombBox.uid,
         nextNodeUid="endingGood",
@@ -488,7 +488,7 @@ with story:
     ThroughPage(
         uid="badPaint",
         change=SackChange(
-            minus={"money": 15},
+            minus={"my": 15},
         ),
         missTemplate="""Stop slacking!
         Go back to {{node.goalBox.label}}
@@ -498,8 +498,8 @@ with story:
         best, but it doesn't
         look good...
         The painter charges
-        {{node.change.minus['money']}} Denarii,
-        You have {{sack.money}} Denarii...""",
+        {{node.change.minus['my']}} Denarii,
+        You have {{sack.my}} Denarii...""",
         goalBoxUid=tombBox.uid,
         nextNodeUid="endingBad",
     )
@@ -529,11 +529,11 @@ with story:
     ThroughPage(
         uid="reward",
         change=SackChange(
-            plus={"money": 100},
+            plus={"my": 100},
         ),
         page="""
         The soldiers pay you a
-        bonus of {{node.change.plus['money']}} Denarii
+        bonus of {{node.change.plus['my']}} Denarii
         and give you a
         LAUREL WREATH!
         """,
@@ -565,14 +565,14 @@ with story:
     ThroughPage(
         uid="refund",
         change=SackChange(
-            minus={"money": 50},
+            minus={"my": 50},
         ),
         page="""
             The soldiers demand a
             refund of
-            {{node.change.minus['money']}} Denarii.
+            {{node.change.minus['my']}} Denarii.
             You now have
-            {{sack.money}} Denarii.
+            {{sack.my}} Denarii.
             """,
         goalBoxUid=tombBox.uid,
         nextNodeUid="ending",
@@ -597,15 +597,15 @@ with story:
     ThroughPage(
         uid="stone2",
         change=SackChange(
-            assign={"stone": True},
-            minus={"money": 50}
+            assign={"st": 1},
+            minus={"my": 50}
         ),
         page="""You meet the quarryman
 				and place an order of
                 stone for tomorrow.
-				It costs {{node.change.minus['money']}} Denarii,
+				It costs {{node.change.minus['my']}} Denarii,
 				leaving you with
-				{{sack.money}} Denarii.""",
+				{{sack.my}} Denarii.""",
         goalBoxUid=quarryBox.uid,
         nextNodeUid="stoneFork",
     )
@@ -635,7 +635,7 @@ with story:
         uid="stoneDonkey",
         goalBoxUid=smithBox.uid,
         change=SackChange(
-            minus={"money": 5}
+            minus={"my": 5}
         ),
         missTemplate="""Come on, back to
         {{node.goalBox.description}}!
@@ -644,14 +644,14 @@ with story:
         carry the stone, now
         RIDE the donkey back to
 		the workshop. It cost
-		{{node.change.minus['money']}} Denarii, leaving you
-        with {{sack.money}} Denarii.""",
+		{{node.change.minus['my']}} Denarii, leaving you
+        with {{sack.my}} Denarii.""",
         nextNodeUid="stoneTime"
     )
 
     ConditionFork(
         uid="stoneTime",
-        condition="sack.afternoon == False",
+        condition="not(sack.pm)",
         trueNodeUid="workshop1",
         falseNodeUid="fromSmith",
     )
@@ -660,7 +660,7 @@ with story:
         uid="ending",
         page="""
         You completed the game
-        with {{sack.money}} Denarii!
+        with {{sack.my}} Denarii!
         Try again or visit
         another museum to play
         more MileCastles!
