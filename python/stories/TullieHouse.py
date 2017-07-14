@@ -2,11 +2,12 @@ from milecastles import Story, Box, ThroughPage, ThroughSequence, ConditionFork,
 from stories import introText
 
 # inspects the module to figure out the story name (e.g. corbridge)
-storyName = "TullieHouse1"
+storyName = "TullieHouse"
 
 # create story
 story = Story(
     uid=storyName,
+    version="0.1.0",
     startNodeUid="firstLanding",
     startSack={
             "money":  100,
