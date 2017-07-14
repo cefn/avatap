@@ -1,13 +1,18 @@
 from time import sleep
 from milecastles import GoalPage, AnonymousContainer, required
+from vault import CardReadIncompleteError, CardBankMissingError, CardJsonInvalidError, CardJsonIncompatibleError
+
 import agnostic
 
 awaitLift =     b"LIFT & REPLACE for more"
 awaitReplace =  b"Now REPLACE for more..."
 awaitLeave =    b"REMOVE when ready"
 
+# used to reset next tag (red) or trigger fuzzing routine (yellow)
 redTags=(b'=\xe5zR\xf0', b'=whRp', b'=eoRe', b'=\x14\x8dR\xf6', b'=\x95?R\xc5', b'=Q\xf2R\xcc')
 yellowTags=(b'=[8b<', b'=\x13\xc42\xd8', b'=J\xd92\x9c', b'=\xff(B\xa8', b'=\x0cDB7', b'=\xc5\x96B,')
+
+PRESENCE_TIMEOUT=10000 # ms to wait before discarding card cache or reset command
 
 class Host(AnonymousContainer):
     box = required
@@ -22,7 +27,8 @@ class Host(AnonymousContainer):
     powerPin = required
     running = True
     expectStay = False
-    resetMode = False
+    resetCard = False
+    cardCache = None
 
     def displayGeneratedText(self, generator):
         self.screen.clear()
@@ -70,8 +76,134 @@ class Host(AnonymousContainer):
         else:
             self.screen.redraw()
 
-    # TODO CH add 'special control tag' handling behaviour, based around host 'expectWipeNext'
-    # TODO either fully remove or fully implement timeout
+    def newLoop(self, fuzz=False):
+        agnostic.collect()
+
+        cardUid = None
+        card = None
+
+        try: # toast and label finaliser
+
+            toastRect = None
+            labelRect = None
+            if self.expectStay:
+                labelRect = self.label(awaitReplace)  # draw quickly before clearing rest of screen
+                self.screen.clear()
+                labelRect = self.label(awaitReplace, redraw=False)
+            else:
+                self.screen.clear()
+                if self.resetCard:
+                    toastRect = self.toast(b"RESETTING TAG!", redraw=False)
+                else:
+                    toastRect = self.toast(b"PLACE TAG\nto read", redraw=False)
+            self.redraw()
+
+            print("WAITING FOR CARD")
+            if self.cardCache or self.resetCard:    # block for short period
+                cardUid = self.rfid.awaitPresence(PRESENCE_TIMEOUT)
+            else:
+                cardUid = self.rfid.awaitPresence()                         # block indefinitely
+            if cardUid is None:  # resumeMs timeout was hit
+                print("TIMEOUT: ", end="")
+                if self.cardCache is not None:
+                    print("RESUME ABANDONED")
+                    self.cardCache = None
+                if self.resetCard:
+                    print("RESET ABANDONED")
+                    self.resetCard = False
+                return None
+
+            print("CARD PRESENT")
+
+            if cardUid in redTags:
+                print("RESET REQUESTED")
+                self.screen.clear()
+                self.redraw()
+                toastRect = self.toast(b"Reset requested")
+                self.expectStay = False
+                self.cardCache = None
+                self.resetCard = True
+                self.rfid.awaitAbsence()
+                return cardUid
+        finally:
+            if toastRect:
+                self.wipeRect(toastRect)
+            if labelRect:
+                self.wipeRect(labelRect)
+
+        try: # unselect finaliser
+            self.rfid.selectTag(cardUid)
+
+            if self.resetCard and not(cardUid in redTags):
+                self.resetCard = False
+                card = self.story.createBlankCard(cardUid)
+                self.rfid.writeCard(card=card, unselect=True)
+                toastRect = self.toast(b"Reset complete")
+                self.rfid.awaitAbsence()
+                self.wipeRect(toastRect)
+                return cardUid
+            elif self.cardCache is not None:
+                if cardUid == self.cardCache.uid:
+                    card = self.cardCache
+                    print("RESUMED AVOIDING READ")
+                else:
+                    print("NEW CARD: RESUME ABANDONED")
+                self.cardCache = None  # discard cached data from previous cycle (implicitly after resumeMs)
+
+            if card is None:
+                try:
+                    labelRect = self.label(b"KEEP IN PLACE, loading..")
+                    card = self.rfid.readCard(cardUid=cardUid, unselect=False)
+                    if card.storyUid != self.story.uid or card.storyVersion != self.story.version:
+                        raise CardJsonIncompatibleError("Wrong story or version")
+                    print("CARD LOADED")
+                except CardReadIncompleteError:
+                    print("EARLY REMOVAL")
+                    return None
+                except (CardBankMissingError, CardJsonInvalidError, CardJsonIncompatibleError, KeyError):
+                    print("CARD INVALID")
+                    card = self.story.createBlankCard(cardUid)
+
+            try: # label finaliser
+                labelRect = self.label(b"KEEP IN PLACE, saving...") # TODO CH calculate location to just wipe and draw 'saving.' over 'loading'
+
+                origNodeUid = card.nodeUid
+                nextNode = self.engine.handleCard(card, self)
+
+                # will next page also be at this box?
+                if issubclass(type(nextNode), GoalPage) and nextNode.goalBoxUid == self.box.uid:
+                    self.expectStay = True # goalpage at same box
+                elif nextNode.uid != origNodeUid:
+                    self.expectStay = True # remote GoalPage or NodeFork unvisited
+                else:
+                    self.expectStay = False # remote GoalPage or NodeFork now visited
+
+                try:
+                    self.rfid.writeCard(card=card, unselect=False)
+                    self.cardCache = card
+                except:
+                    print("Error; discarding write. One of...")
+                    print("Card identity not the intended card to be written")
+                    print("Card removed before write complete")
+            finally:
+                self.wipeRect(labelRect)
+
+            # TODO try this to avoid error counting in awaitAbsence (meaning two presence cycles needed to detect)
+            # cardVault.reader.reset()
+        finally:
+            try:
+                labelRect = self.label(awaitLift if self.expectStay else awaitLeave, redraw=False)
+                self.redraw()  # TODO redraw fully as workaround for draw alignment bug which seems only to affect this message
+                self.rfid.unselectTag()
+                if not fuzz: # if fuzzing, don't wait for tag lift
+                    self.rfid.awaitAbsence()
+                print("CARD REMOVED")
+            finally:
+                self.wipeRect(labelRect)
+
+        return cardUid
+
+    """
     def gameLoop(self, card=None):
         try:
             loopStart = agnostic.ticks_ms()
@@ -120,6 +252,8 @@ class Host(AnonymousContainer):
                     self.wipeRect(toastRect)
                 if labelRect:
                     self.wipeRect(labelRect)
+
+
             if card is None:
                 if self.resetMode:
                     self.resetMode = False
@@ -164,6 +298,7 @@ class Host(AnonymousContainer):
             return card
         finally:
             self.rfid.unselectTag()
+    """
 
     def powerDown(self):
         self.powerPin.value(1) # wired to OFF on Polulu Power Switch LV -
