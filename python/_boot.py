@@ -25,16 +25,19 @@ agnostic.collect()
 story = loader.loadStory(loader.storyUid)
 agnostic.collect()
 
-boxHost = prepareHost(story, loader.boxUid)
+boxHosts = prepareHost(story, [loader.boxUid])
+
+boxHost = boxHosts[loader.boxUid]
 while True: # useful for testing powerDown, although loop runs only once if Polulu latching
     while boxHost.running:
         agnostic.report_collect()
         try:
-            card = boxHost.gameLoop() # card value allows gameLoop to indicate idleness for future self-depower
+            cardUid = boxHost.newLoop() # card value allows gameLoop to indicate idleness for future self-depower
         except Exception as e:
             sys.print_exception(e)
     print("Powering down")
     boxHost.powerDown()
+
 """
 from regimes.integration_test import run
 run()
