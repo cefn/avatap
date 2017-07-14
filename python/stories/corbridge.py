@@ -4,11 +4,12 @@ from stories import introText
 
 # TODO CH, change use of True and 0 to 0 and 1 throughout, use bool() instead of x==True ?
 
-storyName = "corbridge1"
+storyName = "corbridge"
 
 # create story
 story = Story(
     uid=storyName,
+    version="0.1.0",
     # choose an alternative startNodeUid and startSack for debugging
     # startNodeUid = "stoneFork",
     startNodeUid="firstLanding",
