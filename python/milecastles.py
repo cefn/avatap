@@ -193,6 +193,7 @@ class AnonymousContainer(Container):
 
 class Story(Container):
     startNodeUid = required
+    version = required
     startSack = optional
 
     def __init__(self, *a, **k):
@@ -239,6 +240,7 @@ class Story(Container):
         return Card(
             uid=cardUid,
             storyUid = self.uid,
+            storyVersion = self.version,
             nodeUid = self.startNodeUid,
             sack = dict(self.startSack)
         )
@@ -246,6 +248,7 @@ class Story(Container):
 
 class Card(UidItem):
     storyUid = required
+    storyVersion = required
     nodeUid = required
     sack = required
 
