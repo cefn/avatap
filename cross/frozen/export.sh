@@ -31,6 +31,7 @@ $COPYPATHCMD micropython-st7920/st7920.py $MODULEDIR
 
 # READER LIBRARY
 $COPYPATHCMD micropython-mfrc522/mfrc522.py $MODULEDIR
+$COPYPATHCMD micropython-mfrc522/vault.py $MODULEDIR
 # CH TODO REMOVE READER EXAMPLES
 $COPYPATHCMD micropython-mfrc522/examples/read.py $MODULEDIR
 $COPYPATHCMD micropython-mfrc522/examples/write.py $MODULEDIR
