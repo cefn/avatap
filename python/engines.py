@@ -21,6 +21,7 @@ def cacheTemplate(story, node, templateName):
 def cardToDict(card):
     return dict(
         storyUid=card.storyUid,
+        storyVersion=card.storyVersion,
         nodeUid=card.nodeUid,
         sack=card.sack
     )
@@ -30,6 +31,7 @@ def dictToCard(cardUid, cardDict):
     return Card(
         uid=cardUid,
         storyUid=cardDict["storyUid"],
+        storyVersion=cardDict["storyVersion"],
         nodeUid=cardDict["nodeUid"],
         sack=cardDict["sack"]
     )
