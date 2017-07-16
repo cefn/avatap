@@ -2,7 +2,7 @@
 
 Experiment with overclocking for 2x speedup https://docs.micropython.org/en/latest/esp8266/esp8266/tutorial/powerctrl.html (make SPI or externally-timed functionality unstable?) 
 
-Make debug validation logic depend on Milecastles debug flag, to accelerate story loading (speed powerup for solar boxes)
+Make debug validation logic depend on Milecastles debug flag, to accelerate story loading and minimise memory fragmentation (speed powerup for solar boxes)
 
 TODO replace non-debug asserts with if and AssertionError? This will permit future optimisation by toggling a flag
 
