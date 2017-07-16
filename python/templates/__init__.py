@@ -7,10 +7,6 @@ def cacheTemplates():
 
     storyIds = [
         loader.storyUid
-        #"arbeia",
-        #"corbridge",
-        #"housesteads",
-        #"senhouse",
     ]
 
     qstrings = {
