@@ -1,5 +1,4 @@
 import agnostic
-from engines.console import ConsoleSiteEmulator
 from milecastles import Story, Box, ThroughPage, ThroughSequence, ConditionFork, NodeFork, SackChange
 from stories import introText
 
@@ -9,6 +8,7 @@ storyName = __name__.split(".")[-1]
 # create story
 story = Story(
     uid=storyName,
+    version="0.1.0",
     #startNodeUid = "landing",
     startNodeUid="firstLanding",
     startSack={
@@ -439,14 +439,3 @@ with story:
         nextNodeUid = "landing",
     )
     agnostic.collect()
-
-agnostic.collect()
-
-def run():
-    print("Loading emulator")
-    emulator = ConsoleSiteEmulator(story=story)
-    print("Running Emulator")
-    emulator.run()
-
-if __name__ == "__main__":
-    run()
