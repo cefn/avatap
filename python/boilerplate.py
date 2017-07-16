@@ -43,7 +43,6 @@ class Resolver:
         self.sourceObj = sourceObj
 
     def file_open(self, name):
-        # TODO CH MEMORY eliminate potential fragmentation from whitespace manipulation
         assert hasattr(self.sourceObj, name), "Missing {}".format(name)
         loadedString = getattr(self.sourceObj, name)
         assert type(loadedString) == str, "Entry {} not 'str'".format(name)
