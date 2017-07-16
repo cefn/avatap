@@ -112,6 +112,7 @@ class Engine(AnonymousContainer):
         if not(useCache) or generatorFactory is None:
             cacheTemplate(self.story, node, templateName)
             generatorFactory = boilerplate.loadTemplateGeneratorFactory(templateId)
+        agnostic.collect()
 
         generator = generatorFactory(**self.getEngineContext())
         agnostic.collect()
