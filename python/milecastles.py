@@ -142,6 +142,7 @@ class Item(StrictHolder):
 
     # populate attributes from positional dicts and keyword args
     def __init__(self, *a, **k):
+        agnostic.collect()
         super().__init__(self, *a, **k)
 
         names = dir(self)
