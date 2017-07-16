@@ -717,11 +717,3 @@ with story:
 				""",
         ],
     )
-
-def run():
-    from regimes.console import ConsoleSiteEmulator
-    emulator = ConsoleSiteEmulator(story=story)
-    emulator.run()
-
-if __name__ == "__main__":
-    run()
