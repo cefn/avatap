@@ -1,4 +1,5 @@
 import sys
+
 """
 Provides platform-agnostic exported symbols which may be provided in different ways on different platforms.
 For example, the const() symbol provides for values which are treated as constant by the micropython bytecode
@@ -8,13 +9,31 @@ allows them to be used without lots of platform-detection logic strewn through o
 """
 
 assert hasattr(sys, "implementation"), "FATAL: Cannot run in Python 2"
+
+# number of bytes at which to reset
+LOW_MEMORY = 13000
+
 if sys.implementation.name == "micropython":
-    import micropython
-    from micropython import const
+    from micropython import const, opt_level
+    opt_level(1) # removes debug symbols?
+    from machine import reset as reboot
+    """
+    from esp import deepsleep
+    def reboot():
+        deepsleep(1) # sleep for 1 microsecond
+    """
     import gc
     from utime import sleep,ticks_ms
     import uos as os
     import uio as io
+
+    def reboot_collect():
+        report_collect()
+        if gc.mem_free() > LOW_MEMORY:
+            print("MEMORY OK")
+        else:
+            print("LOW MEMORY, REBOOTING")
+            reboot()
 
     def collect():
         gc.collect()
@@ -41,6 +60,14 @@ if sys.implementation.name == "micropython":
         return result
 
 else:
+    def collect():
+        pass
+    def report_import():
+        pass
+    def report_collect():
+        pass
+    def reboot_collect():
+        pass
     def noop():
         pass
     class AttrObj:
@@ -54,9 +81,3 @@ else:
         return val
     import os as os
     import io as io
-    def collect():
-        pass
-    def report_collect():
-        pass
-    def report_import():
-        pass
