@@ -1,6 +1,4 @@
 import sys
-import gc
-gc.threshold((gc.mem_free() + gc.mem_alloc()) // 4)
 import uos
 
 """ # TODO CH Filesystem disabled to maximise memory
@@ -15,43 +13,43 @@ except OSError:
     import inisetup
     vfs = inisetup.setup()
 """
-gc.collect()
 
 import agnostic
-from host.cockle import prepareHosts
-from loader import storyUid, boxUid, loadStory
+agnostic.collect()
+import host.cockle
+import loader
 from machine import reset
 agnostic.collect()
 
-story = loadStory(storyUid)
+story = loader.loadStory(loader.storyUid)
 agnostic.collect()
 
 def run(loop=True):
-    boxHosts = prepareHosts(story, [boxUid])
-    boxHost = boxHosts[boxUid]
+    boxHosts = host.cockle.prepareHosts(story, [loader.boxUid])
+    boxHost = boxHosts[loader.boxUid]
     while loop and boxHost.running:
         agnostic.report_collect()
         cardUid = boxHost.gameLoop()  # card value allows gameLoop to indicate idleness for future self-depower
 
-"""
-"""
-try:
-    run()
-except MemoryError:
-    reset()
-except Exception as e:
-    sys.print_exception(e)
-    reset()
-
+while True:
+    try:
+        run()
+    except MemoryError:
+        reset()
+    except Exception as e:
+        sys.print_exception(e)
+        continue
 
 """
-from fuzz import walk
-try:
-    walk(story)
-except MemoryError:
-    reset()
-except Exception as e:
-    sys.print_exception(e)
+while True:
+    from fuzz import walk
+    try:
+        walk(story)
+    except MemoryError:
+        reset()
+    except Exception as e:
+        sys.print_exception(e)
+        continue
 """
 
 """
