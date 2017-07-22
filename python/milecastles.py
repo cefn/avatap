@@ -112,6 +112,7 @@ def getStoryContext():
 
 class Holder(object):
     def __init__(self, *a, **k):
+        agnostic.collect()
         for key,val in k.items():
             setattr(self, key, val)
 
@@ -142,7 +143,6 @@ class Item(StrictHolder):
 
     # populate attributes from positional dicts and keyword args
     def __init__(self, *a, **k):
-        agnostic.collect()
         super().__init__(self, *a, **k)
 
         names = dir(self)
@@ -447,24 +447,6 @@ class ThroughPage(GoalPage):
         if engine.box == self.goalBox:
             engine.setNodeUid(self.nextNodeUid)
 
-"""
-class ConfirmationPage(ThroughPage):
-    defaults = dict(ThroughPage.defaults, 
-        timeout=4000
-    )
-    
-    def handleTap(self, engine):
-        now = ticks_ms()
-        # progress only if tap follows quickly
-        if now - self.last_tap_ms < self.timeout:
-            self.progressPlayer(engine.card)
-        engine.renderText(self.getRenderedText(engine))
-        self.last_tap_ms = now          
-
-class WaitPage(ThroughPage):
-    pass
-"""    
-
 # TODO CH, choiceItem workaround uses concatenateGeneratedStrings directly - recursion explains eval explosion? messes with caching strategy!
 # how else to support arbitrary strings not resolved against noderesolver? Can these be resolved via noderesolver?
 # instead of {{ engine.concatenateGeneratedStrings(node, node.choices[choiceUid]) }}
@@ -555,3 +537,20 @@ def ThroughSequence(uid, nextNodeUid, goalBoxUid, sequence, **k):
 # Condition routing
 # Test Verification of story
 # Rendering as graph
+
+class CardReadIncompleteError(Exception):
+    """Card was probably removed while reading"""
+    pass
+
+class CardBankMissingError(Exception):
+    """Bank metadata was not found on the card"""
+    pass
+
+class CardJsonInvalidError(Exception):
+    """Bank metadata found, but indicated data wasn't JSON"""
+    pass
+
+class CardJsonIncompatibleError(Exception):
+    """'Userspace' error; JSON was found, but not compatible with the application"""
+    pass
+
