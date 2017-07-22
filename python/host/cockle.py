@@ -1,6 +1,6 @@
 from machine import SPI, Pin, freq
 
-# TODO CH make conditional on being an interior box
+# TODO CH make conditional on being an interior box?
 # overclock for speed - sacrificing current (and stability?)
 freq(160000000)
 
@@ -21,6 +21,7 @@ smallFont.draw_line(b"Powering Up!", x=32, y=24, plotter=blackPlotter)
 screen.redraw()
 
 loader.loadOther()
+
 loader.loadStory(loader.storyUid)
 
 from mfrc522 import MFRC522
@@ -33,12 +34,9 @@ from milecastles import Box
 class CockleRfid(BankVault):
 
     def readCard(self, cardUid, unselect=True):
-        try:
-            cardDict = self.readJson(cardUid, unselect)
-            card = dictToCard(cardUid, cardDict)
-            return card
-        except AssertionError as e:
-            return None
+        cardDict = self.readJson(cardUid, unselect)
+        card = dictToCard(cardUid, cardDict)
+        return card
 
     def writeCard(self, card, unselect=True):
         return self.writeJson( cardToDict(card), card.uid, unselect)
