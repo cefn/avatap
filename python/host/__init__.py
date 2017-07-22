@@ -151,7 +151,7 @@ class Host(AnonymousContainer):
                         raise CardJsonIncompatibleError("Wrong story or version")
                 except CardReadIncompleteError:
                     return None # exit the loop altogether
-                except (CardBankMissingError, CardJsonInvalidError, CardJsonIncompatibleError, KeyError):
+                except (AssertionError, CardBankMissingError, CardJsonInvalidError, CardJsonIncompatibleError, KeyError):
                     card = self.story.createBlankCard(cardUid) # overwrite the card, read was successful but content flawed
 
             try: # label finaliser
