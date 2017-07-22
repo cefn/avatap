@@ -1,6 +1,5 @@
 from time import sleep
-from milecastles import GoalPage, AnonymousContainer, required
-from vault import CardReadIncompleteError, CardBankMissingError, CardJsonInvalidError, CardJsonIncompatibleError
+from milecastles import GoalPage, AnonymousContainer, required, CardReadIncompleteError, CardBankMissingError, CardJsonInvalidError, CardJsonIncompatibleError
 
 import agnostic
 
@@ -151,7 +150,7 @@ class Host(AnonymousContainer):
                         raise CardJsonIncompatibleError("Wrong story or version")
                 except CardReadIncompleteError:
                     return None # exit the loop altogether
-                except (AssertionError, CardBankMissingError, CardJsonInvalidError, CardJsonIncompatibleError, KeyError):
+                except (CardBankMissingError, CardJsonInvalidError, CardJsonIncompatibleError, AssertionError):
                     card = self.story.createBlankCard(cardUid) # overwrite the card, read was successful but content flawed
 
             try: # label finaliser
@@ -195,7 +194,17 @@ class Host(AnonymousContainer):
 
         return cardUid
 
+    def createRunnable(self):
+        def run():
+            while self.running:
+                agnostic.report_collect()
+                cardUid = self.gameLoop()
+        return run
+
     def powerDown(self):
-        self.powerPin.value(1) # wired to OFF on Polulu Power Switch LV -
-        sleep(1) # only seen in testing with LED attached - otherwise the pulse above should power off the unit
-        self.powerPin.value(0)
+        if self.powerPin is not None:
+            self.powerPin.value(1) # wired to OFF on Polulu Power Switch LV -
+            sleep(1) # only seen in testing with LED attached - otherwise the pulse above should power off the unit
+            self.powerPin.value(0)
+        else:
+            raise AssertionError("No powerpin, can't powerDown")
