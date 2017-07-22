@@ -4,7 +4,7 @@ from os import urandom
 from time import sleep
 from threading import Thread
 import pyglet
-from agnostic import ticks_ms
+from agnostic import ticks_ms, ticks_diff
 from faces.font_5x7 import font as smallFont
 #from faces.font_timB14 import font as bigFont
 bigFont=smallFont
@@ -13,13 +13,13 @@ import st7920Emulator
 
 from milecastles import Box
 
-#from stories.housesteads import story
-from stories.corbridge import story
-#from stories.senhouse import story
+import loader
 
 from host import Host
 
-delayActive = True
+story = loader.loadStory(loader.storyUid)
+
+delayActive = False
 
 def hostDelay(delay):
     if delayActive:
@@ -48,30 +48,50 @@ class LaptopRfid:
         self.adaptor = adaptor
         self.boxUid = boxUid
 
-    def awaitPresence(self, cardUid=None):
-        while self.adaptor.boxUid != self.boxUid or self.adaptor.cardUid is None:
-            sleep(pollDelay)
-        hostDelay(presenceDelay)
-        if cardUid is not None and self.adaptor.cardUid != cardUid:
-            raise AssertionError("Wrong Tag")
-        return self.adaptor.cardUid
+    def selectTag(self, cardUid):
+        self.selectedTag = cardUid
 
-    def readCard(self, cardUid=None):
+    def unselectTag(self):
+        self.selectedTag = None
+
+    def awaitPresence(self, waitms=None):
+        started = ticks_ms()
+        while True:
+            tagUid = self.getPresentTag()
+            if tagUid is not None:
+                return tagUid
+            else:
+                sleep(pollDelay)
+            if waitms is not None:
+                if ticks_diff(ticks_ms(), started) > waitms:
+                    return None
+
+    def getPresentTag(self):
+        if self.adaptor.boxUid == self.boxUid:
+            return self.adaptor.cardUid
+        else:
+            return None
+
+    def readCard(self, cardUid=None, unselect=True):
         hostDelay(readDelay)
         if self.adaptor.boxUid != self.boxUid or self.adaptor.cardUid is None:
             raise AssertionError("No Tag")
         if cardUid is not None and self.adaptor.cardUid != cardUid:
             raise AssertionError("Wrong Tag")
         card = dictToCard(self.adaptor.cardUid, self.adaptor.cardDictMap[self.adaptor.cardUid])
+        if unselect:
+            self.unselectTag()
         return card
 
-    def writeCard(self, card):
+    def writeCard(self, card, unselect=True):
         hostDelay(writeDelay)
         if self.adaptor.boxUid != self.boxUid or self.adaptor.cardUid is None:
             raise AssertionError("No Tag")
         if self.adaptor.cardUid != card.uid:
             raise AssertionError("Wrong Tag")
         self.adaptor.cardDictMap[self.adaptor.cardUid]=cardToDict(card)
+        if unselect:
+            self.unselectTag()
 
     def awaitAbsence(self):
         while self.adaptor.boxUid == self.boxUid and self.adaptor.cardUid is not None:
@@ -137,6 +157,7 @@ if __name__ == "__main__":
     hosts = dict()
     screens = list()
 
+    hostThreads = list()
     boxUids = list(boxTable.keys())
     boxUids.sort()
     for boxUid in boxUids:
@@ -157,15 +178,21 @@ if __name__ == "__main__":
             bigFont=bigFont,
             blackPlotter=blackPlotter,
             whitePlotter=whitePlotter,
+            powerPin = None
         )
         hosts[boxUid] = host
         screens.append(screen)
         hostRun = host.createRunnable()
-        hostThread = Thread(target=hostRun, daemon=True)
-        hostThread.start()
+        hostThreads.append(Thread(target=hostRun, daemon=True))
 
     window = st7920Emulator.createPygletWindow(screens)
     window.push_handlers(keyState)
+
+    @window.event
+    def on_show(*a):
+        # start all threads running
+        for hostThread in hostThreads:
+            hostThread.start()
 
     @window.event
     def on_close(*a):
