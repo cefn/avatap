@@ -24,9 +24,9 @@ agnostic.collect()
 
 with story:
 
-    paddockBox =    Box( uid="1",   label="Box I",      description="Looking out to sea")
+    paddockBox =    Box( uid="1",   label="Box I",      description="in the paddock breeding horses")
     altarBox =   Box( uid="2",   label="Box II",     description="Before the altars of the gods")
-    seaBox = Box( uid="3",   label="Box III",     description="in the paddock breeding horses")
+    seaBox = Box( uid="3",   label="Box III",     description="Looking out to sea")
     agnostic.collect()
 
     entranceBox = paddockBox
