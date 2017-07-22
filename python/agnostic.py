@@ -23,7 +23,7 @@ if sys.implementation.name == "micropython":
         deepsleep(1) # sleep for 1 microsecond
     """
     import gc
-    from utime import sleep,ticks_ms
+    from utime import sleep,ticks_ms,ticks_diff
     import uos as os
     import uio as io
 
@@ -62,7 +62,8 @@ if sys.implementation.name == "micropython":
 else:
     def collect():
         pass
-    def report_import():
+    def report_import(moduleName):
+        return __import__(moduleName)
         pass
     def report_collect():
         pass
@@ -77,6 +78,8 @@ else:
     from time import sleep,time
     def ticks_ms():
         return int(time()*1000)
+    def ticks_diff(a, b):
+        return a - b
     def const(val):
         return val
     import os as os
