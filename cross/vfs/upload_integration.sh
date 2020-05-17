@@ -12,12 +12,11 @@ cd "$(dirname "$(realpath "$0")")";
 cd ../../../
 
 # change into cockle directory to deploy generic image
-#cd cockle
-#python3 -m flash.deploy
-#$AMPYRESET
-#sleep 10
-#cd ../
-
+cd cockle
+python3 -m flash.deploy
+$AMPYRESET
+sleep 10
+cd ../
 
 # add agnostic library
 echo agnostic...
